@@ -1,0 +1,42 @@
+# Environment variables
+.env
+
+# Database
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Binaries
+minigame
+minigame-bot
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+.build
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# Mocks
+mocks_test.go
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
