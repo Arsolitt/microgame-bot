@@ -21,12 +21,12 @@ var (
 type Builder struct {
 	createdAt  time.Time
 	updatedAt  time.Time
+	chatID     *ChatID
 	firstName  FirstName
 	lastName   LastName
 	username   Username
 	errors     []error
 	telegramID TelegramID
-	chatID     *ChatID
 	id         ID
 }
 

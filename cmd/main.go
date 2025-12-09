@@ -157,13 +157,15 @@ func startup() error {
 			return err
 		}
 
-		_, err = ctx.Bot().EditMessageText(ctx, tu.EditMessageText(tu.ID(0), 0, msg).WithInlineMessageID(query.InlineMessageID).WithParseMode("HTML"))
+		_, err = ctx.Bot().
+			EditMessageText(ctx, tu.EditMessageText(tu.ID(0), 0, msg).WithInlineMessageID(query.InlineMessageID).WithParseMode("HTML"))
 		if err != nil {
 			slog.ErrorContext(ctx, "Failed to edit message", logger.ErrorField, err.Error())
 			return err
 		}
 
-		_, err = ctx.Bot().EditMessageReplyMarkup(ctx, tu.EditMessageReplyMarkup(tu.ID(0), 0, boardKeyboard).WithInlineMessageID(query.InlineMessageID))
+		_, err = ctx.Bot().
+			EditMessageReplyMarkup(ctx, tu.EditMessageReplyMarkup(tu.ID(0), 0, boardKeyboard).WithInlineMessageID(query.InlineMessageID))
 		if err != nil {
 			slog.ErrorContext(ctx, "Failed to edit message", logger.ErrorField, err.Error())
 			return err
@@ -203,9 +205,9 @@ func extractGameID(callbackData string) (ttt.ID, error) {
 func buildGameBoardKeyboard(game *ttt.TTT) *telego.InlineKeyboardMarkup {
 	rows := make([][]telego.InlineKeyboardButton, 3)
 
-	for row := 0; row < 3; row++ {
+	for row := range 3 {
 		buttons := make([]telego.InlineKeyboardButton, 3)
-		for col := 0; col < 3; col++ {
+		for col := range 3 {
 			cell, _ := game.GetCell(row, col)
 
 			// Get icon for cell

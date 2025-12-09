@@ -9,8 +9,8 @@ import (
 )
 
 type Repository struct {
-	mu    sync.RWMutex
 	users map[domainUser.ID]domainUser.User
+	mu    sync.RWMutex
 }
 
 func New() *Repository {

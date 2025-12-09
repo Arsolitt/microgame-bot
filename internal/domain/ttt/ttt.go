@@ -29,8 +29,8 @@ type TTT struct {
 	Board           [3][3]Cell
 	Turn            Player
 	Winner          Player
-	ID              ID
 	InlineMessageID InlineMessageID
+	ID              ID
 	PlayerXID       user.ID
 	PlayerOID       user.ID
 }
@@ -38,7 +38,7 @@ type TTT struct {
 var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // New creates a new tic-tac-toe game with the first player
-// First player is randomly assigned to X or O, but X always goes first
+// First player is randomly assigned to X or O, but X always goes first.
 func New(inlineMessageID InlineMessageID, firstPlayerID user.ID) *TTT {
 	game := &TTT{
 		Board:           [3][3]Cell{},
@@ -58,7 +58,7 @@ func New(inlineMessageID InlineMessageID, firstPlayerID user.ID) *TTT {
 	return game
 }
 
-// JoinGame adds the second player to the game
+// JoinGame adds the second player to the game.
 func (t *TTT) JoinGame(secondPlayerID user.ID) error {
 	if !t.PlayerXID.IsZero() && !t.PlayerOID.IsZero() {
 		return ErrGameFull
@@ -77,7 +77,7 @@ func (t *TTT) JoinGame(secondPlayerID user.ID) error {
 	return nil
 }
 
-// GetPlayerFigure returns the player symbol (X or O) for the given user ID
+// GetPlayerFigure returns the player symbol (X or O) for the given user ID.
 func (t *TTT) GetPlayerFigure(userID user.ID) (Player, error) {
 	if t.PlayerXID == userID {
 		return PlayerX, nil
@@ -88,7 +88,7 @@ func (t *TTT) GetPlayerFigure(userID user.ID) (Player, error) {
 	return PlayerEmpty, ErrPlayerNotInGame
 }
 
-// IsPlayerTurn checks if it's the turn of the player with given user ID
+// IsPlayerTurn checks if it's the turn of the player with given user ID.
 func (t *TTT) IsPlayerTurn(userID user.ID) bool {
 	symbol, err := t.GetPlayerFigure(userID)
 	if err != nil {
@@ -97,7 +97,7 @@ func (t *TTT) IsPlayerTurn(userID user.ID) bool {
 	return symbol == t.Turn
 }
 
-// GetWinnerID returns the user ID of the winner, if any
+// GetWinnerID returns the user ID of the winner, if any.
 func (t *TTT) GetWinnerID() user.ID {
 	if t.Winner == PlayerX {
 		return t.PlayerXID
@@ -108,7 +108,7 @@ func (t *TTT) GetWinnerID() user.ID {
 	return user.ID{}
 }
 
-// MakeMove attempts to make a move at the specified coordinates for the given user
+// MakeMove attempts to make a move at the specified coordinates for the given user.
 func (t *TTT) MakeMove(row, col int, userID user.ID) error {
 	if t.IsGameOver() {
 		return ErrGameOver
@@ -147,19 +147,19 @@ func (t *TTT) MakeMove(row, col int, userID user.ID) error {
 	return nil
 }
 
-// IsGameOver returns true if the game has ended
+// IsGameOver returns true if the game has ended.
 func (t *TTT) IsGameOver() bool {
 	return t.Winner != PlayerEmpty || t.IsDraw()
 }
 
-// IsDraw returns true if the game is a draw
+// IsDraw returns true if the game is a draw.
 func (t *TTT) IsDraw() bool {
 	if t.Winner != PlayerEmpty {
 		return false
 	}
 
-	for i := 0; i < 3; i++ {
-		for j := 0; j < 3; j++ {
+	for i := range 3 {
+		for j := range 3 {
 			if t.Board[i][j] == CellEmpty {
 				return false
 			}
@@ -168,7 +168,7 @@ func (t *TTT) IsDraw() bool {
 	return true
 }
 
-// GetCell returns the cell value at the specified coordinates
+// GetCell returns the cell value at the specified coordinates.
 func (t *TTT) GetCell(row, col int) (Cell, error) {
 	if row < 0 || row > 2 || col < 0 || col > 2 {
 		return CellEmpty, ErrOutOfBounds
@@ -176,14 +176,14 @@ func (t *TTT) GetCell(row, col int) (Cell, error) {
 	return t.Board[row][col], nil
 }
 
-// Reset resets the game to initial state
+// Reset resets the game to initial state.
 func (t *TTT) Reset() {
 	t.Board = [3][3]Cell{}
 	t.Turn = PlayerX
 	t.Winner = PlayerEmpty
 }
 
-// switchTurn switches the current turn to the other player
+// switchTurn switches the current turn to the other player.
 func (t *TTT) switchTurn() {
 	if t.Turn == PlayerX {
 		t.Turn = PlayerO
@@ -192,10 +192,10 @@ func (t *TTT) switchTurn() {
 	}
 }
 
-// checkWinner checks if there is a winner and returns the winner
+// checkWinner checks if there is a winner and returns the winner.
 func (t *TTT) checkWinner() Player {
 	// Check rows
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if t.Board[i][0] != CellEmpty &&
 			t.Board[i][0] == t.Board[i][1] &&
 			t.Board[i][1] == t.Board[i][2] {
@@ -204,7 +204,7 @@ func (t *TTT) checkWinner() Player {
 	}
 
 	// Check columns
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if t.Board[0][i] != CellEmpty &&
 			t.Board[0][i] == t.Board[1][i] &&
 			t.Board[1][i] == t.Board[2][i] {
@@ -228,7 +228,7 @@ func (t *TTT) checkWinner() Player {
 	return PlayerEmpty
 }
 
-// playerToCell converts Player to Cell
+// playerToCell converts Player to Cell.
 func playerToCell(p Player) Cell {
 	switch p {
 	case PlayerX:
@@ -240,7 +240,7 @@ func playerToCell(p Player) Cell {
 	}
 }
 
-// cellToPlayer converts Cell to Player
+// cellToPlayer converts Cell to Player.
 func cellToPlayer(c Cell) Player {
 	switch c {
 	case CellX:

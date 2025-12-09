@@ -7,11 +7,11 @@ import (
 type User struct {
 	createdAt  time.Time  `json:"created_at"`
 	updatedAt  time.Time  `json:"updated_at"`
+	chatID     *ChatID    `json:"chat_id"`
 	firstName  FirstName  `json:"first_name"`
 	lastName   LastName   `json:"last_name"`
 	username   Username   `json:"username"`
 	telegramID TelegramID `json:"telegram_id"`
-	chatID     *ChatID    `json:"chat_id"`
 	id         ID         `json:"id"`
 }
 

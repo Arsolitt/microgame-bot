@@ -15,7 +15,10 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
-func UserProvider(locker locker.ILocker, userRepo repository.IUserRepository) func(ctx *th.Context, update telego.Update) error {
+func UserProvider(
+	locker locker.ILocker,
+	userRepo repository.IUserRepository,
+) func(ctx *th.Context, update telego.Update) error {
 	const OPERATION_NAME = "middleware::user_provider"
 	return func(ctx *th.Context, update telego.Update) error {
 		var userTelegramID int64
