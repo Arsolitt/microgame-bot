@@ -3,5 +3,6 @@ package core
 type ContextKey string
 
 const (
-	ContextKeyUser = ContextKey("user")
+	ContextKeyUser          = ContextKey("user")
+	ContextKeyCorrelationID = ContextKey("correlation_id")
 )
