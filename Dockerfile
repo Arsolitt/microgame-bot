@@ -1,4 +1,4 @@
-FROM harbor.arsolitt.tech/hub/golang:1.25.4-bookworm AS local
+FROM harbor.arsolitt.tech/hub/golang:1.25.5-bookworm AS local
 ENV CGO_ENABLED=0
 ENV GOOS=linux
 ENV GOARCH=amd64
@@ -14,7 +14,7 @@ EXPOSE 8080
 USER 1000
 CMD ["air"]
 
-FROM harbor.arsolitt.tech/hub/golang:1.25.4-bookworm AS builder
+FROM harbor.arsolitt.tech/hub/golang:1.25.5-bookworm AS builder
 ENV CGO_ENABLED=0
 ENV GOOS=linux
 ENV GOARCH=amd64
