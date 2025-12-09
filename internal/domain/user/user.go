@@ -11,7 +11,7 @@ type User struct {
 	lastName   LastName   `json:"last_name"`
 	username   Username   `json:"username"`
 	telegramID TelegramID `json:"telegram_id"`
-	chatID     ChatID     `json:"chat_id"`
+	chatID     *ChatID    `json:"chat_id"`
 	id         ID         `json:"id"`
 }
 
@@ -23,7 +23,7 @@ func (u User) TelegramID() TelegramID {
 	return u.telegramID
 }
 
-func (u User) ChatID() ChatID {
+func (u User) ChatID() *ChatID {
 	return u.chatID
 }
 

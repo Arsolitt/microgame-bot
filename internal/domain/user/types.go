@@ -36,6 +36,6 @@ func (u ID) IsZero() bool {
 	return utils.UUIDIsZero(u)
 }
 
-func (u ChatID) IsZero() bool {
-	return u == 0
+func (c *ChatID) IsZero() bool {
+	return c == nil || *c == 0
 }

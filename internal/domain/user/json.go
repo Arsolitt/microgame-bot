@@ -13,7 +13,7 @@ func (u User) MarshalJSON() ([]byte, error) {
 		LastName   LastName   `json:"last_name"`
 		Username   Username   `json:"username"`
 		TelegramID TelegramID `json:"telegram_id"`
-		ChatID     ChatID     `json:"chat_id"`
+		ChatID     *ChatID    `json:"chat_id,omitempty"`
 		ID         ID         `json:"id"`
 	}{
 		ID:         u.id,
@@ -35,7 +35,7 @@ func (u *User) UnmarshalJSON(data []byte) error {
 		LastName   LastName   `json:"last_name"`
 		Username   Username   `json:"username"`
 		TelegramID TelegramID `json:"telegram_id"`
-		ChatID     ChatID     `json:"chat_id"`
+		ChatID     *ChatID    `json:"chat_id,omitempty"`
 		ID         ID         `json:"id"`
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {

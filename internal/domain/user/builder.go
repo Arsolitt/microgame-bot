@@ -13,7 +13,6 @@ import (
 var (
 	ErrIDRequired         = errors.New("ID required")
 	ErrTelegramIDRequired = errors.New("telegram ID required")
-	ErrChatIDRequired     = errors.New("chat ID required")
 	ErrUsernameRequired   = errors.New("username required")
 	ErrCreatedAtRequired  = errors.New("createdAt required")
 	ErrUpdatedAtRequired  = errors.New("updatedAt required")
@@ -27,7 +26,7 @@ type Builder struct {
 	username   Username
 	errors     []error
 	telegramID TelegramID
-	chatID     ChatID
+	chatID     *ChatID
 	id         ID
 }
 
@@ -74,17 +73,25 @@ func (b Builder) TelegramIDFromInt(telegramID int64) Builder {
 	return b.TelegramID(TelegramID(telegramID))
 }
 
-func (b Builder) ChatID(chatID ChatID) Builder {
-	if chatID.IsZero() {
-		b.errors = append(b.errors, ErrChatIDRequired)
-		return b
-	}
+func (b Builder) ChatID(chatID *ChatID) Builder {
 	b.chatID = chatID
 	return b
 }
 
 func (b Builder) ChatIDFromInt(chatID int64) Builder {
-	return b.ChatID(ChatID(chatID))
+	if chatID == 0 {
+		return b.ChatID(nil)
+	}
+	id := ChatID(chatID)
+	return b.ChatID(&id)
+}
+
+func (b Builder) ChatIDFromPointer(chatID *int64) Builder {
+	if chatID == nil {
+		return b.ChatID(nil)
+	}
+	id := ChatID(*chatID)
+	return b.ChatID(&id)
 }
 
 func (b Builder) FirstName(firstName FirstName) Builder {
@@ -159,9 +166,6 @@ func (b Builder) Build() (User, error) {
 	}
 	if b.updatedAt.IsZero() {
 		b.errors = append(b.errors, ErrUpdatedAtRequired)
-	}
-	if b.chatID.IsZero() {
-		b.errors = append(b.errors, ErrChatIDRequired)
 	}
 
 	if len(b.errors) > 0 {
