@@ -239,9 +239,20 @@ func startup() error {
 
 		// Check if game is over
 		if game.IsGameOver() {
+			// Get both players
+			player1, err := userRepo.UserByID(ctx, game.PlayerXID)
+			if err != nil {
+				l.ErrorContext(ctx, "Failed to get player X", logger.ErrorField, err.Error())
+				return err
+			}
+			player2, err := userRepo.UserByID(ctx, game.PlayerOID)
+			if err != nil {
+				l.ErrorContext(ctx, "Failed to get player O", logger.ErrorField, err.Error())
+				return err
+			}
+
 			var resultMsg string
 			if game.Winner != ttt.PlayerEmpty {
-				// Get winner
 				winnerID := game.GetWinnerID()
 				winner, err := userRepo.UserByID(ctx, winnerID)
 				if err != nil {
@@ -253,17 +264,26 @@ func startup() error {
 				resultMsg = "Ничья"
 			}
 
-			err = ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID).WithText(resultMsg))
+			// Build final message
+			msg, err := msgs.TTTGameStarted(&game, player1, player2)
 			if err != nil {
-				l.ErrorContext(ctx, "Failed to answer callback query", logger.ErrorField, err.Error())
+				l.ErrorContext(ctx, "Failed to build game message", logger.ErrorField, err.Error())
 				return err
 			}
-		} else {
-			err = ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID))
+			finalMsg := msg + "\n\n🏁 " + resultMsg
+
+			_, err = ctx.Bot().
+				EditMessageText(ctx, tu.EditMessageText(tu.ID(0), 0, finalMsg).WithInlineMessageID(query.InlineMessageID).WithParseMode("HTML"))
 			if err != nil {
-				l.ErrorContext(ctx, "Failed to answer callback query", logger.ErrorField, err.Error())
+				l.ErrorContext(ctx, "Failed to edit message", logger.ErrorField, err.Error())
 				return err
 			}
+		}
+
+		err = ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID))
+		if err != nil {
+			l.ErrorContext(ctx, "Failed to answer callback query", logger.ErrorField, err.Error())
+			return err
 		}
 
 		return nil
