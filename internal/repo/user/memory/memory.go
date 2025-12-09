@@ -8,18 +8,18 @@ import (
 	"sync"
 )
 
-type UserRepository struct {
+type Repository struct {
 	mu    sync.RWMutex
 	users map[domainUser.ID]domainUser.User
 }
 
-func New() *UserRepository {
-	return &UserRepository{
+func New() *Repository {
+	return &Repository{
 		users: make(map[domainUser.ID]domainUser.User),
 	}
 }
 
-func (r *UserRepository) UserByTelegramID(ctx context.Context, telegramID int64) (domainUser.User, error) {
+func (r *Repository) UserByTelegramID(ctx context.Context, telegramID int64) (domainUser.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -34,7 +34,7 @@ func (r *UserRepository) UserByTelegramID(ctx context.Context, telegramID int64)
 	return domainUser.User{}, core.ErrUserNotFound
 }
 
-func (r *UserRepository) UserByID(ctx context.Context, id domainUser.ID) (domainUser.User, error) {
+func (r *Repository) UserByID(ctx context.Context, id domainUser.ID) (domainUser.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -48,7 +48,7 @@ func (r *UserRepository) UserByID(ctx context.Context, id domainUser.ID) (domain
 	return user, nil
 }
 
-func (r *UserRepository) CreateUser(ctx context.Context, user domainUser.User) error {
+func (r *Repository) CreateUser(ctx context.Context, user domainUser.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -58,7 +58,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, user domainUser.User) e
 	return nil
 }
 
-func (r *UserRepository) UpdateUser(ctx context.Context, user domainUser.User) error {
+func (r *Repository) UpdateUser(ctx context.Context, user domainUser.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
