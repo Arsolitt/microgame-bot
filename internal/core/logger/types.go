@@ -15,7 +15,11 @@ const (
 )
 
 const (
-	ChatIDField          = "chat_id"
+	OperationField       = "op"
+	PrivateChatIDField   = "private_chat_id"
+	GroupChatIDField     = "group_chat_id"
+	InlineMessageIDField = "inline_message_id"
+	ChatInstanceField    = "chat_instance"
 	UserIDField          = "user_id"
 	CorrelationIDField   = "correlation_id"
 	RequestIDField       = "request_id"
