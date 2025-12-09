@@ -12,6 +12,7 @@ import (
 	"minigame-bot/internal/utils"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -179,6 +180,96 @@ func startup() error {
 		return nil
 	}, th.CallbackDataPrefix("ttt::join::"))
 
+	bh.HandleCallbackQuery(func(ctx *th.Context, query telego.CallbackQuery) error {
+		const OPERATION_NAME = "handler::callback_query"
+		l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+
+		user, ok := ctx.Value(core.ContextKeyUser).(domainUser.User)
+		if !ok {
+			l.ErrorContext(ctx, "User not found")
+			return core.ErrUserNotFoundInContext
+		}
+
+		gameID, err := extractGameID(query.Data)
+		if err != nil {
+			l.ErrorContext(ctx, "Failed to extract game ID", logger.ErrorField, err.Error())
+			return err
+		}
+		game, err := gameRepo.GameByID(ctx, gameID)
+		if err != nil {
+			l.ErrorContext(ctx, "Failed to get game", logger.ErrorField, err.Error())
+			return err
+		}
+		cellNumber, err := extractCellNumber(query.Data)
+		if err != nil {
+			l.ErrorContext(ctx, "Failed to extract cell number", logger.ErrorField, err.Error())
+			return err
+		}
+
+		// Convert cell number to row and column
+		row := cellNumber / 3
+		col := cellNumber % 3
+
+		// Make move
+		err = game.MakeMove(row, col, user.ID())
+		if err != nil {
+			l.ErrorContext(ctx, "Failed to make move", logger.ErrorField, err.Error())
+			err = ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID).WithText(err.Error()))
+			if err != nil {
+				l.ErrorContext(ctx, "Failed to answer callback query", logger.ErrorField, err.Error())
+			}
+			return err
+		}
+
+		// Save updated game state
+		err = gameRepo.UpdateGame(ctx, game)
+		if err != nil {
+			l.ErrorContext(ctx, "Failed to update game", logger.ErrorField, err.Error())
+			return err
+		}
+
+		// Update keyboard
+		boardKeyboard := buildGameBoardKeyboard(&game)
+		_, err = ctx.Bot().
+			EditMessageReplyMarkup(ctx, tu.EditMessageReplyMarkup(tu.ID(0), 0, boardKeyboard).WithInlineMessageID(query.InlineMessageID))
+		if err != nil {
+			l.ErrorContext(ctx, "Failed to edit message", logger.ErrorField, err.Error())
+			return err
+		}
+
+		// Check if game is over
+		if game.IsGameOver() {
+			var resultMsg string
+			if game.Winner != ttt.PlayerEmpty {
+				// Get winner
+				winnerID := game.GetWinnerID()
+				winner, err := userRepo.UserByID(ctx, winnerID)
+				if err != nil {
+					l.ErrorContext(ctx, "Failed to get winner", logger.ErrorField, err.Error())
+					return err
+				}
+				resultMsg = fmt.Sprintf("Победа @%s", winner.Username())
+			} else {
+				resultMsg = "Ничья"
+			}
+
+			err = ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID).WithText(resultMsg))
+			if err != nil {
+				l.ErrorContext(ctx, "Failed to answer callback query", logger.ErrorField, err.Error())
+				return err
+			}
+		} else {
+			err = ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID))
+			if err != nil {
+				l.ErrorContext(ctx, "Failed to answer callback query", logger.ErrorField, err.Error())
+				return err
+			}
+		}
+
+		return nil
+
+	}, th.CallbackDataPrefix("ttt::move::"))
+
 	// Start handling updates
 	return bh.Start()
 }
@@ -200,6 +291,18 @@ func extractGameID(callbackData string) (ttt.ID, error) {
 		return ttt.ID{}, err
 	}
 	return id, nil
+}
+
+func extractCellNumber(callbackData string) (int, error) {
+	parts := strings.Split(callbackData, "::")
+	if len(parts) < 3 {
+		return 0, errors.New("invalid callback data")
+	}
+	cellNumber, err := strconv.Atoi(parts[3])
+	if err != nil {
+		return 0, err
+	}
+	return cellNumber, nil
 }
 
 func buildGameBoardKeyboard(game *ttt.TTT) *telego.InlineKeyboardMarkup {
