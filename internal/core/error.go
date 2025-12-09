@@ -13,4 +13,5 @@ var (
 	ErrInvalidUserState      = errors.New("invalid user state")
 	ErrFailedToParseID       = errors.New("failed to parse ID")
 	ErrInvalidUpdate         = errors.New("invalid update")
+	ErrGameNotFound          = errors.New("game not found")
 )
