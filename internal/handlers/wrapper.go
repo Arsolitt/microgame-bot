@@ -55,3 +55,20 @@ func WrapCallbackQuery(handler CallbackQueryHandlerFunc) func(*th.Context, teleg
 		return response.Handle(ctx)
 	}
 }
+
+type ChosenInlineResultHandlerFunc func(ctx *th.Context, result telego.ChosenInlineResult) (IResponse, error)
+
+func WrapChosenInlineResult(handler ChosenInlineResultHandlerFunc) func(*th.Context, telego.ChosenInlineResult) error {
+	return func(ctx *th.Context, result telego.ChosenInlineResult) error {
+		response, err := handler(ctx, result)
+		if err != nil {
+			return err
+		}
+
+		if response == nil {
+			return nil
+		}
+
+		return response.Handle(ctx)
+	}
+}
