@@ -32,13 +32,13 @@ func TestBuilder_Build_Success(t *testing.T) {
 		assert.Fail(t, "failed to build game: %v", err)
 	}
 
-	assert.Equal(t, id, game.ID)
-	assert.Equal(t, inlineMessageID, game.InlineMessageID)
-	assert.Equal(t, creatorID, game.CreatorID)
-	assert.Equal(t, playerXID, game.PlayerXID)
-	assert.Equal(t, playerOID, game.PlayerOID)
-	assert.Equal(t, PlayerX, game.Turn)
-	assert.Equal(t, PlayerEmpty, game.Winner)
+	assert.Equal(t, id, game.ID())
+	assert.Equal(t, inlineMessageID, game.InlineMessageID())
+	assert.Equal(t, creatorID, game.CreatorID())
+	assert.Equal(t, playerXID, game.PlayerXID())
+	assert.Equal(t, playerOID, game.PlayerOID())
+	assert.Equal(t, PlayerX, game.Turn())
+	assert.Equal(t, PlayerEmpty, game.Winner())
 }
 
 func TestBuilder_RandomFirstPlayer(t *testing.T) {
@@ -57,7 +57,7 @@ func TestBuilder_RandomFirstPlayer(t *testing.T) {
 	assert.NotNil(t, game)
 
 	// Creator should be assigned to either X or O
-	assert.True(t, game.PlayerXID == creatorID || game.PlayerOID == creatorID,
+	assert.True(t, game.PlayerXID() == creatorID || game.PlayerOID() == creatorID,
 		"creator should be assigned to either X or O")
 }
 
@@ -74,8 +74,8 @@ func TestBuilder_AssignCreatorToX(t *testing.T) {
 		Build()
 
 	assert.NoError(t, err)
-	assert.Equal(t, creatorID, game.PlayerXID)
-	assert.True(t, game.PlayerOID.IsZero())
+	assert.Equal(t, creatorID, game.PlayerXID())
+	assert.True(t, game.PlayerOID().IsZero())
 }
 
 func TestBuilder_AssignCreatorToO(t *testing.T) {
@@ -91,8 +91,8 @@ func TestBuilder_AssignCreatorToO(t *testing.T) {
 		Build()
 
 	assert.NoError(t, err)
-	assert.Equal(t, creatorID, game.PlayerOID)
-	assert.True(t, game.PlayerXID.IsZero())
+	assert.Equal(t, creatorID, game.PlayerOID())
+	assert.True(t, game.PlayerXID().IsZero())
 }
 
 func TestBuilder_Build_ValidationError(t *testing.T) {
@@ -195,20 +195,26 @@ func TestBuilder_Build_ValidationError(t *testing.T) {
 	}
 }
 
-func TestNew_UsesBuilder(t *testing.T) {
+func TestBuilder_NewID_GeneratesUniqueID(t *testing.T) {
 	inlineMessageID := InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 
-	game := New(inlineMessageID, creatorID)
+	game, err := NewBuilder().
+		NewID().
+		InlineMessageID(inlineMessageID).
+		CreatorID(creatorID).
+		RandomFirstPlayer().
+		Build()
 
+	assert.NoError(t, err)
 	assert.NotNil(t, game)
-	assert.Equal(t, inlineMessageID, game.InlineMessageID)
-	assert.Equal(t, creatorID, game.CreatorID)
-	assert.False(t, game.ID.IsZero())
-	assert.Equal(t, PlayerX, game.Turn)
-	assert.Equal(t, PlayerEmpty, game.Winner)
+	assert.Equal(t, inlineMessageID, game.InlineMessageID())
+	assert.Equal(t, creatorID, game.CreatorID())
+	assert.False(t, game.ID().IsZero())
+	assert.Equal(t, PlayerX, game.Turn())
+	assert.Equal(t, PlayerEmpty, game.Winner())
 
 	// Creator should be assigned to either X or O
-	assert.True(t, game.PlayerXID == creatorID || game.PlayerOID == creatorID,
+	assert.True(t, game.PlayerXID() == creatorID || game.PlayerOID() == creatorID,
 		"creator should be assigned to either X or O")
 }

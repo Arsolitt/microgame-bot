@@ -160,13 +160,13 @@ func (b Builder) Build() (*TTT, error) {
 	}
 
 	return &TTT{
-		ID:              b.id,
-		InlineMessageID: b.inlineMessageID,
-		CreatorID:       b.creatorID,
-		PlayerXID:       b.playerXID,
-		PlayerOID:       b.playerOID,
-		Board:           b.board,
-		Turn:            b.turn,
-		Winner:          b.winner,
+		id:              b.id,
+		inlineMessageID: b.inlineMessageID,
+		creatorID:       b.creatorID,
+		playerXID:       b.playerXID,
+		playerOID:       b.playerOID,
+		board:           b.board,
+		turn:            b.turn,
+		winner:          b.winner,
 	}, nil
 }

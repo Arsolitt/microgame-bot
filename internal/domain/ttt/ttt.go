@@ -25,49 +25,42 @@ const (
 )
 
 type TTT struct {
-	Board           [3][3]Cell
-	Turn            Player
-	Winner          Player
-	InlineMessageID InlineMessageID
-	ID              ID
-	PlayerXID       user.ID
-	PlayerOID       user.ID
-	CreatorID       user.ID
+	board           [3][3]Cell
+	turn            Player
+	winner          Player
+	inlineMessageID InlineMessageID
+	id              ID
+	playerXID       user.ID
+	playerOID       user.ID
+	creatorID       user.ID
 }
 
 var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-// New creates a new tic-tac-toe game with the first player
-// First player is randomly assigned to X or O, but X always goes first.
-func New(inlineMessageID InlineMessageID, firstPlayerID user.ID) *TTT {
-	game, err := NewBuilder().
-		NewID().
-		InlineMessageID(inlineMessageID).
-		CreatorID(firstPlayerID).
-		RandomFirstPlayer().
-		Build()
-
-	if err != nil {
-		panic(err) // Should never happen with valid inputs
-	}
-
-	return game
-}
+// Getters
+func (t *TTT) ID() ID                           { return t.id }
+func (t *TTT) InlineMessageID() InlineMessageID { return t.inlineMessageID }
+func (t *TTT) CreatorID() user.ID               { return t.creatorID }
+func (t *TTT) PlayerXID() user.ID               { return t.playerXID }
+func (t *TTT) PlayerOID() user.ID               { return t.playerOID }
+func (t *TTT) Turn() Player                     { return t.turn }
+func (t *TTT) Winner() Player                   { return t.winner }
+func (t *TTT) Board() [3][3]Cell                { return t.board }
 
 // JoinGame adds the second player to the game.
 func (t *TTT) JoinGame(secondPlayerID user.ID) error {
-	if !t.PlayerXID.IsZero() && !t.PlayerOID.IsZero() {
+	if !t.playerXID.IsZero() && !t.playerOID.IsZero() {
 		return ErrGameFull
 	}
 
-	if t.PlayerXID == secondPlayerID || t.PlayerOID == secondPlayerID {
+	if t.playerXID == secondPlayerID || t.playerOID == secondPlayerID {
 		return ErrPlayerAlreadyInGame
 	}
 
-	if t.PlayerXID.IsZero() {
-		t.PlayerXID = secondPlayerID
+	if t.playerXID.IsZero() {
+		t.playerXID = secondPlayerID
 	} else {
-		t.PlayerOID = secondPlayerID
+		t.playerOID = secondPlayerID
 	}
 
 	return nil
@@ -75,10 +68,10 @@ func (t *TTT) JoinGame(secondPlayerID user.ID) error {
 
 // GetPlayerFigure returns the player symbol (X or O) for the given user ID.
 func (t *TTT) GetPlayerFigure(userID user.ID) (Player, error) {
-	if t.PlayerXID == userID {
+	if t.playerXID == userID {
 		return PlayerX, nil
 	}
-	if t.PlayerOID == userID {
+	if t.playerOID == userID {
 		return PlayerO, nil
 	}
 	return PlayerEmpty, ErrPlayerNotInGame
@@ -90,16 +83,16 @@ func (t *TTT) IsPlayerTurn(userID user.ID) bool {
 	if err != nil {
 		return false
 	}
-	return symbol == t.Turn
+	return symbol == t.turn
 }
 
 // GetWinnerID returns the user ID of the winner, if any.
 func (t *TTT) GetWinnerID() user.ID {
-	if t.Winner == PlayerX {
-		return t.PlayerXID
+	if t.winner == PlayerX {
+		return t.playerXID
 	}
-	if t.Winner == PlayerO {
-		return t.PlayerOID
+	if t.winner == PlayerO {
+		return t.playerOID
 	}
 	return user.ID{}
 }
@@ -111,7 +104,7 @@ func (t *TTT) MakeMove(row, col int, userID user.ID) error {
 	}
 
 	// Check if both players are in game
-	if t.PlayerXID.IsZero() || t.PlayerOID.IsZero() {
+	if t.playerXID.IsZero() || t.playerOID.IsZero() {
 		return ErrWaitingForOpponent
 	}
 
@@ -120,7 +113,7 @@ func (t *TTT) MakeMove(row, col int, userID user.ID) error {
 		return err
 	}
 
-	if player != t.Turn {
+	if player != t.turn {
 		return ErrNotPlayersTurn
 	}
 
@@ -128,14 +121,14 @@ func (t *TTT) MakeMove(row, col int, userID user.ID) error {
 		return ErrOutOfBounds
 	}
 
-	if t.Board[row][col] != CellEmpty {
+	if t.board[row][col] != CellEmpty {
 		return ErrCellOccupied
 	}
 
-	t.Board[row][col] = playerToCell(player)
+	t.board[row][col] = playerToCell(player)
 
 	if winner := t.checkWinner(); winner != PlayerEmpty {
-		t.Winner = winner
+		t.winner = winner
 	} else {
 		t.switchTurn()
 	}
@@ -145,18 +138,18 @@ func (t *TTT) MakeMove(row, col int, userID user.ID) error {
 
 // IsGameOver returns true if the game has ended.
 func (t *TTT) IsGameOver() bool {
-	return t.Winner != PlayerEmpty || t.IsDraw()
+	return t.winner != PlayerEmpty || t.IsDraw()
 }
 
 // IsDraw returns true if the game is a draw.
 func (t *TTT) IsDraw() bool {
-	if t.Winner != PlayerEmpty {
+	if t.winner != PlayerEmpty {
 		return false
 	}
 
 	for i := range 3 {
 		for j := range 3 {
-			if t.Board[i][j] == CellEmpty {
+			if t.board[i][j] == CellEmpty {
 				return false
 			}
 		}
@@ -169,22 +162,22 @@ func (t *TTT) GetCell(row, col int) (Cell, error) {
 	if row < 0 || row > 2 || col < 0 || col > 2 {
 		return CellEmpty, ErrOutOfBounds
 	}
-	return t.Board[row][col], nil
+	return t.board[row][col], nil
 }
 
 // Reset resets the game to initial state.
 func (t *TTT) Reset() {
-	t.Board = [3][3]Cell{}
-	t.Turn = PlayerX
-	t.Winner = PlayerEmpty
+	t.board = [3][3]Cell{}
+	t.turn = PlayerX
+	t.winner = PlayerEmpty
 }
 
 // switchTurn switches the current turn to the other player.
 func (t *TTT) switchTurn() {
-	if t.Turn == PlayerX {
-		t.Turn = PlayerO
+	if t.turn == PlayerX {
+		t.turn = PlayerO
 	} else {
-		t.Turn = PlayerX
+		t.turn = PlayerX
 	}
 }
 
@@ -192,33 +185,33 @@ func (t *TTT) switchTurn() {
 func (t *TTT) checkWinner() Player {
 	// Check rows
 	for i := range 3 {
-		if t.Board[i][0] != CellEmpty &&
-			t.Board[i][0] == t.Board[i][1] &&
-			t.Board[i][1] == t.Board[i][2] {
-			return cellToPlayer(t.Board[i][0])
+		if t.board[i][0] != CellEmpty &&
+			t.board[i][0] == t.board[i][1] &&
+			t.board[i][1] == t.board[i][2] {
+			return cellToPlayer(t.board[i][0])
 		}
 	}
 
 	// Check columns
 	for i := range 3 {
-		if t.Board[0][i] != CellEmpty &&
-			t.Board[0][i] == t.Board[1][i] &&
-			t.Board[1][i] == t.Board[2][i] {
-			return cellToPlayer(t.Board[0][i])
+		if t.board[0][i] != CellEmpty &&
+			t.board[0][i] == t.board[1][i] &&
+			t.board[1][i] == t.board[2][i] {
+			return cellToPlayer(t.board[0][i])
 		}
 	}
 
 	// Check diagonals
-	if t.Board[0][0] != CellEmpty &&
-		t.Board[0][0] == t.Board[1][1] &&
-		t.Board[1][1] == t.Board[2][2] {
-		return cellToPlayer(t.Board[0][0])
+	if t.board[0][0] != CellEmpty &&
+		t.board[0][0] == t.board[1][1] &&
+		t.board[1][1] == t.board[2][2] {
+		return cellToPlayer(t.board[0][0])
 	}
 
-	if t.Board[0][2] != CellEmpty &&
-		t.Board[0][2] == t.Board[1][1] &&
-		t.Board[1][1] == t.Board[2][0] {
-		return cellToPlayer(t.Board[0][2])
+	if t.board[0][2] != CellEmpty &&
+		t.board[0][2] == t.board[1][1] &&
+		t.board[1][1] == t.board[2][0] {
+		return cellToPlayer(t.board[0][2])
 	}
 
 	return PlayerEmpty
