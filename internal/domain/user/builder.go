@@ -95,9 +95,11 @@ func (b Builder) ChatIDFromPointer(chatID *int64) Builder {
 }
 
 func (b Builder) FirstName(firstName FirstName) Builder {
-	if len(firstName) > maxFirstNameLength {
-		firstNameRunes := []rune(firstName)
+	firstNameRunes := []rune(firstName)
+	if len(firstNameRunes) > maxFirstNameLength {
 		firstName = FirstName(firstNameRunes[:maxFirstNameLength])
+	} else {
+		firstName = FirstName(firstNameRunes)
 	}
 	b.firstName = firstName
 	return b
@@ -108,9 +110,11 @@ func (b Builder) FirstNameFromString(firstName string) Builder {
 }
 
 func (b Builder) LastName(lastName LastName) Builder {
-	if len(lastName) > maxLastNameLength {
-		lastNameRunes := []rune(lastName)
+	lastNameRunes := []rune(lastName)
+	if len(lastNameRunes) > maxLastNameLength {
 		lastName = LastName(lastNameRunes[:maxLastNameLength])
+	} else {
+		lastName = LastName(lastNameRunes)
 	}
 	b.lastName = lastName
 	return b
