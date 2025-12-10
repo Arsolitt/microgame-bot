@@ -66,6 +66,8 @@ func startup() error {
 
 	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTMove(gameRepo, userRepo)), th.CallbackDataPrefix("ttt::move::"))
 
+	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.Empty()), th.CallbackDataEqual("empty"))
+
 	// Start handling updates
 	return bh.Start()
 }

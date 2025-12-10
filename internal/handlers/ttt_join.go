@@ -135,7 +135,7 @@ func buildGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO doma
 		rows = append(rows, []telego.InlineKeyboardButton{
 			{
 				Text:         turnText,
-				CallbackData: "ttt::noop",
+				CallbackData: "empty",
 			},
 		})
 	}

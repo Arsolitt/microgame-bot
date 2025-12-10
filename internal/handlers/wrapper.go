@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"log/slog"
+	"minigame-bot/internal/core"
 	"minigame-bot/internal/core/logger"
 	"minigame-bot/internal/domain/ttt"
 
@@ -20,6 +21,7 @@ var errorStatusMap = map[error]string{
 	ttt.ErrPlayerNotInGame:     "Вы не участвуете в игре",
 	ttt.ErrOutOfBounds:         "Координаты выходят за пределы доски",
 	ttt.ErrNotPlayersTurn:      "Не ваш ход",
+	core.ErrGameNotFound:       "Игра не найдена",
 }
 
 func getCustomErrorMessage(target error) string {

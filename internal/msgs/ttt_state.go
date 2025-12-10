@@ -40,14 +40,6 @@ func TTTGameState(game *ttt.TTT, playerX domainUser.User, playerO domainUser.Use
 		sb.WriteString(fmt.Sprintf("🏆 <b>Победитель:</b> @%s %s", winner.Username(), game.Winner.Symbol()))
 	} else if game.IsDraw() {
 		sb.WriteString("🤝 <b>Ничья!</b>")
-	} else {
-		var currentPlayer domainUser.User
-		if game.Turn == ttt.PlayerX {
-			currentPlayer = playerX
-		} else {
-			currentPlayer = playerO
-		}
-		sb.WriteString(fmt.Sprintf("🎯 <b>Ход:</b> @%s %s", currentPlayer.Username(), game.Turn.Symbol()))
 	}
 
 	return sb.String(), nil

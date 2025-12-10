@@ -16,6 +16,7 @@ minigame-bot
 *.so
 *.dylib
 .build
+dist
 
 # Test binary
 *.test
