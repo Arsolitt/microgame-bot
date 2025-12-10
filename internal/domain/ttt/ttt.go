@@ -25,14 +25,14 @@ const (
 )
 
 type TTT struct {
-	board           [3][3]Cell
-	turn            Player
-	winner          Player
-	inlineMessageID InlineMessageID
-	id              ID
-	playerXID       user.ID
-	playerOID       user.ID
-	creatorID       user.ID
+	board           [3][3]Cell      `json:"board"`
+	turn            Player          `json:"turn"`
+	winner          Player          `json:"winner"`
+	inlineMessageID InlineMessageID `json:"inline_message_id"`
+	id              ID              `json:"id"`
+	playerXID       user.ID         `json:"player_x_id"`
+	playerOID       user.ID         `json:"player_o_id"`
+	creatorID       user.ID         `json:"creator_id"`
 }
 
 var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
