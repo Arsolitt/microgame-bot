@@ -281,6 +281,15 @@ func startup() error {
 				l.ErrorContext(ctx, "Failed to edit message", logger.ErrorField, err.Error())
 				return err
 			}
+
+			// Update keyboard with final game state
+			finalKeyboard := buildGameBoardKeyboard(&game)
+			_, err = ctx.Bot().
+				EditMessageReplyMarkup(ctx, tu.EditMessageReplyMarkup(tu.ID(0), 0, finalKeyboard).WithInlineMessageID(query.InlineMessageID))
+			if err != nil {
+				l.ErrorContext(ctx, "Failed to edit message keyboard", logger.ErrorField, err.Error())
+				return err
+			}
 		}
 
 		err = ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID))
