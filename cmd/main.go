@@ -69,74 +69,7 @@ func startup() error {
 
 	bh.HandleInlineQuery(handlers.WrapInlineQuery(handlers.GameSelector(gameRepo)), th.AnyInlineQuery())
 
-	bh.HandleCallbackQuery(func(ctx *th.Context, query telego.CallbackQuery) error {
-		const OPERATION_NAME = "handler::callback_query"
-		l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
-
-		player2, ok := ctx.Value(core.ContextKeyUser).(domainUser.User)
-		if !ok {
-			l.ErrorContext(ctx, "User not found")
-			return core.ErrUserNotFoundInContext
-		}
-
-		gameID, err := extractGameID(query.Data)
-		if err != nil {
-			l.ErrorContext(ctx, "Failed to extract game ID", logger.ErrorField, err.Error())
-			return err
-		}
-		game, err := gameRepo.GameByID(ctx, gameID)
-		if err != nil {
-			l.ErrorContext(ctx, "Failed to get game", logger.ErrorField, err.Error())
-			return err
-		}
-
-		err = game.JoinGame(player2.ID())
-		if err != nil {
-			l.ErrorContext(ctx, "Failed to join game", logger.ErrorField, err.Error())
-			return err
-		}
-
-		// Save updated game state
-		err = gameRepo.UpdateGame(ctx, game)
-		if err != nil {
-			l.ErrorContext(ctx, "Failed to update game", logger.ErrorField, err.Error())
-			return err
-		}
-
-		// Get creator (player1) - the one who started the game
-		creator, err := userRepo.UserByID(ctx, game.CreatorID)
-		if err != nil {
-			l.ErrorContext(ctx, "Failed to get creator", logger.ErrorField, err.Error())
-			return err
-		}
-
-		boardKeyboard := buildGameBoardKeyboard(&game)
-		msg, err := msgs.TTTGameStarted(&game, creator, player2)
-		if err != nil {
-			return err
-		}
-
-		_, err = ctx.Bot().
-			EditMessageText(ctx, tu.EditMessageText(tu.ID(0), 0, msg).WithInlineMessageID(query.InlineMessageID).WithParseMode("HTML"))
-		if err != nil {
-			slog.ErrorContext(ctx, "Failed to edit message", logger.ErrorField, err.Error())
-			return err
-		}
-
-		_, err = ctx.Bot().
-			EditMessageReplyMarkup(ctx, tu.EditMessageReplyMarkup(tu.ID(0), 0, boardKeyboard).WithInlineMessageID(query.InlineMessageID))
-		if err != nil {
-			slog.ErrorContext(ctx, "Failed to edit message", logger.ErrorField, err.Error())
-			return err
-		}
-
-		err = ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID).WithText("Игра началась!"))
-		if err != nil {
-			slog.ErrorContext(ctx, "Failed to answer callback query", logger.ErrorField, err.Error())
-			return err
-		}
-		return nil
-	}, th.CallbackDataPrefix("ttt::join::"))
+	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTJoin(gameRepo, userRepo)), th.CallbackDataPrefix("ttt::join::"))
 
 	bh.HandleCallbackQuery(func(ctx *th.Context, query telego.CallbackQuery) error {
 		const OPERATION_NAME = "handler::callback_query"
@@ -307,7 +240,6 @@ func buildGameBoardKeyboard(game *ttt.TTT) *telego.InlineKeyboardMarkup {
 		for col := range 3 {
 			cell, _ := game.GetCell(row, col)
 
-			// Get icon for cell
 			icon := ttt.CellEmptyIcon
 			switch cell {
 			case ttt.CellX:
