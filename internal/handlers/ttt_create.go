@@ -27,8 +27,16 @@ func TTTCreate(gameRepo *memoryTTTRepository.Repository) CallbackQueryHandlerFun
 			return nil, core.ErrInvalidUpdate
 		}
 
-		game := ttt.New(ttt.InlineMessageID(query.InlineMessageID), user.ID())
-		err := gameRepo.CreateGame(ctx, *game)
+		game, err := ttt.NewBuilder().
+			NewID().
+			InlineMessageID(ttt.InlineMessageID(query.InlineMessageID)).
+			CreatorID(user.ID()).
+			RandomFirstPlayer().
+			Build()
+		if err != nil {
+			return nil, err
+		}
+		err = gameRepo.CreateGame(ctx, *game)
 		if err != nil {
 			return nil, err
 		}
@@ -45,7 +53,7 @@ func TTTCreate(gameRepo *memoryTTTRepository.Repository) CallbackQueryHandlerFun
 				ParseMode:       "HTML",
 				ReplyMarkup: tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
-						tu.InlineKeyboardButton("Присоединиться").WithCallbackData("ttt::join::" + game.ID.String()),
+						tu.InlineKeyboardButton("Присоединиться").WithCallbackData("ttt::join::" + game.ID().String()),
 					),
 				),
 			},

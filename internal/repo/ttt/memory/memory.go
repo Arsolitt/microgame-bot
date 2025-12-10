@@ -22,7 +22,7 @@ func (r *Repository) CreateGame(ctx context.Context, game ttt.TTT) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.games[game.ID] = game
+	r.games[game.ID()] = game
 	return nil
 }
 
@@ -31,7 +31,7 @@ func (r *Repository) GameByMessageID(ctx context.Context, id ttt.InlineMessageID
 	defer r.mu.RUnlock()
 
 	for _, game := range r.games {
-		if game.InlineMessageID == id {
+		if game.InlineMessageID() == id {
 			return game, nil
 		}
 	}
@@ -54,6 +54,6 @@ func (r *Repository) UpdateGame(ctx context.Context, game ttt.TTT) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.games[game.ID] = game
+	r.games[game.ID()] = game
 	return nil
 }

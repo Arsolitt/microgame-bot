@@ -47,12 +47,12 @@ func TTTMove(gameRepo *memoryTTTRepository.Repository, userRepo *memoryUserRepos
 			return nil, err
 		}
 
-		playerX, err := userRepo.UserByID(ctx, game.PlayerXID)
+		playerX, err := userRepo.UserByID(ctx, game.PlayerXID())
 		if err != nil {
 			return nil, err
 		}
 
-		playerO, err := userRepo.UserByID(ctx, game.PlayerOID)
+		playerO, err := userRepo.UserByID(ctx, game.PlayerOID())
 		if err != nil {
 			return nil, err
 		}
@@ -120,7 +120,7 @@ func cellNumberToCoords(cellNumber int) (row, col int) {
 }
 
 func getSuccessMessage(game *ttt.TTT) string {
-	if game.Winner != ttt.PlayerEmpty {
+	if game.Winner() != ttt.PlayerEmpty {
 		return "Победа! 🎉"
 	}
 	if game.IsDraw() {

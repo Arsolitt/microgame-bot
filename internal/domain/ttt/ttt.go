@@ -37,7 +37,6 @@ type TTT struct {
 
 var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-// Getters
 func (t *TTT) ID() ID                           { return t.id }
 func (t *TTT) InlineMessageID() InlineMessageID { return t.inlineMessageID }
 func (t *TTT) CreatorID() user.ID               { return t.creatorID }

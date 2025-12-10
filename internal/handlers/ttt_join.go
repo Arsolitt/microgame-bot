@@ -47,13 +47,13 @@ func TTTJoin(gameRepo *memoryTTTRepository.Repository, userRepo *memoryUserRepos
 			return nil, err
 		}
 
-		creator, err := userRepo.UserByID(ctx, game.CreatorID)
+		creator, err := userRepo.UserByID(ctx, game.CreatorID())
 		if err != nil {
 			return nil, err
 		}
 
 		var playerX, playerO domainUser.User
-		if game.PlayerXID == creator.ID() {
+		if game.PlayerXID() == creator.ID() {
 			playerX = creator
 			playerO = player2
 		} else {
@@ -114,7 +114,7 @@ func buildGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO doma
 			}
 
 			cellNumber := row*3 + col
-			callbackData := fmt.Sprintf("ttt::move::%s::%d", game.ID.String(), cellNumber)
+			callbackData := fmt.Sprintf("ttt::move::%s::%d", game.ID().String(), cellNumber)
 
 			buttons[col] = telego.InlineKeyboardButton{
 				Text:         icon,
@@ -126,12 +126,12 @@ func buildGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO doma
 
 	if !game.IsGameOver() {
 		var currentPlayer domainUser.User
-		if game.Turn == ttt.PlayerX {
+		if game.Turn() == ttt.PlayerX {
 			currentPlayer = playerX
 		} else {
 			currentPlayer = playerO
 		}
-		turnText := fmt.Sprintf("🎯 Ход: @%s %s", currentPlayer.Username(), game.Turn.Symbol())
+		turnText := fmt.Sprintf("🎯 Ход: @%s %s", currentPlayer.Username(), game.Turn().Symbol())
 		rows = append(rows, []telego.InlineKeyboardButton{
 			{
 				Text:         turnText,
