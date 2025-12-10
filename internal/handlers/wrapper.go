@@ -77,12 +77,15 @@ func WrapCallbackQuery(handler CallbackQueryHandlerFunc) func(*th.Context, teleg
 
 		response, err := handler(ctx, query)
 		if err != nil {
-			l.ErrorContext(ctx, "Failed to answer callback query with error", logger.ErrorField, err.Error())
+			l.ErrorContext(ctx, "Callback query handler returned error", logger.ErrorField, err.Error())
 			err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
 				CallbackQueryID: query.ID,
 				Text:            getCustomErrorMessage(err),
 				ShowAlert:       true,
 			})
+			if err != nil {
+				l.ErrorContext(ctx, "Failed to answer callback query with error", logger.ErrorField, err.Error())
+			}
 			return err
 		}
 
