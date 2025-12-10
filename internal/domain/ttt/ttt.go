@@ -3,7 +3,6 @@ package ttt
 import (
 	"math/rand"
 	"minigame-bot/internal/domain/user"
-	"minigame-bot/internal/utils"
 	"time"
 )
 
@@ -41,20 +40,15 @@ var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 // New creates a new tic-tac-toe game with the first player
 // First player is randomly assigned to X or O, but X always goes first.
 func New(inlineMessageID InlineMessageID, firstPlayerID user.ID) *TTT {
-	game := &TTT{
-		Board:           [3][3]Cell{},
-		Turn:            PlayerX, // X always goes first
-		Winner:          PlayerEmpty,
-		ID:              ID(utils.NewUniqueID()),
-		InlineMessageID: inlineMessageID,
-		CreatorID:       firstPlayerID,
-	}
+	game, err := NewBuilder().
+		NewID().
+		InlineMessageID(inlineMessageID).
+		CreatorID(firstPlayerID).
+		RandomFirstPlayer().
+		Build()
 
-	// Randomly assign first player to X or O
-	if rng.Intn(2) == 0 {
-		game.PlayerXID = firstPlayerID
-	} else {
-		game.PlayerOID = firstPlayerID
+	if err != nil {
+		panic(err) // Should never happen with valid inputs
 	}
 
 	return game
