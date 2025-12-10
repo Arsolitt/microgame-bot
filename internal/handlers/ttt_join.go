@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"minigame-bot/internal/core"
-	"minigame-bot/internal/core/logger"
 	"minigame-bot/internal/domain/ttt"
 	domainUser "minigame-bot/internal/domain/user"
 	"minigame-bot/internal/msgs"
@@ -30,31 +29,26 @@ func TTTJoin(gameRepo *memoryTTTRepository.Repository, userRepo *memoryUserRepos
 
 		gameID, err := extractGameID(query.Data)
 		if err != nil {
-			slog.ErrorContext(ctx, "Failed to extract game ID", logger.ErrorField, err.Error())
 			return nil, err
 		}
 
 		game, err := gameRepo.GameByID(ctx, gameID)
 		if err != nil {
-			slog.ErrorContext(ctx, "Failed to get game", logger.ErrorField, err.Error())
 			return nil, err
 		}
 
 		err = game.JoinGame(player2.ID())
 		if err != nil {
-			slog.ErrorContext(ctx, "Failed to join game", logger.ErrorField, err.Error())
 			return nil, err
 		}
 
 		err = gameRepo.UpdateGame(ctx, game)
 		if err != nil {
-			slog.ErrorContext(ctx, "Failed to update game", logger.ErrorField, err.Error())
 			return nil, err
 		}
 
 		creator, err := userRepo.UserByID(ctx, game.CreatorID)
 		if err != nil {
-			slog.ErrorContext(ctx, "Failed to get creator", logger.ErrorField, err.Error())
 			return nil, err
 		}
 
@@ -106,7 +100,6 @@ func extractGameID(callbackData string) (ttt.ID, error) {
 func buildGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO domainUser.User) *telego.InlineKeyboardMarkup {
 	rows := make([][]telego.InlineKeyboardButton, 0, 4)
 
-	// Game board (3x3)
 	for row := range 3 {
 		buttons := make([]telego.InlineKeyboardButton, 3)
 		for col := range 3 {
@@ -131,7 +124,6 @@ func buildGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO doma
 		rows = append(rows, buttons)
 	}
 
-	// Current turn indicator button
 	if !game.IsGameOver() {
 		var currentPlayer domainUser.User
 		if game.Turn == ttt.PlayerX {

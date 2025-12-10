@@ -18,8 +18,12 @@ func GameSelector() InlineQueryHandlerFunc {
 				tu.ResultArticle(
 					"game::ttt",
 					"Крестики-Нолики",
-					tu.TextMessage("Загрузка игры...").WithParseMode("HTML"),
-				),
+					tu.TextMessage("🎮 <b>Крестики-Нолики</b>\n\nНажми кнопку, чтобы начать игру!").WithParseMode("HTML"),
+				).WithReplyMarkup(tu.InlineKeyboard(
+					tu.InlineKeyboardRow(
+						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("ttt::create"),
+					),
+				)),
 			},
 			CacheTime: 1,
 		}, nil

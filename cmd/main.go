@@ -58,9 +58,9 @@ func startup() error {
 		mdw.UserProvider(memoryLocker.New(), userRepo),
 	)
 
-	bh.HandleChosenInlineResult(handlers.WrapChosenInlineResult(handlers.GameCreator(gameRepo)), th.AnyChosenInlineResult())
-
 	bh.HandleInlineQuery(handlers.WrapInlineQuery(handlers.GameSelector()), th.AnyInlineQuery())
+
+	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(gameRepo)), th.CallbackDataEqual("ttt::create"))
 
 	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTJoin(gameRepo, userRepo)), th.CallbackDataPrefix("ttt::join::"))
 
