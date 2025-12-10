@@ -2,25 +2,16 @@ package main
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"log/slog"
 	"minigame-bot/internal/core"
 	"minigame-bot/internal/core/logger"
 	"minigame-bot/internal/mdw"
-	"minigame-bot/internal/msgs"
-	"minigame-bot/internal/utils"
 	"os"
 	"os/signal"
-	"strconv"
-	"strings"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
-	tu "github.com/mymmrac/telego/telegoutil"
 
-	"minigame-bot/internal/domain/ttt"
-	domainUser "minigame-bot/internal/domain/user"
 	memoryFSM "minigame-bot/internal/fsm/memory"
 	"minigame-bot/internal/handlers"
 	memoryLocker "minigame-bot/internal/locker/memory"
@@ -71,131 +62,7 @@ func startup() error {
 
 	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTJoin(gameRepo, userRepo)), th.CallbackDataPrefix("ttt::join::"))
 
-	bh.HandleCallbackQuery(func(ctx *th.Context, query telego.CallbackQuery) error {
-		const OPERATION_NAME = "handler::callback_query"
-		l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
-
-		user, ok := ctx.Value(core.ContextKeyUser).(domainUser.User)
-		if !ok {
-			l.ErrorContext(ctx, "User not found")
-			return core.ErrUserNotFoundInContext
-		}
-
-		gameID, err := extractGameID(query.Data)
-		if err != nil {
-			l.ErrorContext(ctx, "Failed to extract game ID", logger.ErrorField, err.Error())
-			return err
-		}
-		game, err := gameRepo.GameByID(ctx, gameID)
-		if err != nil {
-			l.ErrorContext(ctx, "Failed to get game", logger.ErrorField, err.Error())
-			return err
-		}
-		cellNumber, err := extractCellNumber(query.Data)
-		if err != nil {
-			l.ErrorContext(ctx, "Failed to extract cell number", logger.ErrorField, err.Error())
-			return err
-		}
-
-		// Convert cell number to row and column
-		row := cellNumber / 3
-		col := cellNumber % 3
-
-		// Make move
-		err = game.MakeMove(row, col, user.ID())
-		if err != nil {
-			l.ErrorContext(ctx, "Failed to make move", logger.ErrorField, err.Error())
-			err = ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID).WithText(err.Error()))
-			if err != nil {
-				l.ErrorContext(ctx, "Failed to answer callback query", logger.ErrorField, err.Error())
-			}
-			return err
-		}
-
-		// Save updated game state
-		err = gameRepo.UpdateGame(ctx, game)
-		if err != nil {
-			l.ErrorContext(ctx, "Failed to update game", logger.ErrorField, err.Error())
-			return err
-		}
-
-		// Update keyboard
-		boardKeyboard := buildGameBoardKeyboard(&game)
-		_, err = ctx.Bot().
-			EditMessageReplyMarkup(ctx, tu.EditMessageReplyMarkup(tu.ID(0), 0, boardKeyboard).WithInlineMessageID(query.InlineMessageID))
-		if err != nil {
-			l.ErrorContext(ctx, "Failed to edit message", logger.ErrorField, err.Error())
-			return err
-		}
-
-		// Check if game is over
-		if game.IsGameOver() {
-			// Get creator (player1) and joined player (player2)
-			creator, err := userRepo.UserByID(ctx, game.CreatorID)
-			if err != nil {
-				l.ErrorContext(ctx, "Failed to get creator", logger.ErrorField, err.Error())
-				return err
-			}
-
-			var joinedPlayerID domainUser.ID
-			if game.PlayerXID == game.CreatorID {
-				joinedPlayerID = game.PlayerOID
-			} else {
-				joinedPlayerID = game.PlayerXID
-			}
-			joinedPlayer, err := userRepo.UserByID(ctx, joinedPlayerID)
-			if err != nil {
-				l.ErrorContext(ctx, "Failed to get joined player", logger.ErrorField, err.Error())
-				return err
-			}
-
-			var resultMsg string
-			if game.Winner != ttt.PlayerEmpty {
-				winnerID := game.GetWinnerID()
-				winner, err := userRepo.UserByID(ctx, winnerID)
-				if err != nil {
-					l.ErrorContext(ctx, "Failed to get winner", logger.ErrorField, err.Error())
-					return err
-				}
-				resultMsg = fmt.Sprintf("Победа @%s", winner.Username())
-			} else {
-				resultMsg = "Ничья"
-			}
-
-			// Build final message
-			msg, err := msgs.TTTGameStarted(&game, creator, joinedPlayer)
-			if err != nil {
-				l.ErrorContext(ctx, "Failed to build game message", logger.ErrorField, err.Error())
-				return err
-			}
-			finalMsg := msg + "\n\n🏁 " + resultMsg
-
-			_, err = ctx.Bot().
-				EditMessageText(ctx, tu.EditMessageText(tu.ID(0), 0, finalMsg).WithInlineMessageID(query.InlineMessageID).WithParseMode("HTML"))
-			if err != nil {
-				l.ErrorContext(ctx, "Failed to edit message", logger.ErrorField, err.Error())
-				return err
-			}
-
-			// Update keyboard with final game state
-			finalKeyboard := buildGameBoardKeyboard(&game)
-			_, err = ctx.Bot().
-				EditMessageReplyMarkup(ctx, tu.EditMessageReplyMarkup(tu.ID(0), 0, finalKeyboard).WithInlineMessageID(query.InlineMessageID))
-			if err != nil {
-				l.ErrorContext(ctx, "Failed to edit message keyboard", logger.ErrorField, err.Error())
-				return err
-			}
-		}
-
-		err = ctx.Bot().AnswerCallbackQuery(ctx, tu.CallbackQuery(query.ID))
-		if err != nil {
-			l.ErrorContext(ctx, "Failed to answer callback query", logger.ErrorField, err.Error())
-			return err
-		}
-
-		return nil
-
-	}, th.CallbackDataPrefix("ttt::move::"))
+	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTMove(gameRepo, userRepo)), th.CallbackDataPrefix("ttt::move::"))
 
 	// Start handling updates
 	return bh.Start()
@@ -205,61 +72,5 @@ func main() {
 	if err := startup(); err != nil {
 		slog.Error("Failed to startup application", logger.ErrorField, err.Error())
 		os.Exit(1)
-	}
-}
-
-func extractGameID(callbackData string) (ttt.ID, error) {
-	parts := strings.Split(callbackData, "::")
-	if len(parts) < 3 {
-		return ttt.ID{}, errors.New("invalid callback data")
-	}
-	id, err := utils.UUIDFromString[ttt.ID](parts[2])
-	if err != nil {
-		return ttt.ID{}, err
-	}
-	return id, nil
-}
-
-func extractCellNumber(callbackData string) (int, error) {
-	parts := strings.Split(callbackData, "::")
-	if len(parts) < 3 {
-		return 0, errors.New("invalid callback data")
-	}
-	cellNumber, err := strconv.Atoi(parts[3])
-	if err != nil {
-		return 0, err
-	}
-	return cellNumber, nil
-}
-
-func buildGameBoardKeyboard(game *ttt.TTT) *telego.InlineKeyboardMarkup {
-	rows := make([][]telego.InlineKeyboardButton, 3)
-
-	for row := range 3 {
-		buttons := make([]telego.InlineKeyboardButton, 3)
-		for col := range 3 {
-			cell, _ := game.GetCell(row, col)
-
-			icon := ttt.CellEmptyIcon
-			switch cell {
-			case ttt.CellX:
-				icon = ttt.CellXIcon
-			case ttt.CellO:
-				icon = ttt.CellOIcon
-			}
-
-			cellNumber := row*3 + col
-			callbackData := fmt.Sprintf("ttt::move::%s::%d", game.ID.String(), cellNumber)
-
-			buttons[col] = telego.InlineKeyboardButton{
-				Text:         icon,
-				CallbackData: callbackData,
-			}
-		}
-		rows[row] = buttons
-	}
-
-	return &telego.InlineKeyboardMarkup{
-		InlineKeyboard: rows,
 	}
 }
