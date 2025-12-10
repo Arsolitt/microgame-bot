@@ -33,6 +33,7 @@ type TTT struct {
 	ID              ID
 	PlayerXID       user.ID
 	PlayerOID       user.ID
+	CreatorID       user.ID
 }
 
 var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -46,6 +47,7 @@ func New(inlineMessageID InlineMessageID, firstPlayerID user.ID) *TTT {
 		Winner:          PlayerEmpty,
 		ID:              ID(utils.NewUniqueID()),
 		InlineMessageID: inlineMessageID,
+		CreatorID:       firstPlayerID,
 	}
 
 	// Randomly assign first player to X or O

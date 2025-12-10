@@ -21,7 +21,6 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 
 	"minigame-bot/internal/domain/ttt"
-	"minigame-bot/internal/domain/user"
 	domainUser "minigame-bot/internal/domain/user"
 	memoryFSM "minigame-bot/internal/fsm/memory"
 	memoryLocker "minigame-bot/internal/locker/memory"
@@ -135,25 +134,22 @@ func startup() error {
 			return err
 		}
 
-		var player1ID user.ID
-		player2Figure, err := game.GetPlayerFigure(player2.ID())
+		// Save updated game state
+		err = gameRepo.UpdateGame(ctx, game)
 		if err != nil {
-			l.ErrorContext(ctx, "Failed to get player symbol", logger.ErrorField, err.Error())
+			l.ErrorContext(ctx, "Failed to update game", logger.ErrorField, err.Error())
 			return err
 		}
-		if player2Figure == ttt.PlayerO {
-			player1ID = game.PlayerXID
-		} else {
-			player1ID = game.PlayerOID
-		}
-		player1, err := userRepo.UserByID(ctx, player1ID)
+
+		// Get creator (player1) - the one who started the game
+		creator, err := userRepo.UserByID(ctx, game.CreatorID)
 		if err != nil {
-			l.ErrorContext(ctx, "Failed to get player", logger.ErrorField, err.Error())
+			l.ErrorContext(ctx, "Failed to get creator", logger.ErrorField, err.Error())
 			return err
 		}
 
 		boardKeyboard := buildGameBoardKeyboard(&game)
-		msg, err := msgs.TTTGameStarted(&game, player1, player2)
+		msg, err := msgs.TTTGameStarted(&game, creator, player2)
 		if err != nil {
 			return err
 		}
@@ -239,15 +235,22 @@ func startup() error {
 
 		// Check if game is over
 		if game.IsGameOver() {
-			// Get both players
-			player1, err := userRepo.UserByID(ctx, game.PlayerXID)
+			// Get creator (player1) and joined player (player2)
+			creator, err := userRepo.UserByID(ctx, game.CreatorID)
 			if err != nil {
-				l.ErrorContext(ctx, "Failed to get player X", logger.ErrorField, err.Error())
+				l.ErrorContext(ctx, "Failed to get creator", logger.ErrorField, err.Error())
 				return err
 			}
-			player2, err := userRepo.UserByID(ctx, game.PlayerOID)
+
+			var joinedPlayerID domainUser.ID
+			if game.PlayerXID == game.CreatorID {
+				joinedPlayerID = game.PlayerOID
+			} else {
+				joinedPlayerID = game.PlayerXID
+			}
+			joinedPlayer, err := userRepo.UserByID(ctx, joinedPlayerID)
 			if err != nil {
-				l.ErrorContext(ctx, "Failed to get player O", logger.ErrorField, err.Error())
+				l.ErrorContext(ctx, "Failed to get joined player", logger.ErrorField, err.Error())
 				return err
 			}
 
@@ -265,7 +268,7 @@ func startup() error {
 			}
 
 			// Build final message
-			msg, err := msgs.TTTGameStarted(&game, player1, player2)
+			msg, err := msgs.TTTGameStarted(&game, creator, joinedPlayer)
 			if err != nil {
 				l.ErrorContext(ctx, "Failed to build game message", logger.ErrorField, err.Error())
 				return err
