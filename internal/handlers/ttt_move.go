@@ -69,18 +69,34 @@ func TTTMove(gameRepo *memoryTTTRepository.Repository, userRepo *memoryUserRepos
 			return nil, err
 		}
 
-		boardKeyboard := buildGameBoardKeyboard(&game)
-		msg, err := msgs.TTTGameState(&game, playerX, playerO)
-		if err != nil {
-			return nil, err
+		boardKeyboard := buildGameBoardKeyboard(&game, playerX, playerO)
+
+		// Update text message only when game is over
+		if game.IsGameOver() {
+			msg, err := msgs.TTTGameState(&game, playerX, playerO)
+			if err != nil {
+				return nil, err
+			}
+
+			return ResponseChain{
+				&EditMessageTextResponse{
+					InlineMessageID: query.InlineMessageID,
+					Text:            msg,
+					ParseMode:       "HTML",
+				},
+				&EditMessageReplyMarkupResponse{
+					InlineMessageID: query.InlineMessageID,
+					ReplyMarkup:     boardKeyboard,
+				},
+				&CallbackQueryResponse{
+					CallbackQueryID: query.ID,
+					Text:            getSuccessMessage(&game),
+				},
+			}, nil
 		}
 
+		// Update only keyboard during the game
 		return ResponseChain{
-			&EditMessageTextResponse{
-				InlineMessageID: query.InlineMessageID,
-				Text:            msg,
-				ParseMode:       "HTML",
-			},
 			&EditMessageReplyMarkupResponse{
 				InlineMessageID: query.InlineMessageID,
 				ReplyMarkup:     boardKeyboard,

@@ -58,7 +58,16 @@ func TTTJoin(gameRepo *memoryTTTRepository.Repository, userRepo *memoryUserRepos
 			return nil, err
 		}
 
-		boardKeyboard := buildGameBoardKeyboard(&game)
+		var playerX, playerO domainUser.User
+		if game.PlayerXID == creator.ID() {
+			playerX = creator
+			playerO = player2
+		} else {
+			playerX = player2
+			playerO = creator
+		}
+
+		boardKeyboard := buildGameBoardKeyboard(&game, playerX, playerO)
 		msg, err := msgs.TTTGameStarted(&game, creator, player2)
 		if err != nil {
 			return nil, err
@@ -94,9 +103,10 @@ func extractGameID(callbackData string) (ttt.ID, error) {
 	return id, nil
 }
 
-func buildGameBoardKeyboard(game *ttt.TTT) *telego.InlineKeyboardMarkup {
-	rows := make([][]telego.InlineKeyboardButton, 3)
+func buildGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO domainUser.User) *telego.InlineKeyboardMarkup {
+	rows := make([][]telego.InlineKeyboardButton, 0, 4)
 
+	// Game board (3x3)
 	for row := range 3 {
 		buttons := make([]telego.InlineKeyboardButton, 3)
 		for col := range 3 {
@@ -118,7 +128,24 @@ func buildGameBoardKeyboard(game *ttt.TTT) *telego.InlineKeyboardMarkup {
 				CallbackData: callbackData,
 			}
 		}
-		rows[row] = buttons
+		rows = append(rows, buttons)
+	}
+
+	// Current turn indicator button
+	if !game.IsGameOver() {
+		var currentPlayer domainUser.User
+		if game.Turn == ttt.PlayerX {
+			currentPlayer = playerX
+		} else {
+			currentPlayer = playerO
+		}
+		turnText := fmt.Sprintf("🎯 Ход: @%s %s", currentPlayer.Username(), game.Turn.Symbol())
+		rows = append(rows, []telego.InlineKeyboardButton{
+			{
+				Text:         turnText,
+				CallbackData: "ttt::noop",
+			},
+		})
 	}
 
 	return &telego.InlineKeyboardMarkup{
