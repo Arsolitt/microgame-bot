@@ -15,7 +15,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
@@ -23,6 +22,7 @@ import (
 	"minigame-bot/internal/domain/ttt"
 	domainUser "minigame-bot/internal/domain/user"
 	memoryFSM "minigame-bot/internal/fsm/memory"
+	"minigame-bot/internal/handlers"
 	memoryLocker "minigame-bot/internal/locker/memory"
 	memoryTTTRepository "minigame-bot/internal/repo/ttt/memory"
 	memoryUserRepository "minigame-bot/internal/repo/user/memory"
@@ -67,45 +67,7 @@ func startup() error {
 		mdw.UserProvider(memoryLocker.New(), userRepo),
 	)
 
-	bh.HandleInlineQuery(func(ctx *th.Context, query telego.InlineQuery) error {
-		slog.DebugContext(ctx, "Inline query received")
-		user, ok := ctx.Value(core.ContextKeyUser).(domainUser.User)
-		if !ok {
-			slog.ErrorContext(ctx, "User not found")
-			return core.ErrUserNotFoundInContext
-		}
-
-		game := ttt.New(ttt.InlineMessageID(query.ID), user.ID())
-		err := gameRepo.CreateGame(ctx, *game)
-		if err != nil {
-			slog.ErrorContext(ctx, "Failed to create game", logger.ErrorField, err.Error())
-			return err
-		}
-
-		msg, err := msgs.TTTStart(user, game)
-		if err != nil {
-			slog.ErrorContext(ctx, "Failed to create game start message", logger.ErrorField, err.Error())
-			return err
-		}
-
-		ctx.Bot().AnswerInlineQuery(
-			ctx,
-			tu.InlineQuery(
-				query.ID,
-				tu.ResultArticle(
-					uuid.New().String(),
-					"Крестики-Нолики",
-					tu.TextMessage(msg).WithParseMode("HTML"),
-				).WithReplyMarkup(tu.InlineKeyboard(
-					tu.InlineKeyboardRow(
-						tu.InlineKeyboardButton(
-							"Присоединиться",
-						).WithCallbackData("ttt::join::"+game.ID.String()),
-					))),
-			).WithCacheTime(1),
-		)
-		return nil
-	}, th.AnyInlineQuery())
+	bh.HandleInlineQuery(handlers.WrapInlineQuery(handlers.GameSelector(gameRepo)), th.AnyInlineQuery())
 
 	bh.HandleCallbackQuery(func(ctx *th.Context, query telego.CallbackQuery) error {
 		const OPERATION_NAME = "handler::callback_query"
