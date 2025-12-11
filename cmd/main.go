@@ -9,6 +9,10 @@ import (
 	"os"
 	"os/signal"
 
+	"gorm.io/driver/sqlite" // Sqlite driver based on CGO
+	// "github.com/glebarez/sqlite" // Pure go SQLite driver, checkout https://github.com/glebarez/sqlite for details
+	"gorm.io/gorm"
+
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 
@@ -16,7 +20,9 @@ import (
 	"minigame-bot/internal/handlers"
 	memoryLocker "minigame-bot/internal/locker/memory"
 	memoryTTTRepository "minigame-bot/internal/repo/ttt/memory"
-	memoryUserRepository "minigame-bot/internal/repo/user/memory"
+	gormUserRepository "minigame-bot/internal/repo/user/gorm"
+
+	gormLogger "gorm.io/gorm/logger"
 )
 
 func startup() error {
@@ -31,10 +37,19 @@ func startup() error {
 	logger.InitLogger(cfg.Logs)
 	slog.Info("Logger initialized successfully")
 
+	db, err := gorm.Open(sqlite.Open("gorm.db"), &gorm.Config{
+		Logger: gormLogger.Default.LogMode(gormLogger.Silent),
+	})
+	if err != nil {
+		return err
+	}
+
+	db.AutoMigrate(&gormUserRepository.User{})
+
 	_ = memoryLocker.New()
 	_ = memoryFSM.New()
 
-	bot, err := telego.NewBot(string(cfg.Telegram.Token))
+	bot, err := telego.NewBot(string(cfg.Telegram.Token), telego.WithDiscardLogger())
 	if err != nil {
 		return err
 	}
@@ -44,13 +59,16 @@ func startup() error {
 		return err
 	}
 
-	bh, err := th.NewBotHandler(bot, updates)
+	bh, err := th.NewBotHandler(bot, updates, th.WithErrorHandler(func(ctx *th.Context, update telego.Update, err error) {
+		slog.ErrorContext(ctx, "Handler error occurred", logger.ErrorField, err.Error())
+	}))
 	if err != nil {
 		return err
 	}
 	defer bh.StopWithContext(ctx)
 
-	userRepo := memoryUserRepository.New()
+	// userRepo := memoryUserRepository.New()
+	userRepo := gormUserRepository.New(db)
 	gameRepo := memoryTTTRepository.New()
 
 	bh.Use(
