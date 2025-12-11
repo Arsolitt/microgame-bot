@@ -18,7 +18,7 @@ func New(db *gorm.DB) *Repository {
 }
 
 func (r *Repository) UserByTelegramID(ctx context.Context, telegramID int64) (domainUser.User, error) {
-	model, err := gorm.G[domainUser.GUserModel](r.db).
+	model, err := gorm.G[User](r.db).
 		Where("telegram_id = ?", telegramID).
 		First(ctx)
 	if err != nil {
@@ -31,7 +31,7 @@ func (r *Repository) UserByTelegramID(ctx context.Context, telegramID int64) (do
 }
 
 func (r *Repository) UserByID(ctx context.Context, id domainUser.ID) (domainUser.User, error) {
-	model, err := gorm.G[domainUser.GUserModel](r.db).
+	model, err := gorm.G[User](r.db).
 		Where("id = ?", id.String()).
 		First(ctx)
 	if err != nil {
@@ -44,16 +44,16 @@ func (r *Repository) UserByID(ctx context.Context, id domainUser.ID) (domainUser
 }
 
 func (r *Repository) CreateUser(ctx context.Context, user domainUser.User) (domainUser.User, error) {
-	model := user.ToModel()
-	if err := gorm.G[domainUser.GUserModel](r.db).Create(ctx, &model); err != nil {
+	model := User{}.FromDomain(user)
+	if err := gorm.G[User](r.db).Create(ctx, &model); err != nil {
 		return domainUser.User{}, err
 	}
 	return model.ToDomain()
 }
 
 func (r *Repository) UpdateUser(ctx context.Context, user domainUser.User) error {
-	model := user.ToModel()
-	rows, err := gorm.G[domainUser.GUserModel](r.db).
+	model := User{}.FromDomain(user)
+	rows, err := gorm.G[User](r.db).
 		Where("id = ?", model.ID).
 		Updates(ctx, model)
 	if rows == 0 {
