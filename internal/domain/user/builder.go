@@ -165,12 +165,6 @@ func (b Builder) Build() (User, error) {
 	if b.username.IsZero() {
 		b.errors = append(b.errors, ErrUsernameRequired)
 	}
-	if b.createdAt.IsZero() {
-		b.errors = append(b.errors, ErrCreatedAtRequired)
-	}
-	if b.updatedAt.IsZero() {
-		b.errors = append(b.errors, ErrUpdatedAtRequired)
-	}
 
 	if len(b.errors) > 0 {
 		return User{}, errors.Join(b.errors...)

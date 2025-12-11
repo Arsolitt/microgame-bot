@@ -9,7 +9,6 @@ import (
 	"minigame-bot/internal/locker"
 	repository "minigame-bot/internal/repo/user"
 	"strconv"
-	"time"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -18,6 +17,7 @@ import (
 func UserProvider(
 	locker locker.ILocker,
 	userRepo repository.IUserRepository,
+	// db *gorm.DB,
 ) func(ctx *th.Context, update telego.Update) error {
 	const OPERATION_NAME = "middleware::user_provider"
 	return func(ctx *th.Context, update telego.Update) error {
@@ -89,7 +89,6 @@ func UserProvider(
 		if err != nil {
 			if errors.Is(err, core.ErrUserNotFound) {
 				l.InfoContext(ctx, "User not found, creating new")
-				now := time.Now()
 				buildedUser, err := domainUser.NewBuilder().
 					NewID().
 					TelegramIDFromInt(userTelegramID).
@@ -97,18 +96,16 @@ func UserProvider(
 					LastName(domainUser.LastName(lastName)).
 					Username(domainUser.Username(username)).
 					ChatIDFromPointer(privateChatID).
-					CreatedAt(now).
-					UpdatedAt(now).
 					Build()
 				if err != nil {
 					return err
 				}
-				err = userRepo.CreateUser(ctx, buildedUser)
+				dbUser, err := userRepo.CreateUser(ctx, buildedUser)
 				if err != nil {
 					return err
 				}
 				l.InfoContext(ctx, "User created")
-				user = buildedUser
+				user = dbUser
 			} else {
 				return err
 			}
