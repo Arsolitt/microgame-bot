@@ -12,7 +12,7 @@ type IUserGetter interface {
 }
 
 type IUserCreator interface {
-	CreateUser(ctx context.Context, user domainUser.User) error
+	CreateUser(ctx context.Context, user domainUser.User) (domainUser.User, error)
 }
 
 type IUserUpdater interface {
