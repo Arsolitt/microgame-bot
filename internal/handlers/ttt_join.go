@@ -9,7 +9,7 @@ import (
 	domainUser "minigame-bot/internal/domain/user"
 	"minigame-bot/internal/msgs"
 	memoryTTTRepository "minigame-bot/internal/repo/ttt/memory"
-	memoryUserRepository "minigame-bot/internal/repo/user/memory"
+	repository "minigame-bot/internal/repo/user"
 	"minigame-bot/internal/utils"
 	"strings"
 
@@ -17,7 +17,7 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
-func TTTJoin(gameRepo *memoryTTTRepository.Repository, userRepo *memoryUserRepository.Repository) CallbackQueryHandlerFunc {
+func TTTJoin(gameRepo *memoryTTTRepository.Repository, userRepo repository.IUserRepository) CallbackQueryHandlerFunc {
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		slog.DebugContext(ctx, "Join callback received")
 
