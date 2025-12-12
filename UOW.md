@@ -1,5 +1,37 @@
 # Unit of Work Pattern with GORM
 
+## TL;DR
+
+**Ключевая идея:** Инкапсулируй транзакции и репозитории в `UnitOfWork`, добавь `*Locked` методы для `SELECT FOR UPDATE`.
+
+**Использование:**
+```go
+// Simple read - no transaction
+user, err := service.uow.UserRepo().UserByID(ctx, id)
+
+// Complex operation - automatic transaction
+err := service.uow.Do(ctx, func(uow repo.UnitOfWork) error {
+    // SELECT FOR UPDATE
+    game, err := uow.GameRepo().GameByIDLocked(ctx, gameID)
+    
+    // Business logic
+    game.Update()
+    
+    // Save
+    return uow.GameRepo().Update(ctx, game)
+})
+```
+
+**Тестирование:**
+```go
+mockUow := mock.NewMockUnitOfWork()
+mockRepo := mock.NewMockRepository()
+mockUow.On("UserRepo").Return(mockRepo)
+// No GORM dependency!
+```
+
+---
+
 ## Проблема
 
 При работе с транзакциями в паттерне Repository возникает вопрос: как передать транзакцию между несколькими репозиториями, чтобы они работали в рамках одной транзакции, при этом сохраняя возможность легко писать юнит-тесты?
@@ -58,9 +90,6 @@ type UnitOfWork interface {
 	// Repository accessors
 	UserRepo() userRepo.IUserRepository
 	TTTRepo() tttRepo.ITTTRepository
-	
-	// Raw DB access for complex queries
-	DB() *gorm.DB
 }
 
 type unitOfWork struct {
@@ -97,13 +126,78 @@ func (u *unitOfWork) UserRepo() userRepo.IUserRepository {
 func (u *unitOfWork) TTTRepo() tttRepo.ITTTRepository {
 	return u.tttRepo
 }
+```
 
-func (u *unitOfWork) DB() *gorm.DB {
-	return u.db
+### 2. Обновление интерфейсов репозиториев
+
+Добавляем методы с `Locked` суффиксом для SELECT FOR UPDATE:
+
+```go
+// internal/repo/user/repository.go
+package repository
+
+import (
+	"context"
+	domainUser "minigame-bot/internal/domain/user"
+)
+
+type IUserGetter interface {
+	UserByTelegramID(ctx context.Context, telegramID int64) (domainUser.User, error)
+	UserByID(ctx context.Context, id domainUser.ID) (domainUser.User, error)
+	
+	// Locked versions - work only within transaction
+	UserByIDLocked(ctx context.Context, id domainUser.ID) (domainUser.User, error)
+	UserByTelegramIDLocked(ctx context.Context, telegramID int64) (domainUser.User, error)
+}
+
+type IUserCreator interface {
+	CreateUser(ctx context.Context, user domainUser.User) error
+}
+
+type IUserUpdater interface {
+	UpdateUser(ctx context.Context, user domainUser.User) error
+}
+
+type IUserRepository interface {
+	IUserGetter
+	IUserCreator
+	IUserUpdater
 }
 ```
 
-### 2. Обновление репозиториев
+```go
+// internal/repo/ttt/repository.go
+package ttt
+
+import (
+	"context"
+	"minigame-bot/internal/domain/ttt"
+)
+
+type ITTTGetter interface {
+	GameByMessageID(ctx context.Context, id ttt.InlineMessageID) (ttt.TTT, error)
+	GameByID(ctx context.Context, id ttt.ID) (ttt.TTT, error)
+	
+	// Locked version - works only within transaction
+	GameByIDLocked(ctx context.Context, id ttt.ID) (ttt.TTT, error)
+}
+
+type ITTTCreator interface {
+	CreateGame(ctx context.Context, game ttt.TTT) error
+}
+
+type ITTTUpdater interface {
+	UpdateGame(ctx context.Context, game ttt.TTT) error
+}
+
+type ITTTRepository interface {
+	ITTTCreator
+	ITTTUpdater
+	ITTTGetter
+}
+```
+
+### 3. Реализация в GORM репозитории
 
 ```go
 // internal/repo/user/gorm_repository.go
@@ -111,10 +205,14 @@ package user
 
 import (
 	"context"
+	"errors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	domainUser "minigame-bot/internal/domain/user"
 	repository "minigame-bot/internal/repo/user"
 )
+
+var ErrNotInTransaction = errors.New("locked methods can only be called within a transaction")
 
 type gormRepository struct {
 	db *gorm.DB
@@ -122,6 +220,12 @@ type gormRepository struct {
 
 func NewGormRepository(db *gorm.DB) repository.IUserRepository {
 	return &gormRepository{db: db}
+}
+
+// isInTransaction checks if current db instance is in transaction
+func (r *gormRepository) isInTransaction() bool {
+	committer, ok := r.db.Statement.ConnPool.(gorm.TxCommitter)
+	return ok && committer != nil
 }
 
 func (r *gormRepository) UserByTelegramID(ctx context.Context, telegramID int64) (domainUser.User, error) {
@@ -144,6 +248,42 @@ func (r *gormRepository) UserByID(ctx context.Context, id domainUser.ID) (domain
 	return model.ToDomain()
 }
 
+// UserByIDLocked - SELECT FOR UPDATE, works only in transaction
+func (r *gormRepository) UserByIDLocked(ctx context.Context, id domainUser.ID) (domainUser.User, error) {
+	if !r.isInTransaction() {
+		return domainUser.User{}, ErrNotInTransaction
+	}
+	
+	var model domainUser.GUserModel
+	err := r.db.
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("id = ?", id.String()).
+		First(&model).Error
+	if err != nil {
+		return domainUser.User{}, err
+	}
+	
+	return model.ToDomain()
+}
+
+// UserByTelegramIDLocked - SELECT FOR UPDATE, works only in transaction
+func (r *gormRepository) UserByTelegramIDLocked(ctx context.Context, telegramID int64) (domainUser.User, error) {
+	if !r.isInTransaction() {
+		return domainUser.User{}, ErrNotInTransaction
+	}
+	
+	var model domainUser.GUserModel
+	err := r.db.
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("telegram_id = ?", telegramID).
+		First(&model).Error
+	if err != nil {
+		return domainUser.User{}, err
+	}
+	
+	return model.ToDomain()
+}
+
 func (r *gormRepository) CreateUser(ctx context.Context, user domainUser.User) error {
 	model := user.ToModel()
 	return gorm.G[domainUser.GUserModel](r.db).Create(ctx, &model)
@@ -152,6 +292,85 @@ func (r *gormRepository) CreateUser(ctx context.Context, user domainUser.User) e
 func (r *gormRepository) UpdateUser(ctx context.Context, user domainUser.User) error {
 	model := user.ToModel()
 	return gorm.G[domainUser.GUserModel](r.db).
+		Where("id = ?", model.ID).
+		Updates(ctx, model)
+}
+```
+
+```go
+// internal/repo/ttt/gorm_repository.go
+package ttt
+
+import (
+	"context"
+	"errors"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+	domainTTT "minigame-bot/internal/domain/ttt"
+	repository "minigame-bot/internal/repo/ttt"
+)
+
+var ErrNotInTransaction = errors.New("locked methods can only be called within a transaction")
+
+type gormRepository struct {
+	db *gorm.DB
+}
+
+func NewGormRepository(db *gorm.DB) repository.ITTTRepository {
+	return &gormRepository{db: db}
+}
+
+func (r *gormRepository) isInTransaction() bool {
+	committer, ok := r.db.Statement.ConnPool.(gorm.TxCommitter)
+	return ok && committer != nil
+}
+
+func (r *gormRepository) GameByID(ctx context.Context, id domainTTT.ID) (domainTTT.TTT, error) {
+	model, err := gorm.G[domainTTT.GGameModel](r.db).
+		Where("id = ?", id.String()).
+		First(ctx)
+	if err != nil {
+		return domainTTT.TTT{}, err
+	}
+	return model.ToDomain()
+}
+
+// GameByIDLocked - SELECT FOR UPDATE, works only in transaction
+func (r *gormRepository) GameByIDLocked(ctx context.Context, id domainTTT.ID) (domainTTT.TTT, error) {
+	if !r.isInTransaction() {
+		return domainTTT.TTT{}, ErrNotInTransaction
+	}
+	
+	var model domainTTT.GGameModel
+	err := r.db.
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("id = ?", id.String()).
+		First(&model).Error
+	if err != nil {
+		return domainTTT.TTT{}, err
+	}
+	
+	return model.ToDomain()
+}
+
+func (r *gormRepository) GameByMessageID(ctx context.Context, id domainTTT.InlineMessageID) (domainTTT.TTT, error) {
+	model, err := gorm.G[domainTTT.GGameModel](r.db).
+		Where("inline_message_id = ?", string(id)).
+		First(ctx)
+	if err != nil {
+		return domainTTT.TTT{}, err
+	}
+	return model.ToDomain()
+}
+
+func (r *gormRepository) CreateGame(ctx context.Context, game domainTTT.TTT) error {
+	model := game.ToModel()
+	return gorm.G[domainTTT.GGameModel](r.db).Create(ctx, &model)
+}
+
+func (r *gormRepository) UpdateGame(ctx context.Context, game domainTTT.TTT) error {
+	model := game.ToModel()
+	return gorm.G[domainTTT.GGameModel](r.db).
 		Where("id = ?", model.ID).
 		Updates(ctx, model)
 }
@@ -226,17 +445,8 @@ func (s *GameService) CreateGameForUser(ctx context.Context, telegramID int64, g
 // Transaction with SELECT FOR UPDATE
 func (s *GameService) MakeMove(ctx context.Context, gameID ttt.ID, playerID user.ID, move int) error {
 	return s.uow.Do(ctx, func(uow repo.UnitOfWork) error {
-		// SELECT FOR UPDATE - lock row
-		var gameModel ttt.GGameModel
-		err := uow.DB().
-			Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("id = ?", gameID.String()).
-			First(&gameModel).Error
-		if err != nil {
-			return err
-		}
-		
-		game, err := gameModel.ToDomain()
+		// SELECT FOR UPDATE through repository
+		game, err := uow.TTTRepo().GameByIDLocked(ctx, gameID)
 		if err != nil {
 			return err
 		}
@@ -338,14 +548,6 @@ func (m *MockUnitOfWork) TTTRepo() tttRepo.ITTTRepository {
 	args := m.Called()
 	return args.Get(0).(tttRepo.ITTTRepository)
 }
-
-func (m *MockUnitOfWork) DB() *gorm.DB {
-	args := m.Called()
-	if args.Get(0) == nil {
-		return nil
-	}
-	return args.Get(0).(*gorm.DB)
-}
 ```
 
 ### 2. Mock для репозиториев
@@ -378,6 +580,16 @@ func (m *MockUserRepository) UserByTelegramID(ctx context.Context, telegramID in
 
 func (m *MockUserRepository) UserByID(ctx context.Context, id user.ID) (user.User, error) {
 	args := m.Called(ctx, id)
+	return args.Get(0).(user.User), args.Error(1)
+}
+
+func (m *MockUserRepository) UserByIDLocked(ctx context.Context, id user.ID) (user.User, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(user.User), args.Error(1)
+}
+
+func (m *MockUserRepository) UserByTelegramIDLocked(ctx context.Context, telegramID int64) (user.User, error) {
+	args := m.Called(ctx, telegramID)
 	return args.Get(0).(user.User), args.Error(1)
 }
 
@@ -419,6 +631,11 @@ func (m *MockTTTRepository) GameByMessageID(ctx context.Context, id ttt.InlineMe
 }
 
 func (m *MockTTTRepository) GameByID(ctx context.Context, id ttt.ID) (ttt.TTT, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(ttt.TTT), args.Error(1)
+}
+
+func (m *MockTTTRepository) GameByIDLocked(ctx context.Context, id ttt.ID) (ttt.TTT, error) {
 	args := m.Called(ctx, id)
 	return args.Get(0).(ttt.TTT), args.Error(1)
 }
@@ -612,6 +829,60 @@ func TestGameService_CreateGameForUser_TransactionRollback(t *testing.T) {
 	mockTTTRepo.AssertExpectations(t)
 }
 
+func TestGameService_MakeMove_Success(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	gameID := ttt.ID{}
+	playerID := user.ID{}
+	move := 0
+	
+	mockUow := repoMock.NewMockUnitOfWork()
+	mockTTTRepo := tttRepoMock.NewMockTTTRepository()
+	
+	game := ttt.TTT{} // Mock game in progress
+	
+	mockUow.On("TTTRepo").Return(mockTTTRepo)
+	mockTTTRepo.On("GameByIDLocked", ctx, gameID).Return(game, nil)
+	mockTTTRepo.On("UpdateGame", ctx, mock.AnythingOfType("ttt.TTT")).Return(nil)
+	
+	service := NewGameService(mockUow)
+	
+	// Act
+	err := service.MakeMove(ctx, gameID, playerID, move)
+	
+	// Assert
+	assert.NoError(t, err)
+	mockTTTRepo.AssertExpectations(t)
+	mockTTTRepo.AssertCalled(t, "GameByIDLocked", ctx, gameID)
+}
+
+func TestGameService_MakeMove_GameAlreadyFinished(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	gameID := ttt.ID{}
+	playerID := user.ID{}
+	move := 0
+	
+	mockUow := repoMock.NewMockUnitOfWork()
+	mockTTTRepo := tttRepoMock.NewMockTTTRepository()
+	
+	finishedGame := ttt.TTT{} // Mock finished game
+	
+	mockUow.On("TTTRepo").Return(mockTTTRepo)
+	mockTTTRepo.On("GameByIDLocked", ctx, gameID).Return(finishedGame, nil)
+	
+	service := NewGameService(mockUow)
+	
+	// Act
+	err := service.MakeMove(ctx, gameID, playerID, move)
+	
+	// Assert
+	assert.Error(t, err)
+	assert.Equal(t, "game already finished", err.Error())
+	mockTTTRepo.AssertExpectations(t)
+	mockTTTRepo.AssertNotCalled(t, "UpdateGame", mock.Anything, mock.Anything)
+}
+
 func TestGameService_FinishGameAndUpdateStats_Success(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
@@ -737,20 +1008,376 @@ func TestGameService_TransactionRollback_Integration(t *testing.T) {
 	db.Model(&user.GUserModel{}).Count(&userCount)
 	assert.Equal(t, int64(0), userCount)
 }
+
+func TestRepository_LockedMethodsOutsideTransaction_Integration(t *testing.T) {
+	// Arrange
+	db := setupTestDB(t)
+	userRepo := userRepo.NewGormRepository(db)
+	
+	ctx := context.Background()
+	userID := user.ID{}
+	
+	// Act - try to call locked method outside transaction
+	_, err := userRepo.UserByIDLocked(ctx, userID)
+	
+	// Assert
+	assert.Error(t, err)
+	assert.Equal(t, userRepo.ErrNotInTransaction, err)
+}
+
+func TestRepository_LockedMethodsInsideTransaction_Integration(t *testing.T) {
+	// Arrange
+	db := setupTestDB(t)
+	uow := repo.NewUnitOfWork(db)
+	
+	ctx := context.Background()
+	
+	// Create user first
+	usr, _ := user.NewBuilder().
+		TelegramIDFromInt(12345).
+		UsernameFromString("testuser").
+		Build()
+	
+	err := uow.UserRepo().CreateUser(ctx, usr)
+	require.NoError(t, err)
+	
+	// Act - call locked method inside transaction
+	err = uow.Do(ctx, func(uow repo.UnitOfWork) error {
+		lockedUser, err := uow.UserRepo().UserByIDLocked(ctx, usr.ID())
+		if err != nil {
+			return err
+		}
+		
+		assert.Equal(t, usr.TelegramID(), lockedUser.TelegramID())
+		return nil
+	})
+	
+	// Assert
+	assert.NoError(t, err)
+}
 ```
 
 ## Преимущества паттерна
 
-1. **Инкапсуляция транзакций** - логика управления транзакциями в одном месте
-2. **Простота тестирования** - легко мокировать через интерфейс
-3. **Consistency** - все операции в рамках одной транзакции или все откатываются
-4. **Clean Architecture** - сервис не зависит от деталей реализации БД
-5. **Переиспользование** - один UoW для всех сервисов
+### 1. Инкапсуляция транзакций
+Логика управления транзакциями в одном месте - в `UnitOfWork.Do()`. Сервисы не знают про `Begin/Commit/Rollback`.
+
+### 2. Полная абстракция от GORM
+Сервисы не зависят от деталей реализации БД. Даже `SELECT FOR UPDATE` инкапсулирован в репозиториях через `*Locked` методы.
+
+```go
+// Сервис не знает про GORM, clause.Locking, и т.д.
+game, err := uow.GameRepo().GameByIDLocked(ctx, id)
+```
+
+### 3. Простота тестирования
+Легко мокировать через интерфейсы. Не нужна реальная БД для юнит-тестов.
+
+### 4. Consistency
+Все операции в рамках одной транзакции или все откатываются. Невозможно забыть `Commit()` или `Rollback()`.
+
+### 5. Безопасность
+Методы `*Locked` проверяют наличие транзакции - нельзя случайно вызвать `SELECT FOR UPDATE` вне транзакции.
+
+### 6. Переиспользование
+Один UoW для всех сервисов. Легко добавлять новые репозитории - просто добавь метод в интерфейс.
 
 ## Best Practices
 
-1. **Всегда используй транзакции** для операций, затрагивающих несколько сущностей
-2. **SELECT FOR UPDATE** для конкурентных операций (через `uow.DB()`)
-3. **Короткие транзакции** - минимизируй время блокировок
-4. **Не смешивай** чтение и запись в одном методе сервиса (если не нужна транзакция)
-5. **Моки в юнит-тестах**, реальная БД в интеграционных
+### 1. Используй транзакции для связанных операций
+Любые операции, затрагивающие несколько сущностей, должны быть в транзакции:
+
+```go
+// ✅ Good
+func (s *Service) UpdateRelated(ctx context.Context) error {
+	return s.uow.Do(ctx, func(uow repo.UnitOfWork) error {
+		// Multiple operations in single transaction
+		return nil
+	})
+}
+
+// ❌ Bad - no transaction, inconsistent state possible
+func (s *Service) UpdateRelated(ctx context.Context) error {
+	s.uow.UserRepo().Update(ctx, user)
+	s.uow.GameRepo().Update(ctx, game)
+	return nil
+}
+```
+
+### 2. Методы *Locked только для конкурентных операций
+Используй `*Locked` методы когда несколько процессов могут изменять одни данные:
+
+```go
+// ✅ Good - concurrent updates need locking
+func (s *Service) DecrementStock(ctx context.Context, productID string) error {
+	return s.uow.Do(ctx, func(uow repo.UnitOfWork) error {
+		product, err := uow.ProductRepo().ProductByIDLocked(ctx, productID)
+		if err != nil {
+			return err
+		}
+		
+		if product.Stock <= 0 {
+			return errors.New("out of stock")
+		}
+		
+		product.Stock--
+		return uow.ProductRepo().Update(ctx, product)
+	})
+}
+
+// ❌ Bad - race condition, two requests can decrement below 0
+func (s *Service) DecrementStock(ctx context.Context, productID string) error {
+	return s.uow.Do(ctx, func(uow repo.UnitOfWork) error {
+		product, err := uow.ProductRepo().ProductByID(ctx, productID) // No lock!
+		// ... same logic
+	})
+}
+```
+
+### 3. GORM не должен протекать в бизнес-логику
+Все специфичные для БД операции инкапсулируй в репозиториях:
+
+```go
+// ✅ Good - business logic doesn't know about GORM
+func (s *Service) UpdateGame(ctx context.Context) error {
+	return s.uow.Do(ctx, func(uow repo.UnitOfWork) error {
+		game, err := uow.GameRepo().GameByIDLocked(ctx, id)
+		// ...
+	})
+}
+
+// ❌ Bad - GORM leaks to service layer
+func (s *Service) UpdateGame(ctx context.Context) error {
+	return s.uow.Do(ctx, func(uow repo.UnitOfWork) error {
+		var model GameModel
+		err := uow.DB().Clauses(clause.Locking{Strength: "UPDATE"}).First(&model)
+		// ...
+	})
+}
+```
+
+### 4. Методы *Locked должны проверять наличие транзакции
+Всегда проверяй `isInTransaction()` в `*Locked` методах:
+
+```go
+// ✅ Good - prevents misuse
+func (r *repository) UserByIDLocked(ctx context.Context, id ID) (User, error) {
+	if !r.isInTransaction() {
+		return User{}, ErrNotInTransaction
+	}
+	// ... SELECT FOR UPDATE
+}
+
+// ❌ Bad - silent failure or unexpected behavior
+func (r *repository) UserByIDLocked(ctx context.Context, id ID) (User, error) {
+	// SELECT FOR UPDATE without transaction - may not lock!
+}
+```
+
+### 5. Короткие транзакции
+Минимизируй время удержания блокировок:
+
+```go
+// ✅ Good - short transaction
+func (s *Service) ProcessOrder(ctx context.Context) error {
+	// Heavy computation OUTSIDE transaction
+	processed := s.heavyProcessing(order)
+	
+	return s.uow.Do(ctx, func(uow repo.UnitOfWork) error {
+		// Only DB operations inside
+		return uow.OrderRepo().Update(ctx, processed)
+	})
+}
+
+// ❌ Bad - long transaction blocks other requests
+func (s *Service) ProcessOrder(ctx context.Context) error {
+	return s.uow.Do(ctx, func(uow repo.UnitOfWork) error {
+		order, _ := uow.OrderRepo().OrderByIDLocked(ctx, id)
+		
+		// Heavy computation INSIDE transaction - BAD!
+		time.Sleep(5 * time.Second)
+		processed := s.heavyProcessing(order)
+		
+		return uow.OrderRepo().Update(ctx, processed)
+	})
+}
+```
+
+### 6. Читай без транзакций где возможно
+Если операция только читает данные, транзакция не нужна:
+
+```go
+// ✅ Good - simple read without transaction
+func (s *Service) GetUser(ctx context.Context, id string) (User, error) {
+	return s.uow.UserRepo().UserByID(ctx, id)
+}
+
+// ❌ Bad - unnecessary transaction overhead
+func (s *Service) GetUser(ctx context.Context, id string) (User, error) {
+	var user User
+	s.uow.Do(ctx, func(uow repo.UnitOfWork) error {
+		user, _ = uow.UserRepo().UserByID(ctx, id)
+		return nil
+	})
+	return user, nil
+}
+```
+
+### 7. Моки в юнит-тестах, реальная БД в интеграционных
+
+```go
+// Unit test - fast, isolated
+func TestService_UpdateUser(t *testing.T) {
+	mockUow := mock.NewMockUnitOfWork()
+	mockRepo := mock.NewMockUserRepository()
+	// ...
+}
+
+// Integration test - slow, but tests real DB behavior
+//go:build integration
+func TestService_UpdateUser_Integration(t *testing.T) {
+	db := setupTestDB(t)
+	uow := repo.NewUnitOfWork(db)
+	// ...
+}
+```
+
+## Альтернативные подходы
+
+### Подход 1: Передача *gorm.DB в репозитории
+
+```go
+// ❌ GORM протекает в сервис
+func (s *Service) Update(ctx context.Context) error {
+	tx := s.db.Begin()
+	defer tx.Rollback()
+	
+	if err := s.userRepo.Update(tx, user); err != nil {
+		return err
+	}
+	
+	return tx.Commit().Error
+}
+```
+
+**Проблемы:**
+- Сервис зависит от `*gorm.DB`
+- Сложно тестировать
+- Дублирование логики управления транзакциями
+- Легко забыть `Rollback` или `Commit`
+
+### Подход 2: Context-based транзакции
+
+```go
+type txKey struct{}
+
+func InjectTx(ctx context.Context, tx *gorm.DB) context.Context {
+	return context.WithValue(ctx, txKey{}, tx)
+}
+
+func (r *repository) UserByID(ctx context.Context, id ID) (User, error) {
+	db := ExtractTx(ctx, r.db) // Магия!
+	// ...
+}
+```
+
+**Проблемы:**
+- Неявная зависимость через context
+- Сложнее отлаживать (где началась транзакция?)
+- Легко забыть извлечь tx из context
+- `*Locked` методы сложнее реализовать
+
+### Подход 3: WithTx() методы в репозиториях
+
+```go
+type Repository interface {
+	WithTx(tx *gorm.DB) Repository
+	UserByID(ctx context.Context, id ID) (User, error)
+}
+
+func (s *Service) Update(ctx context.Context) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		userRepo := s.userRepo.WithTx(tx)
+		// ...
+	})
+}
+```
+
+**Проблемы:**
+- Сервис всё равно зависит от `*gorm.DB`
+- Нужно помнить вызывать `WithTx()` для каждого репозитория
+- Легко ошибиться и использовать старый репозиторий без tx
+
+### Подход 4: Unit of Work (текущий) ✅
+
+```go
+func (s *Service) Update(ctx context.Context) error {
+	return s.uow.Do(ctx, func(uow repo.UnitOfWork) error {
+		user, err := uow.UserRepo().UserByIDLocked(ctx, id)
+		// ... business logic
+		return uow.UserRepo().Update(ctx, user)
+	})
+}
+```
+
+**Преимущества:**
+- Полная абстракция от БД
+- Явное управление транзакциями через `Do()`
+- Автоматический rollback при ошибке
+- Легко тестировать
+- Невозможно забыть включить транзакцию для `*Locked` методов
+
+## Ограничения и компромиссы
+
+### 1. Boilerplate для новых репозиториев
+При добавлении нового репозитория нужно:
+- Добавить метод в интерфейс `UnitOfWork`
+- Добавить поле в структуру `unitOfWork`
+- Инициализировать в `NewUnitOfWork()` и в `Do()`
+
+**Решение:** Это одноразовая операция, зато получаешь чистую архитектуру.
+
+### 2. Сложные запросы
+Для очень специфичных запросов (JOIN, подзапросы, агрегация) может потребоваться добавлять новые методы в репозиторий.
+
+**Решение:** Это правильно! Специфичные для БД операции должны быть в репозитории, а не в сервисе.
+
+### 3. Вложенные транзакции
+GORM поддерживает savepoints, но через UoW это не так очевидно.
+
+**Решение:** Используй GORM savepoints только если действительно нужны. Обычно достаточно одной транзакции на операцию.
+
+### 4. Deadlocks
+`*Locked` методы могут привести к deadlock при неправильном порядке блокировок.
+
+**Решение:** 
+- Всегда блокируй сущности в одном порядке (например, сначала User, потом Game)
+- Держи транзакции короткими
+- Используй database query timeout
+
+```go
+// ✅ Good - consistent lock order
+func (s *Service) Transfer(ctx context.Context, fromID, toID string) error {
+	// Sort IDs to ensure consistent lock order
+	ids := []string{fromID, toID}
+	sort.Strings(ids)
+	
+	return s.uow.Do(ctx, func(uow repo.UnitOfWork) error {
+		user1, _ := uow.UserRepo().UserByIDLocked(ctx, ids[0])
+		user2, _ := uow.UserRepo().UserByIDLocked(ctx, ids[1])
+		// ...
+	})
+}
+```
+
+## Заключение
+
+Unit of Work с методами `*Locked` - оптимальный баланс между чистотой архитектуры и удобством использования. Паттерн решает все основные проблемы работы с транзакциями в Go + GORM:
+
+✅ Полная изоляция от деталей БД  
+✅ Явное управление транзакциями  
+✅ Безопасные конкурентные операции  
+✅ Легко тестировать  
+✅ SOLID принципы  
+
+При этом остаётся простым и понятным для команды.

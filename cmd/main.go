@@ -19,7 +19,7 @@ import (
 	memoryFSM "minigame-bot/internal/fsm/memory"
 	"minigame-bot/internal/handlers"
 	memoryLocker "minigame-bot/internal/locker/memory"
-	memoryTTTRepository "minigame-bot/internal/repo/ttt/memory"
+	gormTTTRepository "minigame-bot/internal/repo/ttt/gorm"
 	gormUserRepository "minigame-bot/internal/repo/user/gorm"
 
 	gormLogger "gorm.io/gorm/logger"
@@ -45,6 +45,7 @@ func startup() error {
 	}
 
 	db.AutoMigrate(&gormUserRepository.User{})
+	db.AutoMigrate(&gormTTTRepository.TTT{})
 
 	_ = memoryLocker.New()
 	_ = memoryFSM.New()
@@ -69,7 +70,8 @@ func startup() error {
 
 	// userRepo := memoryUserRepository.New()
 	userRepo := gormUserRepository.New(db)
-	gameRepo := memoryTTTRepository.New()
+	// gameRepo := memoryTTTRepository.New()
+	gameRepo := gormTTTRepository.New(db)
 
 	bh.Use(
 		mdw.CorrelationIDProvider(),
