@@ -51,13 +51,16 @@ func (r *Repository) CreateUser(ctx context.Context, user domainUser.User) (doma
 	return model.ToDomain()
 }
 
-func (r *Repository) UpdateUser(ctx context.Context, user domainUser.User) error {
+func (r *Repository) UpdateUser(ctx context.Context, user domainUser.User) (domainUser.User, error) {
 	model := User{}.FromDomain(user)
 	rows, err := gorm.G[User](r.db).
 		Where("id = ?", model.ID).
 		Updates(ctx, model)
 	if rows == 0 {
-		return core.ErrUserNotFound
+		return domainUser.User{}, core.ErrUserNotFound
 	}
-	return err
+	if err != nil {
+		return domainUser.User{}, err
+	}
+	return model.ToDomain()
 }

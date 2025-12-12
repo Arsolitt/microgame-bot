@@ -16,7 +16,7 @@ type IUserCreator interface {
 }
 
 type IUserUpdater interface {
-	UpdateUser(ctx context.Context, user domainUser.User) error
+	UpdateUser(ctx context.Context, user domainUser.User) (domainUser.User, error)
 }
 
 type IUserRepository interface {
