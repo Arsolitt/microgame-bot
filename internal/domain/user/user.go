@@ -1,18 +1,47 @@
 package user
 
 import (
+	"errors"
+	"minigame-bot/internal/domain"
 	"time"
 )
 
 type User struct {
-	createdAt  time.Time  `json:"created_at"`
-	updatedAt  time.Time  `json:"updated_at"`
-	chatID     *ChatID    `json:"chat_id"`
-	firstName  FirstName  `json:"first_name"`
-	lastName   LastName   `json:"last_name"`
-	username   Username   `json:"username"`
-	telegramID TelegramID `json:"telegram_id"`
-	id         ID         `json:"id"`
+	createdAt  time.Time
+	updatedAt  time.Time
+	chatID     *ChatID
+	firstName  FirstName
+	lastName   LastName
+	username   Username
+	telegramID TelegramID
+	id         ID
+}
+
+func NewUser(opts ...UserOpt) (User, error) {
+	u := &User{}
+	var errs []error
+
+	for _, opt := range opts {
+		if err := opt(u); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if u.id.IsZero() {
+		errs = append(errs, domain.ErrIDRequired)
+	}
+	if u.telegramID.IsZero() {
+		errs = append(errs, ErrTelegramIDRequired)
+	}
+	if u.username.IsZero() {
+		errs = append(errs, ErrUsernameRequired)
+	}
+
+	if len(errs) > 0 {
+		return User{}, errors.Join(errs...)
+	}
+
+	return *u, nil
 }
 
 func (u User) ID() ID {

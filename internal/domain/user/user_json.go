@@ -42,16 +42,16 @@ func (u *User) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	user, err := NewBuilder().
-		ID(aux.ID).
-		TelegramID(aux.TelegramID).
-		ChatID(aux.ChatID).
-		FirstName(aux.FirstName).
-		LastName(aux.LastName).
-		Username(aux.Username).
-		CreatedAt(aux.CreatedAt).
-		UpdatedAt(aux.UpdatedAt).
-		Build()
+	user, err := NewUser(
+		WithID(aux.ID),
+		WithTelegramID(aux.TelegramID),
+		WithChatID(aux.ChatID),
+		WithFirstName(aux.FirstName),
+		WithLastName(aux.LastName),
+		WithUsername(aux.Username),
+		WithCreatedAt(aux.CreatedAt),
+		WithUpdatedAt(aux.UpdatedAt),
+	)
 	if err != nil {
 		return err
 	}
