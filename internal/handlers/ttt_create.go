@@ -6,14 +6,15 @@ import (
 	"minigame-bot/internal/domain/ttt"
 	domainUser "minigame-bot/internal/domain/user"
 	"minigame-bot/internal/msgs"
-	memoryTTTRepository "minigame-bot/internal/repo/ttt/memory"
+
+	repository "minigame-bot/internal/repo/ttt"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
-func TTTCreate(gameRepo *memoryTTTRepository.Repository) CallbackQueryHandlerFunc {
+func TTTCreate(gameRepo repository.ITTTRepository) CallbackQueryHandlerFunc {
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		slog.DebugContext(ctx, "Create game callback received")
 
@@ -27,7 +28,7 @@ func TTTCreate(gameRepo *memoryTTTRepository.Repository) CallbackQueryHandlerFun
 			return nil, core.ErrInvalidUpdate
 		}
 
-		game, err := ttt.NewBuilder().
+		buildedGame, err := ttt.NewBuilder().
 			NewID().
 			InlineMessageID(ttt.InlineMessageID(query.InlineMessageID)).
 			CreatorID(user.ID()).
@@ -36,7 +37,7 @@ func TTTCreate(gameRepo *memoryTTTRepository.Repository) CallbackQueryHandlerFun
 		if err != nil {
 			return nil, err
 		}
-		err = gameRepo.CreateGame(ctx, *game)
+		game, err := gameRepo.CreateGame(ctx, buildedGame)
 		if err != nil {
 			return nil, err
 		}

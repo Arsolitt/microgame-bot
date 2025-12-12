@@ -8,8 +8,8 @@ import (
 	"minigame-bot/internal/domain/ttt"
 	domainUser "minigame-bot/internal/domain/user"
 	"minigame-bot/internal/msgs"
-	memoryTTTRepository "minigame-bot/internal/repo/ttt/memory"
-	repository "minigame-bot/internal/repo/user"
+	tttRepository "minigame-bot/internal/repo/ttt"
+	userRepository "minigame-bot/internal/repo/user"
 	"minigame-bot/internal/utils"
 	"strings"
 
@@ -17,7 +17,7 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
-func TTTJoin(gameRepo *memoryTTTRepository.Repository, userRepo repository.IUserRepository) CallbackQueryHandlerFunc {
+func TTTJoin(gameRepo tttRepository.ITTTRepository, userRepo userRepository.IUserRepository) CallbackQueryHandlerFunc {
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		slog.DebugContext(ctx, "Join callback received")
 
@@ -37,12 +37,12 @@ func TTTJoin(gameRepo *memoryTTTRepository.Repository, userRepo repository.IUser
 			return nil, err
 		}
 
-		err = game.JoinGame(player2.ID())
+		game, err = game.JoinGame(player2.ID())
 		if err != nil {
 			return nil, err
 		}
 
-		err = gameRepo.UpdateGame(ctx, game)
+		game, err = gameRepo.UpdateGame(ctx, game)
 		if err != nil {
 			return nil, err
 		}

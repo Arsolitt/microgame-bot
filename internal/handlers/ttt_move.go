@@ -8,8 +8,8 @@ import (
 	"minigame-bot/internal/domain/ttt"
 	domainUser "minigame-bot/internal/domain/user"
 	"minigame-bot/internal/msgs"
-	memoryTTTRepository "minigame-bot/internal/repo/ttt/memory"
-	repository "minigame-bot/internal/repo/user"
+	tttRepository "minigame-bot/internal/repo/ttt"
+	userRepository "minigame-bot/internal/repo/user"
 	"minigame-bot/internal/utils"
 	"strings"
 
@@ -17,7 +17,7 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
-func TTTMove(gameRepo *memoryTTTRepository.Repository, userRepo repository.IUserRepository) CallbackQueryHandlerFunc {
+func TTTMove(gameRepo tttRepository.ITTTRepository, userRepo userRepository.IUserRepository) CallbackQueryHandlerFunc {
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		slog.DebugContext(ctx, "Move callback received")
 
@@ -37,12 +37,12 @@ func TTTMove(gameRepo *memoryTTTRepository.Repository, userRepo repository.IUser
 		}
 
 		row, col := cellNumberToCoords(cellNumber)
-		err = game.MakeMove(row, col, player.ID())
+		game, err = game.MakeMove(row, col, player.ID())
 		if err != nil {
 			return nil, err
 		}
 
-		err = gameRepo.UpdateGame(ctx, game)
+		game, err = gameRepo.UpdateGame(ctx, game)
 		if err != nil {
 			return nil, err
 		}
@@ -60,7 +60,7 @@ func TTTMove(gameRepo *memoryTTTRepository.Repository, userRepo repository.IUser
 		boardKeyboard := buildGameBoardKeyboard(&game, playerX, playerO)
 
 		if game.IsGameOver() {
-			msg, err := msgs.TTTGameState(&game, playerX, playerO)
+			msg, err := msgs.TTTGameState(game, playerX, playerO)
 			if err != nil {
 				return nil, err
 			}
