@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 	"minigame-bot/internal/core"
@@ -10,8 +9,6 @@ import (
 	"minigame-bot/internal/msgs"
 	tttRepository "minigame-bot/internal/repo/ttt"
 	userRepository "minigame-bot/internal/repo/user"
-	"minigame-bot/internal/utils"
-	"strings"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -27,17 +24,13 @@ func TTTJoin(gameRepo tttRepository.ITTTRepository, userRepo userRepository.IUse
 			return nil, core.ErrUserNotFoundInContext
 		}
 
-		gameID, err := extractGameID(query.Data)
-		if err != nil {
-			return nil, err
+		game, ok := ctx.Value(core.ContextKeyGame).(ttt.TTT)
+		if !ok {
+			slog.ErrorContext(ctx, "Game not found")
+			return nil, core.ErrGameNotFoundInContext
 		}
 
-		game, err := gameRepo.GameByID(ctx, gameID)
-		if err != nil {
-			return nil, err
-		}
-
-		game, err = game.JoinGame(player2.ID())
+		game, err := game.JoinGame(player2.ID())
 		if err != nil {
 			return nil, err
 		}
@@ -85,18 +78,6 @@ func TTTJoin(gameRepo tttRepository.ITTTRepository, userRepo userRepository.IUse
 	}
 }
 
-func extractGameID(callbackData string) (ttt.ID, error) {
-	parts := strings.Split(callbackData, "::")
-	if len(parts) < 3 {
-		return ttt.ID{}, errors.New("invalid callback data")
-	}
-	id, err := utils.UUIDFromString[ttt.ID](parts[2])
-	if err != nil {
-		return ttt.ID{}, err
-	}
-	return id, nil
-}
-
 func buildGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO domainUser.User) *telego.InlineKeyboardMarkup {
 	rows := make([][]telego.InlineKeyboardButton, 0, 4)
 
@@ -114,7 +95,7 @@ func buildGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO doma
 			}
 
 			cellNumber := row*3 + col
-			callbackData := fmt.Sprintf("ttt::move::%s::%d", game.ID().String(), cellNumber)
+			callbackData := fmt.Sprintf("g::ttt::move::%s::%d", game.ID().String(), cellNumber)
 
 			buttons[col] = telego.InlineKeyboardButton{
 				Text:         icon,

@@ -19,3 +19,8 @@ func (u UniqueID) String() string {
 func (u UniqueID) IsZero() bool {
 	return UUIDIsZero(u)
 }
+
+type IStringedID interface {
+	comparable
+	String() string
+}

@@ -54,7 +54,7 @@ func TTTCreate(gameRepo repository.ITTTRepository) CallbackQueryHandlerFunc {
 				ParseMode:       "HTML",
 				ReplyMarkup: tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
-						tu.InlineKeyboardButton("Присоединиться").WithCallbackData("ttt::join::" + game.ID().String()),
+						tu.InlineKeyboardButton("Присоединиться").WithCallbackData("g::ttt::join::" + game.ID().String()),
 					),
 				),
 			},

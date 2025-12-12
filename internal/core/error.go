@@ -14,4 +14,5 @@ var (
 	ErrFailedToParseID       = errors.New("failed to parse ID")
 	ErrInvalidUpdate         = errors.New("invalid update")
 	ErrGameNotFound          = errors.New("game not found")
+	ErrGameNotFoundInContext = errors.New("game not found in context")
 )

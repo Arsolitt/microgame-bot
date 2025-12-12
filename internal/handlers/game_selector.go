@@ -21,7 +21,7 @@ func GameSelector() InlineQueryHandlerFunc {
 					tu.TextMessage("🎮 <b>Крестики-Нолики</b>\n\nНажми кнопку, чтобы начать игру!").WithParseMode("HTML"),
 				).WithReplyMarkup(tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
-						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("ttt::create"),
+						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::ttt"),
 					),
 				)),
 			},

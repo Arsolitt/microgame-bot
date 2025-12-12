@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"minigame-bot/internal/core"
 	"minigame-bot/internal/core/logger"
+	"minigame-bot/internal/domain/ttt"
 	"minigame-bot/internal/domain/user"
 	"minigame-bot/internal/mdw"
 	"os"
@@ -72,7 +73,7 @@ func startup() error {
 	// userRepo := memoryUserRepository.New()
 	userRepo := gormUserRepository.New(db)
 	// gameRepo := memoryTTTRepository.New()
-	gameRepo := gormTTTRepository.New(db)
+	tttRepo := gormTTTRepository.New(db)
 
 	bh.Use(
 		mdw.CorrelationIDProvider(),
@@ -81,11 +82,13 @@ func startup() error {
 
 	bh.HandleInlineQuery(handlers.WrapInlineQuery(handlers.GameSelector()), th.AnyInlineQuery())
 
-	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(gameRepo)), th.CallbackDataEqual("ttt::create"))
+	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(tttRepo)), th.CallbackDataEqual("create::ttt"))
 
-	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTJoin(gameRepo, userRepo)), th.CallbackDataPrefix("ttt::join::"))
+	tttG := bh.Group(th.CallbackDataPrefix("g::ttt::"))
+	tttG.Use(mdw.GameProvider(memoryLocker.New[ttt.ID](), tttRepo, "ttt"))
 
-	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTMove(gameRepo, userRepo)), th.CallbackDataPrefix("ttt::move::"))
+	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTJoin(tttRepo, userRepo)), th.CallbackDataPrefix("g::ttt::join::"))
+	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTMove(tttRepo, userRepo)), th.CallbackDataPrefix("g::ttt::move::"))
 
 	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.Empty()), th.CallbackDataEqual("empty"))
 
