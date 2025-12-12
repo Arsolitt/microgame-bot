@@ -17,6 +17,8 @@ func (t TTT) MarshalJSON() ([]byte, error) {
 		PlayerXID       user.ID         `json:"player_x_id"`
 		PlayerOID       user.ID         `json:"player_o_id"`
 		CreatorID       user.ID         `json:"creator_id"`
+		CreatedAt       time.Time       `json:"created_at"`
+		UpdatedAt       time.Time       `json:"updated_at"`
 	}{
 		ID:              t.id,
 		InlineMessageID: t.inlineMessageID,
@@ -26,6 +28,8 @@ func (t TTT) MarshalJSON() ([]byte, error) {
 		Board:           t.board,
 		Turn:            t.turn,
 		Winner:          t.winner,
+		CreatedAt:       t.createdAt,
+		UpdatedAt:       t.updatedAt,
 	})
 }
 

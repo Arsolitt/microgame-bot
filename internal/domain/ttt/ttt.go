@@ -65,7 +65,7 @@ func New(opts ...TTTOpt) (TTT, error) {
 	if t.creatorID.IsZero() {
 		return TTT{}, ErrCreatorIDRequired
 	}
-	if t.IsGameFinished() && (t.playerXID.IsZero() || t.playerOID.IsZero()) {
+	if (t.playerXID.IsZero() || t.playerOID.IsZero()) && t.IsGameFinished() {
 		return TTT{}, ErrCantBeFinishedWithoutTwoPlayers
 	}
 	if err := t.validateBoard(); err != nil {
@@ -87,19 +87,19 @@ func (t TTT) CreatedAt() time.Time             { return t.createdAt }
 func (t TTT) UpdatedAt() time.Time             { return t.updatedAt }
 
 // JoinGame adds the second player to the game.
-func (t TTT) JoinGame(secondPlayerID user.ID) (TTT, error) {
+func (t TTT) JoinGame(playerID user.ID) (TTT, error) {
 	if !t.playerXID.IsZero() && !t.playerOID.IsZero() {
 		return TTT{}, ErrGameFull
 	}
 
-	if t.playerXID == secondPlayerID || t.playerOID == secondPlayerID {
+	if t.playerXID == playerID || t.playerOID == playerID {
 		return TTT{}, ErrPlayerAlreadyInGame
 	}
 
 	if t.playerXID.IsZero() {
-		t.playerXID = secondPlayerID
+		t.playerXID = playerID
 	} else {
-		t.playerOID = secondPlayerID
+		t.playerOID = playerID
 	}
 
 	if err := t.validateBoard(); err != nil {
@@ -232,37 +232,13 @@ func (t TTT) switchTurn() TTT {
 
 // checkWinner checks if there is a winner and returns the winner.
 func (t TTT) checkWinner() Player {
-	// Check rows
-	for i := range 3 {
-		if t.board[i][0] != CellEmpty &&
-			t.board[i][0] == t.board[i][1] &&
-			t.board[i][1] == t.board[i][2] {
-			return cellToPlayer(t.board[i][0])
-		}
+	hasX, hasO := t.checkWinners()
+	if hasX {
+		return PlayerX
 	}
-
-	// Check columns
-	for i := range 3 {
-		if t.board[0][i] != CellEmpty &&
-			t.board[0][i] == t.board[1][i] &&
-			t.board[1][i] == t.board[2][i] {
-			return cellToPlayer(t.board[0][i])
-		}
+	if hasO {
+		return PlayerO
 	}
-
-	// Check diagonals
-	if t.board[0][0] != CellEmpty &&
-		t.board[0][0] == t.board[1][1] &&
-		t.board[1][1] == t.board[2][2] {
-		return cellToPlayer(t.board[0][0])
-	}
-
-	if t.board[0][2] != CellEmpty &&
-		t.board[0][2] == t.board[1][1] &&
-		t.board[1][1] == t.board[2][0] {
-		return cellToPlayer(t.board[0][2])
-	}
-
 	return PlayerEmpty
 }
 
@@ -299,21 +275,21 @@ func (t TTT) validateBoard() error {
 		return errors.New("figure count is invalid")
 	}
 
-	winnerX := t.hasWinner(PlayerX)
-	winnerO := t.hasWinner(PlayerO)
+	// Check winners in both directions (optimized to single pass)
+	winnersX, winnersO := t.checkWinners()
 
 	// Both players cannot win simultaneously
-	if winnerX && winnerO {
+	if winnersX && winnersO {
 		return errors.New("both players cannot win simultaneously")
 	}
 
 	// If X won, X must have made the last move (countX == countO + 1)
-	if winnerX && countX != countO+1 {
+	if winnersX && countX != countO+1 {
 		return errors.New("if X won, X must have made the last move (countX == countO + 1)")
 	}
 
 	// If O won, counts must be equal (O made the last move)
-	if winnerO && countX != countO {
+	if winnersO && countX != countO {
 		return errors.New("if O won, counts must be equal (O made the last move)")
 	}
 
@@ -335,31 +311,60 @@ func (t TTT) countPieces() (countX, countO int) {
 	return
 }
 
-// hasWinner checks if the specified player has a winning combination.
-func (t TTT) hasWinner(player Player) bool {
-	cell := playerToCell(player)
+// checkWinners checks if either player has a winning combination.
+// Returns (hasX, hasO) where hasX is true if X won, hasO is true if O won.
+// This is optimized for validation to check both players in a single pass.
+func (t TTT) checkWinners() (bool, bool) {
+	var hasX, hasO bool
+
+	// Helper to update win status and check early return
+	checkCell := func(cell Cell) {
+		if cell == CellX {
+			hasX = true
+		} else if cell == CellO {
+			hasO = true
+		}
+	}
 
 	// Check rows
 	for i := range 3 {
-		if t.board[i][0] == cell && t.board[i][1] == cell && t.board[i][2] == cell {
-			return true
+		if t.board[i][0] != CellEmpty &&
+			t.board[i][0] == t.board[i][1] &&
+			t.board[i][1] == t.board[i][2] {
+			checkCell(t.board[i][0])
+			if hasX && hasO {
+				return hasX, hasO
+			}
 		}
 	}
 
 	// Check columns
 	for i := range 3 {
-		if t.board[0][i] == cell && t.board[1][i] == cell && t.board[2][i] == cell {
-			return true
+		if t.board[0][i] != CellEmpty &&
+			t.board[0][i] == t.board[1][i] &&
+			t.board[1][i] == t.board[2][i] {
+			checkCell(t.board[0][i])
+			if hasX && hasO {
+				return hasX, hasO
+			}
 		}
 	}
 
 	// Check diagonals
-	if t.board[0][0] == cell && t.board[1][1] == cell && t.board[2][2] == cell {
-		return true
-	}
-	if t.board[0][2] == cell && t.board[1][1] == cell && t.board[2][0] == cell {
-		return true
+	if t.board[0][0] != CellEmpty &&
+		t.board[0][0] == t.board[1][1] &&
+		t.board[1][1] == t.board[2][2] {
+		checkCell(t.board[0][0])
+		if hasX && hasO {
+			return hasX, hasO
+		}
 	}
 
-	return false
+	if t.board[0][2] != CellEmpty &&
+		t.board[0][2] == t.board[1][1] &&
+		t.board[1][1] == t.board[2][0] {
+		checkCell(t.board[0][2])
+	}
+
+	return hasX, hasO
 }
