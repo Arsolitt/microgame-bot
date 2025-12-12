@@ -19,19 +19,21 @@ type User struct {
 	UpdatedAt  time.Time `gorm:"not null"`
 }
 
+// TODO: add tests
 func (m User) ToDomain() (domainUser.User, error) {
-	return domainUser.NewBuilder().
-		IDFromUUID(m.ID).
-		TelegramIDFromInt(m.TelegramID).
-		ChatIDFromPointer(m.ChatID).
-		FirstNameFromString(m.FirstName).
-		LastNameFromString(m.LastName).
-		UsernameFromString(m.Username).
-		CreatedAt(m.CreatedAt).
-		UpdatedAt(m.UpdatedAt).
-		Build()
+	return domainUser.NewUser(
+		domainUser.WithIDFromUUID(m.ID),
+		domainUser.WithTelegramIDFromInt(m.TelegramID),
+		domainUser.WithChatIDFromPointer(m.ChatID),
+		domainUser.WithFirstNameFromString(m.FirstName),
+		domainUser.WithLastNameFromString(m.LastName),
+		domainUser.WithUsernameFromString(m.Username),
+		domainUser.WithCreatedAt(m.CreatedAt),
+		domainUser.WithUpdatedAt(m.UpdatedAt),
+	)
 }
 
+// TODO: add tests
 func (m User) FromDomain(u domainUser.User) User {
 	var chatID *int64
 	if u.ChatID() != nil {

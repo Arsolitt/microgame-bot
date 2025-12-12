@@ -88,14 +88,14 @@ func UserProvider(
 		if err != nil {
 			if errors.Is(err, core.ErrUserNotFound) {
 				l.InfoContext(ctx, "User not found, creating new")
-				buildedUser, err := domainUser.NewBuilder().
-					NewID().
-					TelegramIDFromInt(userTelegramID).
-					FirstName(domainUser.FirstName(firstName)).
-					LastName(domainUser.LastName(lastName)).
-					Username(domainUser.Username(username)).
-					ChatIDFromPointer(privateChatID).
-					Build()
+				buildedUser, err := domainUser.NewUser(
+					domainUser.WithNewID(),
+					domainUser.WithTelegramIDFromInt(userTelegramID),
+					domainUser.WithFirstName(domainUser.FirstName(firstName)),
+					domainUser.WithLastName(domainUser.LastName(lastName)),
+					domainUser.WithUsername(domainUser.Username(username)),
+					domainUser.WithChatIDFromPointer(privateChatID),
+				)
 				if err != nil {
 					return err
 				}
