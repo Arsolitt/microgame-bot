@@ -2,7 +2,6 @@ package ttt
 
 import (
 	"errors"
-	"math/rand"
 	"minigame-bot/internal/domain"
 	"minigame-bot/internal/domain/user"
 	"time"
@@ -38,8 +37,6 @@ type TTT struct {
 	createdAt       time.Time
 	updatedAt       time.Time
 }
-
-var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // New creates a new TTT instance with the given options
 func New(opts ...TTTOpt) (TTT, error) {
@@ -208,18 +205,6 @@ func playerToCell(p Player) Cell {
 		return CellO
 	default:
 		return CellEmpty
-	}
-}
-
-// cellToPlayer converts Cell to Player.
-func cellToPlayer(c Cell) Player {
-	switch c {
-	case CellX:
-		return PlayerX
-	case CellO:
-		return PlayerO
-	default:
-		return PlayerEmpty
 	}
 }
 

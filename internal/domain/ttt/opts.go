@@ -108,7 +108,7 @@ func WithRandomFirstPlayer() TTTOpt {
 			return ErrCreatorIDRequired
 		}
 
-		if rng.Intn(2) == 0 {
+		if utils.RandInt(2) == 0 {
 			t.playerXID = t.creatorID
 		} else {
 			t.playerOID = t.creatorID
