@@ -11,3 +11,7 @@ func (i InlineMessageID) String() string {
 func (i InlineMessageID) IsZero() bool {
 	return string(i) == ""
 }
+
+type IGame[ID comparable] interface {
+	ID() ID
+}

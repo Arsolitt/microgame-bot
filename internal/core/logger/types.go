@@ -39,4 +39,6 @@ const (
 	ArbiterIDField       = "arbiter_id"
 	RequesterIDField     = "requester_id"
 	EventIDField         = "event_id"
+	GameIDField          = "game_id"
+	GameNameField        = "game_name"
 )

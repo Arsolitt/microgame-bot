@@ -15,7 +15,7 @@ import (
 )
 
 func UserProvider(
-	locker locker.ILocker,
+	locker locker.ILocker[domainUser.ID],
 	userRepo repository.IUserRepository,
 ) func(ctx *th.Context, update telego.Update) error {
 	const OPERATION_NAME = "middleware::user_provider"
