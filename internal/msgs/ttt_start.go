@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func TTTStart(user domainUser.User, game *ttt.TTT) (string, error) {
+func TTTStart(user domainUser.User, game ttt.TTT) (string, error) {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("@%s ", user.Username()))
 	sb.WriteString("запустил игру <b>крестики-нолики</b>")

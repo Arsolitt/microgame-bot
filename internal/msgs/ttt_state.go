@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func TTTGameState(game *ttt.TTT, playerX domainUser.User, playerO domainUser.User) (string, error) {
+func TTTGameState(game ttt.TTT, playerX domainUser.User, playerO domainUser.User) (string, error) {
 	var sb strings.Builder
 
 	creator, err := game.GetPlayerFigure(game.CreatorID())
