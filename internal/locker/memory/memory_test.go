@@ -12,7 +12,7 @@ import (
 )
 
 func TestLocker_Lock_Unlock(t *testing.T) {
-	locker := New()
+	locker := New[domainUser.ID]()
 	userID := domainUser.ID(uuid.New())
 
 	err := locker.Lock(userID)
@@ -23,16 +23,16 @@ func TestLocker_Lock_Unlock(t *testing.T) {
 }
 
 func TestLocker_Unlock_NotLocked(t *testing.T) {
-	locker := New()
+	locker := New[domainUser.ID]()
 	userID := domainUser.ID(uuid.New())
 
 	err := locker.Unlock(userID)
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrUserLockNotFound)
+	assert.ErrorIs(t, err, ErrLockNotFound)
 }
 
 func TestLocker_Concurrent_SameUser(t *testing.T) {
-	locker := New()
+	locker := New[domainUser.ID]()
 	userID := domainUser.ID(uuid.New())
 
 	var counter int
@@ -54,7 +54,7 @@ func TestLocker_Concurrent_SameUser(t *testing.T) {
 }
 
 func TestLocker_Concurrent_DifferentUsers(t *testing.T) {
-	locker := New()
+	locker := New[domainUser.ID]()
 
 	var wg sync.WaitGroup
 	users := make([]domainUser.ID, 100)

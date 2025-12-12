@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"minigame-bot/internal/core"
 	"minigame-bot/internal/core/logger"
+	"minigame-bot/internal/domain/user"
 	"minigame-bot/internal/mdw"
 	"os"
 	"os/signal"
@@ -47,7 +48,7 @@ func startup() error {
 	db.AutoMigrate(&gormUserRepository.User{})
 	db.AutoMigrate(&gormTTTRepository.TTT{})
 
-	_ = memoryLocker.New()
+	userLocker := memoryLocker.New[user.ID]()
 	_ = memoryFSM.New()
 
 	bot, err := telego.NewBot(string(cfg.Telegram.Token), telego.WithDiscardLogger())
@@ -75,7 +76,7 @@ func startup() error {
 
 	bh.Use(
 		mdw.CorrelationIDProvider(),
-		mdw.UserProvider(memoryLocker.New(), userRepo),
+		mdw.UserProvider(userLocker, userRepo),
 	)
 
 	bh.HandleInlineQuery(handlers.WrapInlineQuery(handlers.GameSelector()), th.AnyInlineQuery())
