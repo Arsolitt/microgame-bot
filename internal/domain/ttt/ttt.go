@@ -1,6 +1,7 @@
 package ttt
 
 import (
+	"errors"
 	"math/rand"
 	"minigame-bot/internal/domain"
 	"minigame-bot/internal/domain/user"
@@ -63,6 +64,12 @@ func New(opts ...TTTOpt) (TTT, error) {
 	}
 	if t.creatorID.IsZero() {
 		return TTT{}, ErrCreatorIDRequired
+	}
+	if t.IsGameFinished() && (t.playerXID.IsZero() || t.playerOID.IsZero()) {
+		return TTT{}, ErrCantBeFinishedWithoutTwoPlayers
+	}
+	if err := t.validateBoard(); err != nil {
+		return TTT{}, err
 	}
 
 	return *t, nil
@@ -131,7 +138,7 @@ func (t TTT) GetWinnerID() user.ID {
 
 // MakeMove attempts to make a move at the specified coordinates for the given user.
 func (t TTT) MakeMove(row, col int, userID user.ID) (TTT, error) {
-	if t.IsGameOver() {
+	if t.IsGameFinished() {
 		return TTT{}, ErrGameOver
 	}
 
@@ -168,8 +175,8 @@ func (t TTT) MakeMove(row, col int, userID user.ID) (TTT, error) {
 	return t, nil
 }
 
-// IsGameOver returns true if the game has ended.
-func (t TTT) IsGameOver() bool {
+// IsGameFinished returns true if the game has ended.
+func (t TTT) IsGameFinished() bool {
 	return t.winner != PlayerEmpty || t.IsDraw()
 }
 
@@ -273,4 +280,78 @@ func cellToPlayer(c Cell) Player {
 	default:
 		return PlayerEmpty
 	}
+}
+
+// ValidateBoard checks if the board is in a valid state.
+func (t TTT) validateBoard() error {
+	countX, countO := t.countPieces()
+
+	// X always goes first, so X count must be equal to O count or one more
+	if countX < countO || countX > countO+1 {
+		return errors.New("figure count is invalid")
+	}
+
+	winnerX := t.hasWinner(PlayerX)
+	winnerO := t.hasWinner(PlayerO)
+
+	// Both players cannot win simultaneously
+	if winnerX && winnerO {
+		return errors.New("both players cannot win simultaneously")
+	}
+
+	// If X won, X must have made the last move (countX == countO + 1)
+	if winnerX && countX != countO+1 {
+		return errors.New("if X won, X must have made the last move (countX == countO + 1)")
+	}
+
+	// If O won, counts must be equal (O made the last move)
+	if winnerO && countX != countO {
+		return errors.New("if O won, counts must be equal (O made the last move)")
+	}
+
+	return nil
+}
+
+// countPieces counts X and O pieces on the board.
+func (t TTT) countPieces() (countX, countO int) {
+	for i := range 3 {
+		for j := range 3 {
+			switch t.board[i][j] {
+			case CellX:
+				countX++
+			case CellO:
+				countO++
+			}
+		}
+	}
+	return
+}
+
+// hasWinner checks if the specified player has a winning combination.
+func (t TTT) hasWinner(player Player) bool {
+	cell := playerToCell(player)
+
+	// Check rows
+	for i := range 3 {
+		if t.board[i][0] == cell && t.board[i][1] == cell && t.board[i][2] == cell {
+			return true
+		}
+	}
+
+	// Check columns
+	for i := range 3 {
+		if t.board[0][i] == cell && t.board[1][i] == cell && t.board[2][i] == cell {
+			return true
+		}
+	}
+
+	// Check diagonals
+	if t.board[0][0] == cell && t.board[1][1] == cell && t.board[2][2] == cell {
+		return true
+	}
+	if t.board[0][2] == cell && t.board[1][1] == cell && t.board[2][0] == cell {
+		return true
+	}
+
+	return false
 }

@@ -124,7 +124,7 @@ func buildGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO doma
 		rows = append(rows, buttons)
 	}
 
-	if !game.IsGameOver() {
+	if !game.IsGameFinished() {
 		var currentPlayer domainUser.User
 		if game.Turn() == ttt.PlayerX {
 			currentPlayer = playerX

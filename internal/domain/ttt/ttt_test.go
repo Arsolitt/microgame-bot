@@ -246,3 +246,122 @@ func TestWithCreatorAsO_WithoutCreatorID(t *testing.T) {
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, ErrCreatorIDRequired)
 }
+
+func TestNew_BoardValidation(t *testing.T) {
+	id := ID(utils.NewUniqueID())
+	inlineMessageID := InlineMessageID("inline123")
+	creatorID := user.ID(utils.NewUniqueID())
+	playerXID := user.ID(utils.NewUniqueID())
+	playerOID := user.ID(utils.NewUniqueID())
+
+	tests := []struct {
+		name          string
+		board         [3][3]Cell
+		turn          Player
+		winner        Player
+		expectedError string
+	}{
+		{
+			name: "Invalid - more O than X",
+			board: [3][3]Cell{
+				{CellO, CellEmpty, CellEmpty},
+				{CellEmpty, CellEmpty, CellEmpty},
+				{CellEmpty, CellEmpty, CellEmpty},
+			},
+			turn:          PlayerX,
+			winner:        PlayerEmpty,
+			expectedError: "figure count is invalid",
+		},
+		{
+			name: "Invalid - X is 2 more than O",
+			board: [3][3]Cell{
+				{CellX, CellX, CellEmpty},
+				{CellEmpty, CellEmpty, CellEmpty},
+				{CellEmpty, CellEmpty, CellEmpty},
+			},
+			turn:          PlayerX,
+			winner:        PlayerEmpty,
+			expectedError: "figure count is invalid",
+		},
+		{
+			name: "Invalid - both players won",
+			board: [3][3]Cell{
+				{CellX, CellX, CellX},
+				{CellO, CellO, CellO},
+				{CellEmpty, CellEmpty, CellEmpty},
+			},
+			turn:          PlayerX,
+			winner:        PlayerEmpty,
+			expectedError: "both players cannot win simultaneously",
+		},
+		{
+			name: "Invalid - X won but counts are equal",
+			board: [3][3]Cell{
+				{CellX, CellX, CellX},
+				{CellO, CellO, CellEmpty},
+				{CellEmpty, CellO, CellEmpty},
+			},
+			turn:          PlayerO,
+			winner:        PlayerEmpty,
+			expectedError: "if X won, X must have made the last move (countX == countO + 1)",
+		},
+		{
+			name: "Valid - X won with correct count",
+			board: [3][3]Cell{
+				{CellX, CellX, CellX},
+				{CellO, CellO, CellEmpty},
+				{CellEmpty, CellEmpty, CellEmpty},
+			},
+			turn:          PlayerO,
+			winner:        PlayerX,
+			expectedError: "",
+		},
+		{
+			name: "Valid - O won with correct count",
+			board: [3][3]Cell{
+				{CellO, CellO, CellO},
+				{CellX, CellX, CellEmpty},
+				{CellEmpty, CellEmpty, CellX},
+			},
+			turn:          PlayerX,
+			winner:        PlayerO,
+			expectedError: "",
+		},
+		{
+			name: "Valid - game in progress",
+			board: [3][3]Cell{
+				{CellX, CellO, CellEmpty},
+				{CellEmpty, CellX, CellEmpty},
+				{CellEmpty, CellEmpty, CellEmpty},
+			},
+			turn:          PlayerO,
+			winner:        PlayerEmpty,
+			expectedError: "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			game, err := New(
+				WithID(id),
+				WithInlineMessageID(inlineMessageID),
+				WithCreatorID(creatorID),
+				WithPlayerXID(playerXID),
+				WithPlayerOID(playerOID),
+				WithBoard(tc.board),
+				WithTurn(tc.turn),
+				WithWinner(tc.winner),
+			)
+
+			if tc.expectedError != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectedError)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.board, game.Board())
+				assert.Equal(t, tc.turn, game.Turn())
+				assert.Equal(t, tc.winner, game.Winner())
+			}
+		})
+	}
+}
