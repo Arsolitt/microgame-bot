@@ -7,7 +7,6 @@ import (
 	"minigame-bot/internal/core"
 	"minigame-bot/internal/core/logger"
 	"minigame-bot/internal/domain"
-	"minigame-bot/internal/domain/ttt"
 	"minigame-bot/internal/locker"
 	"minigame-bot/internal/utils"
 	"strings"
@@ -17,15 +16,15 @@ import (
 )
 
 // IGameGetter - generic interface for game repositories
-type IGameGetter[T domain.IGame[ID], ID utils.IStringedID] interface {
-	GameByMessageID(ctx context.Context, id domain.InlineMessageID) (T, error)
+type IGameGetter[T domain.IGame[ID], ID utils.UUIDBasedID] interface {
+	GameByID(ctx context.Context, id ID) (T, error)
 }
 
 // GameProvider - generic game provider middleware
-func GameProvider[T domain.IGame[ID], ID utils.IStringedID](
+func GameProvider[T domain.IGame[ID], ID utils.UUIDBasedID](
 	locker locker.ILocker[ID],
 	gameRepo IGameGetter[T, ID],
-	gameName string, // "ttt", "rps", etc for logging
+	gameName string,
 ) func(ctx *th.Context, update telego.Update) error {
 	operationName := "middleware::game_provider::" + gameName
 
@@ -35,23 +34,20 @@ func GameProvider[T domain.IGame[ID], ID utils.IStringedID](
 		if update.CallbackQuery == nil {
 			return core.ErrInvalidUpdate
 		}
-		inlineMessageID := domain.InlineMessageID(update.CallbackQuery.InlineMessageID)
-
-		if inlineMessageID.IsZero() {
-			l.WarnContext(ctx, "No inline message ID found")
-			return core.ErrInvalidUpdate
-		}
-
 		l.DebugContext(ctx, "GameProvider middleware started")
 
-		game, err := gameRepo.GameByMessageID(ctx, inlineMessageID)
+		gameID, err := extractGameID[ID](update.CallbackQuery.Data)
 		if err != nil {
 			return err
 		}
 
-		gameID := game.ID()
+		game, err := gameRepo.GameByID(ctx, gameID)
+		if err != nil {
+			return err
+		}
+
 		rawCtx := ctx.Context()
-		rawCtx = logger.WithLogValue(rawCtx, logger.GameIDField, gameID.String())
+		rawCtx = logger.WithLogValue(rawCtx, logger.GameIDField, utils.UUIDString(gameID))
 		rawCtx = logger.WithLogValue(rawCtx, logger.GameNameField, gameName)
 		ctx = ctx.WithContext(rawCtx)
 		ctx = ctx.WithValue(core.ContextKeyGame, game)
@@ -78,14 +74,16 @@ func GameProvider[T domain.IGame[ID], ID utils.IStringedID](
 	}
 }
 
-func extractGameID(callbackData string) (ttt.ID, error) {
+func extractGameID[ID utils.UUIDBasedID](callbackData string) (ID, error) {
 	parts := strings.Split(callbackData, "::")
-	if len(parts) < 3 {
-		return ttt.ID{}, errors.New("invalid callback data")
+	if len(parts) < 4 {
+		var zero ID
+		return zero, errors.New("invalid callback data")
 	}
-	id, err := utils.UUIDFromString[ttt.ID](parts[2])
+	id, err := utils.UUIDFromString[ID](parts[3])
 	if err != nil {
-		return ttt.ID{}, err
+		var zero ID
+		return zero, err
 	}
 	return id, nil
 }

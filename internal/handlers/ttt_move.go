@@ -10,7 +10,6 @@ import (
 	"minigame-bot/internal/msgs"
 	tttRepository "minigame-bot/internal/repo/ttt"
 	userRepository "minigame-bot/internal/repo/user"
-	"minigame-bot/internal/utils"
 	"strings"
 
 	"github.com/mymmrac/telego"
@@ -26,14 +25,15 @@ func TTTMove(gameRepo tttRepository.ITTTRepository, userRepo userRepository.IUse
 			return nil, core.ErrUserNotFoundInContext
 		}
 
-		gameID, cellNumber, err := extractMoveData(query.Data)
+		cellNumber, err := extractCellNumber(query.Data)
 		if err != nil {
 			return nil, err
 		}
 
-		game, err := gameRepo.GameByID(ctx, gameID)
-		if err != nil {
-			return nil, err
+		game, ok := ctx.Value(core.ContextKeyGame).(ttt.TTT)
+		if !ok {
+			slog.ErrorContext(ctx, "Game not found")
+			return nil, core.ErrGameNotFoundInContext
 		}
 
 		row, col := cellNumberToCoords(cellNumber)
@@ -95,24 +95,19 @@ func TTTMove(gameRepo tttRepository.ITTTRepository, userRepo userRepository.IUse
 	}
 }
 
-func extractMoveData(callbackData string) (ttt.ID, int, error) {
+func extractCellNumber(callbackData string) (int, error) {
 	parts := strings.Split(callbackData, "::")
-	if len(parts) < 4 {
-		return ttt.ID{}, 0, errors.New("invalid callback data")
-	}
-
-	gameID, err := utils.UUIDFromString[ttt.ID](parts[2])
-	if err != nil {
-		return ttt.ID{}, 0, err
+	if len(parts) < 5 {
+		return 0, errors.New("invalid callback data")
 	}
 
 	var cellNumber int
-	_, err = fmt.Sscanf(parts[3], "%d", &cellNumber)
+	_, err := fmt.Sscanf(parts[4], "%d", &cellNumber)
 	if err != nil {
-		return ttt.ID{}, 0, err
+		return 0, err
 	}
 
-	return gameID, cellNumber, nil
+	return cellNumber, nil
 }
 
 func cellNumberToCoords(cellNumber int) (row, col int) {
