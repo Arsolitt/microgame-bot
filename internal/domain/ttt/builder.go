@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"minigame-bot/internal/core"
+	"minigame-bot/internal/domain"
 	"minigame-bot/internal/domain/user"
 	"minigame-bot/internal/utils"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -25,6 +27,8 @@ type Builder struct {
 	playerXID       user.ID
 	playerOID       user.ID
 	creatorID       user.ID
+	createdAt       time.Time
+	updatedAt       time.Time
 	errors          []error
 }
 
@@ -144,7 +148,25 @@ func (b Builder) AssignCreatorToO() Builder {
 	return b
 }
 
-func (b Builder) Build() (*TTT, error) {
+func (b Builder) CreatedAt(createdAt time.Time) Builder {
+	if createdAt.IsZero() {
+		b.errors = append(b.errors, domain.ErrCreatedAtRequired)
+		return b
+	}
+	b.createdAt = createdAt
+	return b
+}
+
+func (b Builder) UpdatedAt(updatedAt time.Time) Builder {
+	if updatedAt.IsZero() {
+		b.errors = append(b.errors, domain.ErrUpdatedAtRequired)
+		return b
+	}
+	b.updatedAt = updatedAt
+	return b
+}
+
+func (b Builder) Build() (TTT, error) {
 	if b.id.IsZero() {
 		b.errors = append(b.errors, ErrIDRequired)
 	}
@@ -156,10 +178,10 @@ func (b Builder) Build() (*TTT, error) {
 	}
 
 	if len(b.errors) > 0 {
-		return nil, errors.Join(b.errors...)
+		return TTT{}, errors.Join(b.errors...)
 	}
 
-	return &TTT{
+	return TTT{
 		id:              b.id,
 		inlineMessageID: b.inlineMessageID,
 		creatorID:       b.creatorID,

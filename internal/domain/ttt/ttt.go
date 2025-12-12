@@ -33,27 +33,31 @@ type TTT struct {
 	playerXID       user.ID         `json:"player_x_id"`
 	playerOID       user.ID         `json:"player_o_id"`
 	creatorID       user.ID         `json:"creator_id"`
+	createdAt       time.Time       `json:"created_at"`
+	updatedAt       time.Time       `json:"updated_at"`
 }
 
 var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-func (t *TTT) ID() ID                           { return t.id }
-func (t *TTT) InlineMessageID() InlineMessageID { return t.inlineMessageID }
-func (t *TTT) CreatorID() user.ID               { return t.creatorID }
-func (t *TTT) PlayerXID() user.ID               { return t.playerXID }
-func (t *TTT) PlayerOID() user.ID               { return t.playerOID }
-func (t *TTT) Turn() Player                     { return t.turn }
-func (t *TTT) Winner() Player                   { return t.winner }
-func (t *TTT) Board() [3][3]Cell                { return t.board }
+func (t TTT) ID() ID                           { return t.id }
+func (t TTT) InlineMessageID() InlineMessageID { return t.inlineMessageID }
+func (t TTT) CreatorID() user.ID               { return t.creatorID }
+func (t TTT) PlayerXID() user.ID               { return t.playerXID }
+func (t TTT) PlayerOID() user.ID               { return t.playerOID }
+func (t TTT) Turn() Player                     { return t.turn }
+func (t TTT) Winner() Player                   { return t.winner }
+func (t TTT) Board() [3][3]Cell                { return t.board }
+func (t TTT) CreatedAt() time.Time             { return t.createdAt }
+func (t TTT) UpdatedAt() time.Time             { return t.updatedAt }
 
 // JoinGame adds the second player to the game.
-func (t *TTT) JoinGame(secondPlayerID user.ID) error {
+func (t TTT) JoinGame(secondPlayerID user.ID) (TTT, error) {
 	if !t.playerXID.IsZero() && !t.playerOID.IsZero() {
-		return ErrGameFull
+		return TTT{}, ErrGameFull
 	}
 
 	if t.playerXID == secondPlayerID || t.playerOID == secondPlayerID {
-		return ErrPlayerAlreadyInGame
+		return TTT{}, ErrPlayerAlreadyInGame
 	}
 
 	if t.playerXID.IsZero() {
@@ -62,11 +66,11 @@ func (t *TTT) JoinGame(secondPlayerID user.ID) error {
 		t.playerOID = secondPlayerID
 	}
 
-	return nil
+	return t, nil
 }
 
 // GetPlayerFigure returns the player symbol (X or O) for the given user ID.
-func (t *TTT) GetPlayerFigure(userID user.ID) (Player, error) {
+func (t TTT) GetPlayerFigure(userID user.ID) (Player, error) {
 	if t.playerXID == userID {
 		return PlayerX, nil
 	}
@@ -77,7 +81,7 @@ func (t *TTT) GetPlayerFigure(userID user.ID) (Player, error) {
 }
 
 // IsPlayerTurn checks if it's the turn of the player with given user ID.
-func (t *TTT) IsPlayerTurn(userID user.ID) bool {
+func (t TTT) IsPlayerTurn(userID user.ID) bool {
 	symbol, err := t.GetPlayerFigure(userID)
 	if err != nil {
 		return false
@@ -86,7 +90,7 @@ func (t *TTT) IsPlayerTurn(userID user.ID) bool {
 }
 
 // GetWinnerID returns the user ID of the winner, if any.
-func (t *TTT) GetWinnerID() user.ID {
+func (t TTT) GetWinnerID() user.ID {
 	if t.winner == PlayerX {
 		return t.playerXID
 	}
@@ -97,31 +101,31 @@ func (t *TTT) GetWinnerID() user.ID {
 }
 
 // MakeMove attempts to make a move at the specified coordinates for the given user.
-func (t *TTT) MakeMove(row, col int, userID user.ID) error {
+func (t TTT) MakeMove(row, col int, userID user.ID) (TTT, error) {
 	if t.IsGameOver() {
-		return ErrGameOver
+		return TTT{}, ErrGameOver
 	}
 
 	// Check if both players are in game
 	if t.playerXID.IsZero() || t.playerOID.IsZero() {
-		return ErrWaitingForOpponent
+		return TTT{}, ErrWaitingForOpponent
 	}
 
 	player, err := t.GetPlayerFigure(userID)
 	if err != nil {
-		return err
+		return TTT{}, err
 	}
 
 	if player != t.turn {
-		return ErrNotPlayersTurn
+		return TTT{}, ErrNotPlayersTurn
 	}
 
 	if row < 0 || row > 2 || col < 0 || col > 2 {
-		return ErrOutOfBounds
+		return TTT{}, ErrOutOfBounds
 	}
 
 	if t.board[row][col] != CellEmpty {
-		return ErrCellOccupied
+		return TTT{}, ErrCellOccupied
 	}
 
 	t.board[row][col] = playerToCell(player)
@@ -129,19 +133,19 @@ func (t *TTT) MakeMove(row, col int, userID user.ID) error {
 	if winner := t.checkWinner(); winner != PlayerEmpty {
 		t.winner = winner
 	} else {
-		t.switchTurn()
+		t = t.switchTurn()
 	}
 
-	return nil
+	return t, nil
 }
 
 // IsGameOver returns true if the game has ended.
-func (t *TTT) IsGameOver() bool {
+func (t TTT) IsGameOver() bool {
 	return t.winner != PlayerEmpty || t.IsDraw()
 }
 
 // IsDraw returns true if the game is a draw.
-func (t *TTT) IsDraw() bool {
+func (t TTT) IsDraw() bool {
 	if t.winner != PlayerEmpty {
 		return false
 	}
@@ -157,7 +161,7 @@ func (t *TTT) IsDraw() bool {
 }
 
 // GetCell returns the cell value at the specified coordinates.
-func (t *TTT) GetCell(row, col int) (Cell, error) {
+func (t TTT) GetCell(row, col int) (Cell, error) {
 	if row < 0 || row > 2 || col < 0 || col > 2 {
 		return CellEmpty, ErrOutOfBounds
 	}
@@ -165,23 +169,25 @@ func (t *TTT) GetCell(row, col int) (Cell, error) {
 }
 
 // Reset resets the game to initial state.
-func (t *TTT) Reset() {
+func (t TTT) Reset() TTT {
 	t.board = [3][3]Cell{}
 	t.turn = PlayerX
 	t.winner = PlayerEmpty
+	return t
 }
 
 // switchTurn switches the current turn to the other player.
-func (t *TTT) switchTurn() {
+func (t TTT) switchTurn() TTT {
 	if t.turn == PlayerX {
 		t.turn = PlayerO
 	} else {
 		t.turn = PlayerX
 	}
+	return t
 }
 
 // checkWinner checks if there is a winner and returns the winner.
-func (t *TTT) checkWinner() Player {
+func (t TTT) checkWinner() Player {
 	// Check rows
 	for i := range 3 {
 		if t.board[i][0] != CellEmpty &&

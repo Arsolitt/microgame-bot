@@ -3,6 +3,7 @@ package ttt
 import (
 	"encoding/json"
 	"minigame-bot/internal/domain/user"
+	"time"
 )
 
 func (t TTT) MarshalJSON() ([]byte, error) {
@@ -37,6 +38,8 @@ func (t *TTT) UnmarshalJSON(data []byte) error {
 		PlayerXID       user.ID         `json:"player_x_id"`
 		PlayerOID       user.ID         `json:"player_o_id"`
 		CreatorID       user.ID         `json:"creator_id"`
+		CreatedAt       time.Time       `json:"created_at"`
+		UpdatedAt       time.Time       `json:"updated_at"`
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -51,11 +54,13 @@ func (t *TTT) UnmarshalJSON(data []byte) error {
 		Board(aux.Board).
 		Turn(aux.Turn).
 		Winner(aux.Winner).
+		CreatedAt(aux.CreatedAt).
+		UpdatedAt(aux.UpdatedAt).
 		Build()
 	if err != nil {
 		return err
 	}
 
-	*t = *ttt
+	*t = ttt
 	return nil
 }
