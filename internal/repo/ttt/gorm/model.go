@@ -26,21 +26,23 @@ type TTT struct {
 	UpdatedAt       time.Time        `gorm:"not null"`
 }
 
+// TODO: add tests
 func (m TTT) ToDomain() (domainTTT.TTT, error) {
-	return domainTTT.NewBuilder().
-		IDFromUUID(m.ID).
-		InlineMessageIDFromString(m.InlineMessageID).
-		CreatorID(m.CreatorID).
-		PlayerXID(m.PlayerXID).
-		PlayerOID(m.PlayerOID).
-		Board([3][3]domainTTT.Cell(m.Board)).
-		Turn(m.Turn).
-		Winner(m.Winner).
-		CreatedAt(m.CreatedAt).
-		UpdatedAt(m.UpdatedAt).
-		Build()
+	return domainTTT.New(
+		domainTTT.WithIDFromUUID(m.ID),
+		domainTTT.WithInlineMessageIDFromString(m.InlineMessageID),
+		domainTTT.WithCreatorID(m.CreatorID),
+		domainTTT.WithPlayerXID(m.PlayerXID),
+		domainTTT.WithPlayerOID(m.PlayerOID),
+		domainTTT.WithBoard([3][3]domainTTT.Cell(m.Board)),
+		domainTTT.WithTurn(m.Turn),
+		domainTTT.WithWinner(m.Winner),
+		domainTTT.WithCreatedAt(m.CreatedAt),
+		domainTTT.WithUpdatedAt(m.UpdatedAt),
+	)
 }
 
+// TODO: add tests
 func (m TTT) FromDomain(u domainTTT.TTT) TTT {
 	return TTT{
 		ID:              uuid.UUID(u.ID()),

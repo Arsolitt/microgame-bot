@@ -28,16 +28,16 @@ func TTTCreate(gameRepo repository.ITTTRepository) CallbackQueryHandlerFunc {
 			return nil, core.ErrInvalidUpdate
 		}
 
-		buildedGame, err := ttt.NewBuilder().
-			NewID().
-			InlineMessageID(ttt.InlineMessageID(query.InlineMessageID)).
-			CreatorID(user.ID()).
-			RandomFirstPlayer().
-			Build()
+		game, err := ttt.New(
+			ttt.WithNewID(),
+			ttt.WithInlineMessageIDFromString(query.InlineMessageID),
+			ttt.WithCreatorID(user.ID()),
+			ttt.WithRandomFirstPlayer(),
+		)
 		if err != nil {
 			return nil, err
 		}
-		game, err := gameRepo.CreateGame(ctx, buildedGame)
+		game, err = gameRepo.CreateGame(ctx, game)
 		if err != nil {
 			return nil, err
 		}
