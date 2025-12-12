@@ -3,6 +3,7 @@ package user
 import (
 	"errors"
 	"minigame-bot/internal/core"
+	"minigame-bot/internal/domain"
 	"minigame-bot/internal/utils"
 	"testing"
 	"time"
@@ -87,7 +88,7 @@ func TestBuilder_Build_ValidationError(t *testing.T) {
 					CreatedAt(now).
 					UpdatedAt(now)
 			},
-			expectedError: ErrIDRequired,
+			expectedError: domain.ErrIDRequired,
 		},
 		{
 			name: "ID is invalid",
@@ -162,7 +163,7 @@ func TestBuilder_Build_ValidationError(t *testing.T) {
 					CreatedAt(time.Time{}).
 					UpdatedAt(now)
 			},
-			expectedError: ErrCreatedAtRequired,
+			expectedError: domain.ErrCreatedAtRequired,
 		},
 		{
 			name: "CreatedAt not set",
@@ -176,7 +177,7 @@ func TestBuilder_Build_ValidationError(t *testing.T) {
 					Username(username).
 					UpdatedAt(now)
 			},
-			expectedError: ErrCreatedAtRequired,
+			expectedError: domain.ErrCreatedAtRequired,
 		},
 		{
 			name: "UpdatedAt is zero",
@@ -191,7 +192,7 @@ func TestBuilder_Build_ValidationError(t *testing.T) {
 					CreatedAt(now).
 					UpdatedAt(time.Time{})
 			},
-			expectedError: ErrUpdatedAtRequired,
+			expectedError: domain.ErrUpdatedAtRequired,
 		},
 		{
 			name: "UpdatedAt not set",
@@ -205,17 +206,17 @@ func TestBuilder_Build_ValidationError(t *testing.T) {
 					Username(username).
 					CreatedAt(now)
 			},
-			expectedError: ErrUpdatedAtRequired,
+			expectedError: domain.ErrUpdatedAtRequired,
 		},
 		{
 			name:    "Empty builder",
 			builder: NewBuilder,
 			expectedError: errors.Join(
-				ErrIDRequired,
+				domain.ErrIDRequired,
 				ErrTelegramIDRequired,
 				ErrUsernameRequired,
-				ErrCreatedAtRequired,
-				ErrUpdatedAtRequired,
+				domain.ErrCreatedAtRequired,
+				domain.ErrUpdatedAtRequired,
 			),
 		},
 	}

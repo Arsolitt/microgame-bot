@@ -1,13 +1,6 @@
 package user
 
-import (
-	"minigame-bot/internal/utils"
-
-	"github.com/google/uuid"
-)
-
 type (
-	ID         uuid.UUID
 	TelegramID int64
 	ChatID     int64
 	FirstName  string
@@ -26,14 +19,6 @@ func (t TelegramID) IsZero() bool {
 
 func (u Username) IsZero() bool {
 	return u == ""
-}
-
-func (u ID) String() string {
-	return utils.UUIDString(u)
-}
-
-func (u ID) IsZero() bool {
-	return utils.UUIDIsZero(u)
 }
 
 func (c *ChatID) IsZero() bool {

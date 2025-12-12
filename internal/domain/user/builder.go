@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"minigame-bot/internal/core"
+	"minigame-bot/internal/domain"
 	"minigame-bot/internal/utils"
 	"time"
 
@@ -11,11 +12,8 @@ import (
 )
 
 var (
-	ErrIDRequired         = errors.New("ID required")
 	ErrTelegramIDRequired = errors.New("telegram ID required")
 	ErrUsernameRequired   = errors.New("username required")
-	ErrCreatedAtRequired  = errors.New("createdAt required")
-	ErrUpdatedAtRequired  = errors.New("updatedAt required")
 )
 
 type Builder struct {
@@ -53,7 +51,7 @@ func (b Builder) IDFromUUID(id uuid.UUID) Builder {
 
 func (b Builder) ID(id ID) Builder {
 	if id.IsZero() {
-		b.errors = append(b.errors, ErrIDRequired)
+		b.errors = append(b.errors, domain.ErrIDRequired)
 		return b
 	}
 	b.id = id
@@ -139,7 +137,7 @@ func (b Builder) UsernameFromString(username string) Builder {
 
 func (b Builder) CreatedAt(createdAt time.Time) Builder {
 	if createdAt.IsZero() {
-		b.errors = append(b.errors, ErrCreatedAtRequired)
+		b.errors = append(b.errors, domain.ErrCreatedAtRequired)
 		return b
 	}
 	b.createdAt = createdAt
@@ -148,7 +146,7 @@ func (b Builder) CreatedAt(createdAt time.Time) Builder {
 
 func (b Builder) UpdatedAt(updatedAt time.Time) Builder {
 	if updatedAt.IsZero() {
-		b.errors = append(b.errors, ErrUpdatedAtRequired)
+		b.errors = append(b.errors, domain.ErrUpdatedAtRequired)
 		return b
 	}
 	b.updatedAt = updatedAt
@@ -157,7 +155,7 @@ func (b Builder) UpdatedAt(updatedAt time.Time) Builder {
 
 func (b Builder) Build() (User, error) {
 	if b.id.IsZero() {
-		b.errors = append(b.errors, ErrIDRequired)
+		b.errors = append(b.errors, domain.ErrIDRequired)
 	}
 	if b.telegramID.IsZero() {
 		b.errors = append(b.errors, ErrTelegramIDRequired)
