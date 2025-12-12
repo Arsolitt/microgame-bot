@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// TODO: add tests
 func (t TTT) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Board           [3][3]Cell      `json:"board"`
@@ -28,6 +29,7 @@ func (t TTT) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// TODO: add tests
 func (t *TTT) UnmarshalJSON(data []byte) error {
 	var aux struct {
 		Board           [3][3]Cell      `json:"board"`
@@ -45,18 +47,18 @@ func (t *TTT) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	ttt, err := NewBuilder().
-		ID(aux.ID).
-		InlineMessageID(aux.InlineMessageID).
-		CreatorID(aux.CreatorID).
-		PlayerXID(aux.PlayerXID).
-		PlayerOID(aux.PlayerOID).
-		Board(aux.Board).
-		Turn(aux.Turn).
-		Winner(aux.Winner).
-		CreatedAt(aux.CreatedAt).
-		UpdatedAt(aux.UpdatedAt).
-		Build()
+	ttt, err := New(
+		WithID(aux.ID),
+		WithInlineMessageID(aux.InlineMessageID),
+		WithCreatorID(aux.CreatorID),
+		WithPlayerXID(aux.PlayerXID),
+		WithPlayerOID(aux.PlayerOID),
+		WithBoard(aux.Board),
+		WithTurn(aux.Turn),
+		WithWinner(aux.Winner),
+		WithCreatedAt(aux.CreatedAt),
+		WithUpdatedAt(aux.UpdatedAt),
+	)
 	if err != nil {
 		return err
 	}

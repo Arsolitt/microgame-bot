@@ -2,6 +2,7 @@ package ttt
 
 import (
 	"math/rand"
+	"minigame-bot/internal/domain"
 	"minigame-bot/internal/domain/user"
 	"time"
 )
@@ -25,19 +26,47 @@ const (
 )
 
 type TTT struct {
-	board           [3][3]Cell      `json:"board"`
-	turn            Player          `json:"turn"`
-	winner          Player          `json:"winner"`
-	inlineMessageID InlineMessageID `json:"inline_message_id"`
-	id              ID              `json:"id"`
-	playerXID       user.ID         `json:"player_x_id"`
-	playerOID       user.ID         `json:"player_o_id"`
-	creatorID       user.ID         `json:"creator_id"`
-	createdAt       time.Time       `json:"created_at"`
-	updatedAt       time.Time       `json:"updated_at"`
+	board           [3][3]Cell
+	turn            Player
+	winner          Player
+	inlineMessageID InlineMessageID
+	id              ID
+	playerXID       user.ID
+	playerOID       user.ID
+	creatorID       user.ID
+	createdAt       time.Time
+	updatedAt       time.Time
 }
 
 var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+// New creates a new TTT instance with the given options
+func New(opts ...TTTOpt) (TTT, error) {
+	t := &TTT{
+		board:  [3][3]Cell{},
+		turn:   PlayerX,
+		winner: PlayerEmpty,
+	}
+
+	for _, opt := range opts {
+		if err := opt(t); err != nil {
+			return TTT{}, err
+		}
+	}
+
+	// Validate required fields
+	if t.id.IsZero() {
+		return TTT{}, domain.ErrIDRequired
+	}
+	if t.inlineMessageID.IsZero() {
+		return TTT{}, ErrInlineMessageIDRequired
+	}
+	if t.creatorID.IsZero() {
+		return TTT{}, ErrCreatorIDRequired
+	}
+
+	return *t, nil
+}
 
 func (t TTT) ID() ID                           { return t.id }
 func (t TTT) InlineMessageID() InlineMessageID { return t.inlineMessageID }
