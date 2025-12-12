@@ -1,17 +1,8 @@
 package ttt
 
 type (
-	Player          string
-	InlineMessageID string
+	Player string
 )
-
-func (i InlineMessageID) String() string {
-	return string(i)
-}
-
-func (i InlineMessageID) IsZero() bool {
-	return string(i) == ""
-}
 
 func (p Player) Symbol() string {
 	switch p {

@@ -13,7 +13,7 @@ import (
 
 func TestNew_Success(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 	playerXID := user.ID(utils.NewUniqueID())
 	playerOID := user.ID(utils.NewUniqueID())
@@ -43,7 +43,7 @@ func TestNew_Success(t *testing.T) {
 
 func TestWithRandomFirstPlayer(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 
 	game, err := New(
@@ -63,7 +63,7 @@ func TestWithRandomFirstPlayer(t *testing.T) {
 
 func TestWithCreatorAsX(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 
 	game, err := New(
@@ -80,7 +80,7 @@ func TestWithCreatorAsX(t *testing.T) {
 
 func TestWithCreatorAsO(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 
 	game, err := New(
@@ -97,7 +97,7 @@ func TestWithCreatorAsO(t *testing.T) {
 
 func TestNew_ValidationError(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 
 	tests := []struct {
@@ -127,7 +127,7 @@ func TestNew_ValidationError(t *testing.T) {
 			name: "InlineMessageID is empty",
 			opts: []TTTOpt{
 				WithID(id),
-				WithInlineMessageID(InlineMessageID("")),
+				WithInlineMessageID(domain.InlineMessageID("")),
 				WithCreatorID(creatorID),
 			},
 			expectedError: ErrInlineMessageIDRequired,
@@ -182,7 +182,7 @@ func TestNew_ValidationError(t *testing.T) {
 }
 
 func TestWithNewID_GeneratesUniqueID(t *testing.T) {
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 
 	game, err := New(
@@ -207,7 +207,7 @@ func TestWithNewID_GeneratesUniqueID(t *testing.T) {
 
 func TestWithRandomFirstPlayer_WithoutCreatorID(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 
 	_, err := New(
 		WithID(id),
@@ -221,7 +221,7 @@ func TestWithRandomFirstPlayer_WithoutCreatorID(t *testing.T) {
 
 func TestWithCreatorAsX_WithoutCreatorID(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 
 	_, err := New(
 		WithID(id),
@@ -235,7 +235,7 @@ func TestWithCreatorAsX_WithoutCreatorID(t *testing.T) {
 
 func TestWithCreatorAsO_WithoutCreatorID(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 
 	_, err := New(
 		WithID(id),
@@ -249,7 +249,7 @@ func TestWithCreatorAsO_WithoutCreatorID(t *testing.T) {
 
 func TestNew_BoardValidation(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 	playerXID := user.ID(utils.NewUniqueID())
 	playerOID := user.ID(utils.NewUniqueID())

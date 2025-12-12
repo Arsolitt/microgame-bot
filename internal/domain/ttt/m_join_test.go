@@ -1,6 +1,7 @@
 package ttt
 
 import (
+	"minigame-bot/internal/domain"
 	"minigame-bot/internal/domain/user"
 	"minigame-bot/internal/utils"
 	"testing"
@@ -11,7 +12,7 @@ import (
 
 func TestJoinGame_SuccessAddFirstPlayer(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 	playerID := user.ID(utils.NewUniqueID())
 
@@ -30,7 +31,7 @@ func TestJoinGame_SuccessAddFirstPlayer(t *testing.T) {
 
 func TestJoinGame_SuccessAddSecondPlayerWhenXExists(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 	playerXID := user.ID(utils.NewUniqueID())
 	playerOID := user.ID(utils.NewUniqueID())
@@ -51,7 +52,7 @@ func TestJoinGame_SuccessAddSecondPlayerWhenXExists(t *testing.T) {
 
 func TestJoinGame_SuccessAddSecondPlayerWhenOExists(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 	playerOID := user.ID(utils.NewUniqueID())
 	playerXID := user.ID(utils.NewUniqueID())
@@ -72,7 +73,7 @@ func TestJoinGame_SuccessAddSecondPlayerWhenOExists(t *testing.T) {
 
 func TestJoinGame_ErrorGameFull(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 	playerXID := user.ID(utils.NewUniqueID())
 	playerOID := user.ID(utils.NewUniqueID())
@@ -94,7 +95,7 @@ func TestJoinGame_ErrorGameFull(t *testing.T) {
 
 func TestJoinGame_ErrorPlayerAlreadyInGameAsX(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 	playerXID := user.ID(utils.NewUniqueID())
 
@@ -113,7 +114,7 @@ func TestJoinGame_ErrorPlayerAlreadyInGameAsX(t *testing.T) {
 
 func TestJoinGame_ErrorPlayerAlreadyInGameAsO(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 	playerOID := user.ID(utils.NewUniqueID())
 
@@ -132,7 +133,7 @@ func TestJoinGame_ErrorPlayerAlreadyInGameAsO(t *testing.T) {
 
 func TestJoinGame_ValidBoardAfterJoin(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 	playerXID := user.ID(utils.NewUniqueID())
 	playerOID := user.ID(utils.NewUniqueID())
@@ -162,7 +163,7 @@ func TestJoinGame_ValidBoardAfterJoin(t *testing.T) {
 
 func TestJoinGame_BothPlayersCanJoinSequentially(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 	player1ID := user.ID(utils.NewUniqueID())
 	player2ID := user.ID(utils.NewUniqueID())

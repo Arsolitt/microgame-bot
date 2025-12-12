@@ -3,6 +3,7 @@ package gorm
 import (
 	"context"
 	"minigame-bot/internal/core"
+	"minigame-bot/internal/domain"
 	"minigame-bot/internal/domain/ttt"
 	"minigame-bot/internal/domain/user"
 
@@ -25,7 +26,7 @@ func (r *Repository) CreateGame(ctx context.Context, game ttt.TTT) (ttt.TTT, err
 	return model.ToDomain()
 }
 
-func (r *Repository) GameByMessageID(ctx context.Context, id ttt.InlineMessageID) (ttt.TTT, error) {
+func (r *Repository) GameByMessageID(ctx context.Context, id domain.InlineMessageID) (ttt.TTT, error) {
 	model, err := gorm.G[TTT](r.db).
 		Where("inline_message_id = ?", string(id)).
 		First(ctx)

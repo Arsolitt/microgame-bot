@@ -42,7 +42,7 @@ func WithIDFromUUID(id uuid.UUID) TTTOpt {
 	return WithID(ID(id))
 }
 
-func WithInlineMessageID(inlineMessageID InlineMessageID) TTTOpt {
+func WithInlineMessageID(inlineMessageID domain.InlineMessageID) TTTOpt {
 	return func(t *TTT) error {
 		if inlineMessageID.IsZero() {
 			return ErrInlineMessageIDRequired
@@ -53,7 +53,7 @@ func WithInlineMessageID(inlineMessageID InlineMessageID) TTTOpt {
 }
 
 func WithInlineMessageIDFromString(inlineMessageID string) TTTOpt {
-	return WithInlineMessageID(InlineMessageID(inlineMessageID))
+	return WithInlineMessageID(domain.InlineMessageID(inlineMessageID))
 }
 
 func WithCreatorID(creatorID user.ID) TTTOpt {

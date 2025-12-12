@@ -1,6 +1,7 @@
 package ttt
 
 import (
+	"minigame-bot/internal/domain"
 	"minigame-bot/internal/domain/user"
 	"minigame-bot/internal/utils"
 	"testing"
@@ -11,7 +12,7 @@ import (
 
 func createTestGame() (TTT, user.ID, user.ID) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 	playerXID := user.ID(utils.NewUniqueID())
 	playerOID := user.ID(utils.NewUniqueID())
@@ -96,7 +97,7 @@ func TestMakeMove_GameAlreadyFinished(t *testing.T) {
 
 func TestMakeMove_WaitingForOpponent(t *testing.T) {
 	id := ID(utils.NewUniqueID())
-	inlineMessageID := InlineMessageID("inline123")
+	inlineMessageID := domain.InlineMessageID("inline123")
 	creatorID := user.ID(utils.NewUniqueID())
 	playerXID := user.ID(utils.NewUniqueID())
 

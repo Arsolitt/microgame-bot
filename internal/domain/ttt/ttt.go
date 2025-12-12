@@ -29,7 +29,7 @@ type TTT struct {
 	board           [3][3]Cell
 	turn            Player
 	winner          Player
-	inlineMessageID InlineMessageID
+	inlineMessageID domain.InlineMessageID
 	id              ID
 	playerXID       user.ID
 	playerOID       user.ID
@@ -72,16 +72,16 @@ func New(opts ...TTTOpt) (TTT, error) {
 	return *t, nil
 }
 
-func (t TTT) ID() ID                           { return t.id }
-func (t TTT) InlineMessageID() InlineMessageID { return t.inlineMessageID }
-func (t TTT) CreatorID() user.ID               { return t.creatorID }
-func (t TTT) PlayerXID() user.ID               { return t.playerXID }
-func (t TTT) PlayerOID() user.ID               { return t.playerOID }
-func (t TTT) Turn() Player                     { return t.turn }
-func (t TTT) Winner() Player                   { return t.winner }
-func (t TTT) Board() [3][3]Cell                { return t.board }
-func (t TTT) CreatedAt() time.Time             { return t.createdAt }
-func (t TTT) UpdatedAt() time.Time             { return t.updatedAt }
+func (t TTT) ID() ID                                  { return t.id }
+func (t TTT) InlineMessageID() domain.InlineMessageID { return t.inlineMessageID }
+func (t TTT) CreatorID() user.ID                      { return t.creatorID }
+func (t TTT) PlayerXID() user.ID                      { return t.playerXID }
+func (t TTT) PlayerOID() user.ID                      { return t.playerOID }
+func (t TTT) Turn() Player                            { return t.turn }
+func (t TTT) Winner() Player                          { return t.winner }
+func (t TTT) Board() [3][3]Cell                       { return t.board }
+func (t TTT) CreatedAt() time.Time                    { return t.createdAt }
+func (t TTT) UpdatedAt() time.Time                    { return t.updatedAt }
 
 // GetPlayerFigure returns the player symbol (X or O) for the given user ID.
 func (t TTT) GetPlayerFigure(userID user.ID) (Player, error) {

@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"minigame-bot/internal/core"
+	"minigame-bot/internal/domain"
 	"minigame-bot/internal/domain/ttt"
 	"sync"
 )
@@ -26,7 +27,7 @@ func (r *Repository) CreateGame(ctx context.Context, game ttt.TTT) error {
 	return nil
 }
 
-func (r *Repository) GameByMessageID(ctx context.Context, id ttt.InlineMessageID) (ttt.TTT, error) {
+func (r *Repository) GameByMessageID(ctx context.Context, id domain.InlineMessageID) (ttt.TTT, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
