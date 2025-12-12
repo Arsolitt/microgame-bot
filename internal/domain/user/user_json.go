@@ -42,7 +42,7 @@ func (u *User) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	user, err := NewUser(
+	user, err := New(
 		WithID(aux.ID),
 		WithTelegramID(aux.TelegramID),
 		WithChatID(aux.ChatID),

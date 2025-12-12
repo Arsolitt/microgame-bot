@@ -88,7 +88,7 @@ func UserProvider(
 		if err != nil {
 			if errors.Is(err, core.ErrUserNotFound) {
 				l.InfoContext(ctx, "User not found, creating new")
-				buildedUser, err := domainUser.NewUser(
+				buildedUser, err := domainUser.New(
 					domainUser.WithNewID(),
 					domainUser.WithTelegramIDFromInt(userTelegramID),
 					domainUser.WithFirstName(domainUser.FirstName(firstName)),

@@ -1,7 +1,6 @@
 package user
 
 import (
-	"errors"
 	"minigame-bot/internal/core"
 	"minigame-bot/internal/domain"
 	"minigame-bot/internal/utils"
@@ -12,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewUser_Success(t *testing.T) {
+func TestNew_Success(t *testing.T) {
 	id := ID(utils.NewUniqueID())
 	telegramID := TelegramID(1234567890)
 	chatID := ChatID(1234567890)
@@ -21,7 +20,7 @@ func TestNewUser_Success(t *testing.T) {
 	username := Username("john.doe")
 	now := time.Now()
 
-	user, err := NewUser(
+	user, err := New(
 		WithID(id),
 		WithTelegramID(telegramID),
 		WithChatID(&chatID),
@@ -62,7 +61,7 @@ func TestNewUser_Success(t *testing.T) {
 	}
 }
 
-func TestNewUser_ValidationError(t *testing.T) {
+func TestNew_ValidationError(t *testing.T) {
 	id := ID(utils.NewUniqueID())
 	telegramID := TelegramID(1234567890)
 	chatID := ChatID(1234567890)
@@ -156,51 +155,48 @@ func TestNewUser_ValidationError(t *testing.T) {
 			expectedError: ErrUsernameRequired,
 		},
 		{
+			name: "Missing ID",
+			opts: func() []UserOpt {
+				return []UserOpt{
+					WithTelegramID(telegramID),
+					WithUsername(username),
+				}
+			},
+			expectedError: domain.ErrIDRequired,
+		},
+		{
+			name: "Missing TelegramID",
+			opts: func() []UserOpt {
+				return []UserOpt{
+					WithID(id),
+					WithUsername(username),
+				}
+			},
+			expectedError: ErrTelegramIDRequired,
+		},
+		{
+			name: "Missing Username",
+			opts: func() []UserOpt {
+				return []UserOpt{
+					WithID(id),
+					WithTelegramID(telegramID),
+				}
+			},
+			expectedError: ErrUsernameRequired,
+		},
+		{
 			name: "Empty options",
 			opts: func() []UserOpt {
 				return []UserOpt{}
 			},
-			expectedError: errors.Join(
-				domain.ErrIDRequired,
-				ErrTelegramIDRequired,
-				ErrUsernameRequired,
-			),
+			expectedError: domain.ErrIDRequired,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := NewUser(test.opts()...)
-			if err == nil && test.expectedError != nil {
-				t.Errorf("expected error %v, got nil", test.expectedError)
-			}
-			if test.name == "Empty options" {
-				var joinErr interface{ Unwrap() []error }
-				if !errors.As(err, &joinErr) {
-					assert.Fail(t, "expected a join error, but got a different type", err)
-				}
-				actualErrors := joinErr.Unwrap()
-
-				var expectedErr interface{ Unwrap() []error }
-				if !errors.As(test.expectedError, &expectedErr) {
-					assert.Fail(t, "expected a join error, but got a different type", test.expectedError)
-				}
-				expectedErrors := expectedErr.Unwrap()
-				for _, expected := range expectedErrors {
-					found := false
-					for _, actual := range actualErrors {
-						if errors.Is(actual, expected) {
-							found = true
-							break
-						}
-					}
-					if !found {
-						assert.Fail(t, "expected error %q was not found in the joined error", expected)
-					}
-				}
-			} else {
-				assert.ErrorIs(t, err, test.expectedError)
-			}
+			_, err := New(test.opts()...)
+			assert.ErrorIs(t, err, test.expectedError)
 		})
 	}
 }

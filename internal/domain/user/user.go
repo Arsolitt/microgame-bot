@@ -1,7 +1,6 @@
 package user
 
 import (
-	"errors"
 	"minigame-bot/internal/domain"
 	"time"
 )
@@ -17,28 +16,23 @@ type User struct {
 	id         ID
 }
 
-func NewUser(opts ...UserOpt) (User, error) {
+func New(opts ...UserOpt) (User, error) {
 	u := &User{}
-	var errs []error
 
 	for _, opt := range opts {
 		if err := opt(u); err != nil {
-			errs = append(errs, err)
+			return User{}, err
 		}
 	}
 
 	if u.id.IsZero() {
-		errs = append(errs, domain.ErrIDRequired)
+		return User{}, domain.ErrIDRequired
 	}
 	if u.telegramID.IsZero() {
-		errs = append(errs, ErrTelegramIDRequired)
+		return User{}, ErrTelegramIDRequired
 	}
 	if u.username.IsZero() {
-		errs = append(errs, ErrUsernameRequired)
-	}
-
-	if len(errs) > 0 {
-		return User{}, errors.Join(errs...)
+		return User{}, ErrUsernameRequired
 	}
 
 	return *u, nil

@@ -21,7 +21,7 @@ type User struct {
 
 // TODO: add tests
 func (m User) ToDomain() (domainUser.User, error) {
-	return domainUser.NewUser(
+	return domainUser.New(
 		domainUser.WithIDFromUUID(m.ID),
 		domainUser.WithTelegramIDFromInt(m.TelegramID),
 		domainUser.WithChatIDFromPointer(m.ChatID),

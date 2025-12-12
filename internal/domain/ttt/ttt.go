@@ -102,6 +102,10 @@ func (t TTT) JoinGame(secondPlayerID user.ID) (TTT, error) {
 		t.playerOID = secondPlayerID
 	}
 
+	if err := t.validateBoard(); err != nil {
+		return TTT{}, err
+	}
+
 	return t, nil
 }
 
@@ -170,6 +174,10 @@ func (t TTT) MakeMove(row, col int, userID user.ID) (TTT, error) {
 		t.winner = winner
 	} else {
 		t = t.switchTurn()
+	}
+
+	if err := t.validateBoard(); err != nil {
+		return TTT{}, err
 	}
 
 	return t, nil
