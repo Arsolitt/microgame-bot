@@ -3,6 +3,7 @@ package domain
 type (
 	InlineMessageID string
 	GameStatus      string
+	Player          string
 )
 
 const (
@@ -11,6 +12,10 @@ const (
 	GameStatusInProgress        GameStatus = "in_progress"
 	GameStatusFinished          GameStatus = "finished"
 	GameStatusCancelled         GameStatus = "cancelled"
+)
+
+const (
+	PlayerEmpty Player = ""
 )
 
 func (i InlineMessageID) String() string {
