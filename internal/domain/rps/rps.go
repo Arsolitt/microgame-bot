@@ -103,7 +103,7 @@ func (r RPS) IsDraw() bool {
 	return false
 }
 
-func (r RPS) GetWinnerID() user.ID {
+func (r RPS) WinnerID() user.ID {
 	if r.winner == Player1 {
 		return r.player1ID
 	}
@@ -111,6 +111,16 @@ func (r RPS) GetWinnerID() user.ID {
 		return r.player2ID
 	}
 	return user.ID{}
+}
+
+func (r RPS) PlayerIcon(pr Player) string {
+	if pr == Player1 {
+		return r.choice1.Icon()
+	}
+	if pr == Player2 {
+		return r.choice2.Icon()
+	}
+	return ""
 }
 
 func (r RPS) checkWinner() Player {
