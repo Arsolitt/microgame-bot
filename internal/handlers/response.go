@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"microgame-bot/internal/domain"
+
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 )
@@ -100,4 +102,20 @@ func (r *CallbackQueryResponse) Handle(ctx *th.Context) error {
 		CacheTime:       r.CacheTime,
 	}
 	return ctx.Bot().AnswerCallbackQuery(ctx, params)
+}
+
+type iSuccessMessageDefiner interface {
+	IsFinished() bool
+	IsDraw() bool
+	Winner() domain.Player
+}
+
+func getSuccessMessage(game iSuccessMessageDefiner) string {
+	if game.Winner() != domain.PlayerEmpty {
+		return "Победа! 🎉"
+	}
+	if game.IsDraw() {
+		return "Ничья!"
+	}
+	return "Ход сделан!"
 }
