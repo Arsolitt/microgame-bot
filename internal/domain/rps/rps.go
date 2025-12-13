@@ -69,6 +69,24 @@ func (r RPS) Status() domain.GameStatus               { return r.status }
 func (r RPS) CreatedAt() time.Time                    { return r.createdAt }
 func (r RPS) UpdatedAt() time.Time                    { return r.updatedAt }
 
+func (r RPS) JoinGame(playerID user.ID) (RPS, error) {
+	if !r.player1ID.IsZero() && !r.player2ID.IsZero() {
+		return RPS{}, domain.ErrGameFull
+	}
+
+	if r.player1ID == playerID || r.player2ID == playerID {
+		return RPS{}, domain.ErrPlayerAlreadyInGame
+	}
+
+	if r.player1ID.IsZero() {
+		r.player1ID = playerID
+	} else {
+		r.player2ID = playerID
+	}
+
+	return r, nil
+}
+
 func (r RPS) MakeChoice(playerID user.ID, choice string) (RPS, error) {
 	parsedChoice, err := ChoiceFromString(choice)
 	if err != nil {

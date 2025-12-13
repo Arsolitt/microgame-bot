@@ -21,6 +21,7 @@ func (t TTT) JoinGame(playerID user.ID) (TTT, error) {
 		t.playerOID = playerID
 	}
 
+	// Maybe not needed
 	if err := t.validateBoard(); err != nil {
 		return TTT{}, err
 	}

@@ -57,7 +57,7 @@ func TTTMove(gameRepo tttRepository.ITTTRepository, userRepo userRepository.IUse
 			return nil, err
 		}
 
-		boardKeyboard := buildGameBoardKeyboard(&game, playerX, playerO)
+		boardKeyboard := buildTTTGameBoardKeyboard(&game, playerX, playerO)
 
 		if game.IsGameFinished() {
 			msg, err := msgs.TTTGameState(game, playerX, playerO)
