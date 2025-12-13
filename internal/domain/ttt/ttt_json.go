@@ -2,8 +2,8 @@ package ttt
 
 import (
 	"encoding/json"
-	"minigame-bot/internal/domain"
-	"minigame-bot/internal/domain/user"
+	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/user"
 	"time"
 )
 

@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"minigame-bot/internal/core"
+	"microgame-bot/internal/core"
 )
 
 const (

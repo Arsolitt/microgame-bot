@@ -3,11 +3,11 @@ package mdw
 import (
 	"errors"
 	"log/slog"
-	"minigame-bot/internal/core"
-	"minigame-bot/internal/core/logger"
-	domainUser "minigame-bot/internal/domain/user"
-	"minigame-bot/internal/locker"
-	repository "minigame-bot/internal/repo/user"
+	"microgame-bot/internal/core"
+	"microgame-bot/internal/core/logger"
+	domainUser "microgame-bot/internal/domain/user"
+	"microgame-bot/internal/locker"
+	repository "microgame-bot/internal/repo/user"
 	"strconv"
 
 	"github.com/mymmrac/telego"

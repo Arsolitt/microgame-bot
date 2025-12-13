@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"log/slog"
-	"minigame-bot/internal/core"
-	"minigame-bot/internal/core/logger"
-	"minigame-bot/internal/domain/ttt"
-	"minigame-bot/internal/domain/user"
-	"minigame-bot/internal/mdw"
+	"microgame-bot/internal/core"
+	"microgame-bot/internal/core/logger"
+	"microgame-bot/internal/domain/ttt"
+	"microgame-bot/internal/domain/user"
+	"microgame-bot/internal/mdw"
 	"os"
 	"os/signal"
 
@@ -18,11 +18,11 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 
-	memoryFSM "minigame-bot/internal/fsm/memory"
-	"minigame-bot/internal/handlers"
-	memoryLocker "minigame-bot/internal/locker/memory"
-	gormTTTRepository "minigame-bot/internal/repo/ttt/gorm"
-	gormUserRepository "minigame-bot/internal/repo/user/gorm"
+	memoryFSM "microgame-bot/internal/fsm/memory"
+	"microgame-bot/internal/handlers"
+	memoryLocker "microgame-bot/internal/locker/memory"
+	gormTTTRepository "microgame-bot/internal/repo/ttt/gorm"
+	gormUserRepository "microgame-bot/internal/repo/user/gorm"
 
 	gormLogger "gorm.io/gorm/logger"
 )

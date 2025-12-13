@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"log/slog"
-	"minigame-bot/internal/core"
-	"minigame-bot/internal/domain/ttt"
-	domainUser "minigame-bot/internal/domain/user"
-	"minigame-bot/internal/msgs"
+	"microgame-bot/internal/core"
+	"microgame-bot/internal/domain/ttt"
+	domainUser "microgame-bot/internal/domain/user"
+	"microgame-bot/internal/msgs"
 
-	repository "minigame-bot/internal/repo/ttt"
+	repository "microgame-bot/internal/repo/ttt"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"

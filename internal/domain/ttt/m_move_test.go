@@ -1,9 +1,9 @@
 package ttt
 
 import (
-	"minigame-bot/internal/domain"
-	"minigame-bot/internal/domain/user"
-	"minigame-bot/internal/utils"
+	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/user"
+	"microgame-bot/internal/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

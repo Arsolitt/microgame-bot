@@ -2,10 +2,10 @@ package gorm
 
 import (
 	"context"
-	"minigame-bot/internal/core"
-	"minigame-bot/internal/domain"
-	"minigame-bot/internal/domain/ttt"
-	"minigame-bot/internal/domain/user"
+	"microgame-bot/internal/core"
+	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/ttt"
+	"microgame-bot/internal/domain/user"
 
 	"gorm.io/gorm"
 )

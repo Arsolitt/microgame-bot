@@ -1,6 +1,6 @@
 package ttt
 
-import "minigame-bot/internal/domain/user"
+import "microgame-bot/internal/domain/user"
 
 // JoinGame adds the second player to the game.
 func (t TTT) JoinGame(playerID user.ID) (TTT, error) {

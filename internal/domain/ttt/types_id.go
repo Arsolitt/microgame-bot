@@ -3,7 +3,7 @@ package ttt
 import (
 	"context"
 	"fmt"
-	"minigame-bot/internal/utils"
+	"microgame-bot/internal/utils"
 	"reflect"
 
 	"github.com/google/uuid"

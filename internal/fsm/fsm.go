@@ -1,6 +1,6 @@
 package fsm
 
-import domainUser "minigame-bot/internal/domain/user"
+import domainUser "microgame-bot/internal/domain/user"
 
 type State string
 

@@ -1,8 +1,8 @@
 package memory
 
 import (
-	domainUser "minigame-bot/internal/domain/user"
-	"minigame-bot/internal/fsm"
+	domainUser "microgame-bot/internal/domain/user"
+	"microgame-bot/internal/fsm"
 	"sync"
 )
 

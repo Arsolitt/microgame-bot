@@ -1,6 +1,6 @@
 package ttt
 
-import "minigame-bot/internal/domain/user"
+import "microgame-bot/internal/domain/user"
 
 // MakeMove attempts to make a move at the specified coordinates for the given user.
 func (t TTT) MakeMove(row, col int, userID user.ID) (TTT, error) {

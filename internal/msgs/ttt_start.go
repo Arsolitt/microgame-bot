@@ -2,8 +2,8 @@ package msgs
 
 import (
 	"fmt"
-	"minigame-bot/internal/domain/ttt"
-	domainUser "minigame-bot/internal/domain/user"
+	"microgame-bot/internal/domain/ttt"
+	domainUser "microgame-bot/internal/domain/user"
 	"strings"
 )
 

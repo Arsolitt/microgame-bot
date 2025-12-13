@@ -3,9 +3,9 @@ package gorm
 import (
 	"time"
 
-	domainTTT "minigame-bot/internal/domain/ttt"
-	"minigame-bot/internal/domain/user"
-	userModel "minigame-bot/internal/repo/user/gorm"
+	domainTTT "microgame-bot/internal/domain/ttt"
+	"microgame-bot/internal/domain/user"
+	userModel "microgame-bot/internal/repo/user/gorm"
 
 	"github.com/google/uuid"
 )

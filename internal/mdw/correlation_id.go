@@ -1,8 +1,8 @@
 package mdw
 
 import (
-	"minigame-bot/internal/core"
-	"minigame-bot/internal/core/logger"
+	"microgame-bot/internal/core"
+	"microgame-bot/internal/core/logger"
 
 	"github.com/google/uuid"
 	"github.com/mymmrac/telego"

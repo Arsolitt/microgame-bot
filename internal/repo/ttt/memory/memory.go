@@ -2,9 +2,9 @@ package memory
 
 import (
 	"context"
-	"minigame-bot/internal/core"
-	"minigame-bot/internal/domain"
-	"minigame-bot/internal/domain/ttt"
+	"microgame-bot/internal/core"
+	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/ttt"
 	"sync"
 )
 

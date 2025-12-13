@@ -3,7 +3,7 @@ package gorm
 import (
 	"time"
 
-	domainUser "minigame-bot/internal/domain/user"
+	domainUser "microgame-bot/internal/domain/user"
 
 	"github.com/google/uuid"
 )

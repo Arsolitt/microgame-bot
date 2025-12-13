@@ -2,10 +2,10 @@ package ttt
 
 import (
 	"fmt"
-	"minigame-bot/internal/core"
-	"minigame-bot/internal/domain"
-	"minigame-bot/internal/domain/user"
-	"minigame-bot/internal/utils"
+	"microgame-bot/internal/core"
+	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/user"
+	"microgame-bot/internal/utils"
 	"time"
 
 	"github.com/google/uuid"

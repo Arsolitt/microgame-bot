@@ -3,8 +3,8 @@ package memory
 import (
 	"context"
 	"log/slog"
-	"minigame-bot/internal/core"
-	domainUser "minigame-bot/internal/domain/user"
+	"microgame-bot/internal/core"
+	domainUser "microgame-bot/internal/domain/user"
 	"sync"
 )
 

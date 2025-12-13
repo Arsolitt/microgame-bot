@@ -1,7 +1,7 @@
 package user
 
 import (
-	"minigame-bot/internal/domain"
+	"microgame-bot/internal/domain"
 	"time"
 )
 

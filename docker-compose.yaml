@@ -1,5 +1,5 @@
 services:
-  minigame-bot:
+  microgame-bot:
     build:
       context: .
       target: local

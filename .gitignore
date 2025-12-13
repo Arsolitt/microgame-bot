@@ -9,7 +9,7 @@
 
 # Binaries
 minigame
-minigame-bot
+microgame-bot
 *.exe
 *.exe~
 *.dll

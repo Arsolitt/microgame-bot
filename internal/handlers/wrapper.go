@@ -3,9 +3,9 @@ package handlers
 import (
 	"errors"
 	"log/slog"
-	"minigame-bot/internal/core"
-	"minigame-bot/internal/core/logger"
-	"minigame-bot/internal/domain/ttt"
+	"microgame-bot/internal/core"
+	"microgame-bot/internal/core/logger"
+	"microgame-bot/internal/domain/ttt"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"

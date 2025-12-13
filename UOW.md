@@ -78,8 +78,8 @@ package repo
 import (
 	"context"
 	"gorm.io/gorm"
-	userRepo "minigame-bot/internal/repo/user"
-	tttRepo "minigame-bot/internal/repo/ttt"
+	userRepo "microgame-bot/internal/repo/user"
+	tttRepo "microgame-bot/internal/repo/ttt"
 )
 
 // UnitOfWork provides transactional operations over multiple repositories
@@ -138,7 +138,7 @@ package repository
 
 import (
 	"context"
-	domainUser "minigame-bot/internal/domain/user"
+	domainUser "microgame-bot/internal/domain/user"
 )
 
 type IUserGetter interface {
@@ -171,7 +171,7 @@ package ttt
 
 import (
 	"context"
-	"minigame-bot/internal/domain/ttt"
+	"microgame-bot/internal/domain/ttt"
 )
 
 type ITTTGetter interface {
@@ -208,8 +208,8 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	domainUser "minigame-bot/internal/domain/user"
-	repository "minigame-bot/internal/repo/user"
+	domainUser "microgame-bot/internal/domain/user"
+	repository "microgame-bot/internal/repo/user"
 )
 
 var ErrNotInTransaction = errors.New("locked methods can only be called within a transaction")
@@ -306,8 +306,8 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	domainTTT "minigame-bot/internal/domain/ttt"
-	repository "minigame-bot/internal/repo/ttt"
+	domainTTT "microgame-bot/internal/domain/ttt"
+	repository "microgame-bot/internal/repo/ttt"
 )
 
 var ErrNotInTransaction = errors.New("locked methods can only be called within a transaction")
@@ -385,9 +385,9 @@ package service
 import (
 	"context"
 	"errors"
-	"minigame-bot/internal/domain/ttt"
-	"minigame-bot/internal/domain/user"
-	"minigame-bot/internal/repo"
+	"microgame-bot/internal/domain/ttt"
+	"microgame-bot/internal/domain/user"
+	"microgame-bot/internal/repo"
 )
 
 type GameService struct {
@@ -521,9 +521,9 @@ import (
 	"context"
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
-	"minigame-bot/internal/repo"
-	userRepo "minigame-bot/internal/repo/user"
-	tttRepo "minigame-bot/internal/repo/ttt"
+	"microgame-bot/internal/repo"
+	userRepo "microgame-bot/internal/repo/user"
+	tttRepo "microgame-bot/internal/repo/ttt"
 )
 
 type MockUnitOfWork struct {
@@ -559,8 +559,8 @@ package mock
 import (
 	"context"
 	"github.com/stretchr/testify/mock"
-	"minigame-bot/internal/domain/user"
-	repository "minigame-bot/internal/repo/user"
+	"microgame-bot/internal/domain/user"
+	repository "microgame-bot/internal/repo/user"
 )
 
 type MockUserRepository struct {
@@ -611,8 +611,8 @@ package mock
 import (
 	"context"
 	"github.com/stretchr/testify/mock"
-	"minigame-bot/internal/domain/ttt"
-	repository "minigame-bot/internal/repo/ttt"
+	"microgame-bot/internal/domain/ttt"
+	repository "microgame-bot/internal/repo/ttt"
 )
 
 type MockTTTRepository struct {
@@ -665,11 +665,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	
-	"minigame-bot/internal/domain/ttt"
-	"minigame-bot/internal/domain/user"
-	repoMock "minigame-bot/internal/repo/mock"
-	userRepoMock "minigame-bot/internal/repo/user/mock"
-	tttRepoMock "minigame-bot/internal/repo/ttt/mock"
+	"microgame-bot/internal/domain/ttt"
+	"microgame-bot/internal/domain/user"
+	repoMock "microgame-bot/internal/repo/mock"
+	userRepoMock "microgame-bot/internal/repo/user/mock"
+	tttRepoMock "microgame-bot/internal/repo/ttt/mock"
 )
 
 func TestGameService_GetUserGame_Success(t *testing.T) {
@@ -936,9 +936,9 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	
-	"minigame-bot/internal/domain/ttt"
-	"minigame-bot/internal/domain/user"
-	"minigame-bot/internal/repo"
+	"microgame-bot/internal/domain/ttt"
+	"microgame-bot/internal/domain/user"
+	"microgame-bot/internal/repo"
 )
 
 func setupTestDB(t *testing.T) *gorm.DB {

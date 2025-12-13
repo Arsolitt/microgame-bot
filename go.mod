@@ -1,4 +1,4 @@
-module minigame-bot
+module microgame-bot
 
 go 1.25.5
 

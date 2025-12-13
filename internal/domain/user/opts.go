@@ -3,9 +3,9 @@ package user
 import (
 	"errors"
 	"fmt"
-	"minigame-bot/internal/core"
-	"minigame-bot/internal/domain"
-	"minigame-bot/internal/utils"
+	"microgame-bot/internal/core"
+	"microgame-bot/internal/domain"
+	"microgame-bot/internal/utils"
 	"time"
 
 	"github.com/google/uuid"

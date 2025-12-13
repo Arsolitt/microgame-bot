@@ -2,9 +2,9 @@ package ttt
 
 import (
 	"context"
-	"minigame-bot/internal/domain"
-	"minigame-bot/internal/domain/ttt"
-	"minigame-bot/internal/domain/user"
+	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/ttt"
+	"microgame-bot/internal/domain/user"
 )
 
 type ITTTGetter interface {
