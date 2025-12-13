@@ -24,6 +24,15 @@ func GameSelector() InlineQueryHandlerFunc {
 						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::ttt"),
 					),
 				)),
+				tu.ResultArticle(
+					"game::rps",
+					"Камень-Ножницы-Бумага",
+					tu.TextMessage("🎮 <b>Камень-Ножницы-Бумага</b>\n\nНажми кнопку, чтобы начать игру!").WithParseMode("HTML"),
+				).WithReplyMarkup(tu.InlineKeyboard(
+					tu.InlineKeyboardRow(
+						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::rps"),
+					),
+				)),
 			},
 			CacheTime: 1,
 		}, nil

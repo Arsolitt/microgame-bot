@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/logger"
+	"microgame-bot/internal/domain/rps"
 	"microgame-bot/internal/domain/ttt"
 	"microgame-bot/internal/domain/user"
 	"microgame-bot/internal/mdw"
@@ -21,6 +22,7 @@ import (
 	memoryFSM "microgame-bot/internal/fsm/memory"
 	"microgame-bot/internal/handlers"
 	memoryLocker "microgame-bot/internal/locker/memory"
+	gormRPSRepository "microgame-bot/internal/repo/rps/gorm"
 	gormTTTRepository "microgame-bot/internal/repo/ttt/gorm"
 	gormUserRepository "microgame-bot/internal/repo/user/gorm"
 
@@ -48,6 +50,7 @@ func startup() error {
 
 	db.AutoMigrate(&gormUserRepository.User{})
 	db.AutoMigrate(&gormTTTRepository.TTT{})
+	db.AutoMigrate(&gormRPSRepository.RPS{})
 
 	userLocker := memoryLocker.New[user.ID]()
 	_ = memoryFSM.New()
@@ -74,6 +77,7 @@ func startup() error {
 	userRepo := gormUserRepository.New(db)
 	// gameRepo := memoryTTTRepository.New()
 	tttRepo := gormTTTRepository.New(db)
+	rpsRepo := gormRPSRepository.New(db)
 
 	bh.Use(
 		mdw.CorrelationIDProvider(),
@@ -82,13 +86,20 @@ func startup() error {
 
 	bh.HandleInlineQuery(handlers.WrapInlineQuery(handlers.GameSelector()), th.AnyInlineQuery())
 
-	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(tttRepo)), th.CallbackDataEqual("create::ttt"))
-
 	tttG := bh.Group(th.CallbackDataPrefix("g::ttt::"))
 	tttG.Use(mdw.GameProvider(memoryLocker.New[ttt.ID](), tttRepo, "ttt"))
 
 	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTJoin(tttRepo, userRepo)), th.CallbackDataPrefix("g::ttt::join::"))
 	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTMove(tttRepo, userRepo)), th.CallbackDataPrefix("g::ttt::move::"))
+
+	rpsG := bh.Group(th.CallbackDataPrefix("g::rps::"))
+	rpsG.Use(mdw.GameProvider(memoryLocker.New[rps.ID](), rpsRepo, "rps"))
+
+	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSJoin(rpsRepo, userRepo)), th.CallbackDataPrefix("g::rps::join::"))
+	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSMove(rpsRepo, userRepo)), th.CallbackDataPrefix("g::rps::choice::"))
+
+	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(tttRepo)), th.CallbackDataEqual("create::ttt"))
+	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSCreate(rpsRepo)), th.CallbackDataEqual("create::rps"))
 
 	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.Empty()), th.CallbackDataEqual("empty"))
 
