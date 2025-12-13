@@ -79,16 +79,15 @@ func buildRPSGameBoardKeyboard(game *rps.RPS) *telego.InlineKeyboardMarkup {
 	rows := make([][]telego.InlineKeyboardButton, 0, 3)
 	choices := []rps.Choice{rps.ChoiceRock, rps.ChoicePaper, rps.ChoiceScissors}
 
-	buttons := make([]telego.InlineKeyboardButton, 3)
-	for col, choice := range choices {
+	for _, choice := range choices {
 		icon := choice.Icon()
 		callbackData := fmt.Sprintf("g::rps::choice::%s::%s", game.ID().String(), choice.String())
 
-		buttons[col] = telego.InlineKeyboardButton{
+		button := telego.InlineKeyboardButton{
 			Text:         icon,
 			CallbackData: callbackData,
 		}
-		rows = append(rows, buttons)
+		rows = append(rows, []telego.InlineKeyboardButton{button})
 	}
 
 	return &telego.InlineKeyboardMarkup{

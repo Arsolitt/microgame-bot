@@ -111,7 +111,7 @@ func (r RPS) IsFinished() bool {
 }
 
 func (r RPS) IsDraw() bool {
-	if r.choice1 == r.choice2 {
+	if r.choice1 != ChoiceEmpty && r.choice2 != ChoiceEmpty && r.choice1 == r.choice2 {
 		return true
 	}
 	return false
