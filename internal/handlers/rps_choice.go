@@ -69,9 +69,6 @@ func RPSMove(gameRepo rpsRepository.IRPSRepository, userRepo userRepository.IUse
 					InlineMessageID: query.InlineMessageID,
 					Text:            msg,
 					ParseMode:       "HTML",
-				},
-				&EditMessageReplyMarkupResponse{
-					InlineMessageID: query.InlineMessageID,
 					ReplyMarkup:     boardKeyboard,
 				},
 				&CallbackQueryResponse{
@@ -82,10 +79,6 @@ func RPSMove(gameRepo rpsRepository.IRPSRepository, userRepo userRepository.IUse
 		}
 
 		return ResponseChain{
-			&EditMessageReplyMarkupResponse{
-				InlineMessageID: query.InlineMessageID,
-				ReplyMarkup:     boardKeyboard,
-			},
 			&CallbackQueryResponse{
 				CallbackQueryID: query.ID,
 				Text:            getSuccessMessage(&game),

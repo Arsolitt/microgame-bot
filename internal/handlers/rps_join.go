@@ -56,9 +56,6 @@ func RPSJoin(gameRepo rpsRepository.IRPSRepository, userRepo userRepository.IUse
 				InlineMessageID: query.InlineMessageID,
 				Text:            msg,
 				ParseMode:       "HTML",
-			},
-			&EditMessageReplyMarkupResponse{
-				InlineMessageID: query.InlineMessageID,
 				ReplyMarkup:     boardKeyboard,
 			},
 			&CallbackQueryResponse{
@@ -70,13 +67,13 @@ func RPSJoin(gameRepo rpsRepository.IRPSRepository, userRepo userRepository.IUse
 }
 
 func buildRPSGameBoardKeyboard(game *rps.RPS) *telego.InlineKeyboardMarkup {
+	rows := make([][]telego.InlineKeyboardButton, 0, 3)
 	if game.IsFinished() {
 		return &telego.InlineKeyboardMarkup{
-			InlineKeyboard: nil,
+			InlineKeyboard: rows,
 		}
 	}
 
-	rows := make([][]telego.InlineKeyboardButton, 0, 3)
 	choices := []rps.Choice{rps.ChoiceRock, rps.ChoicePaper, rps.ChoiceScissors}
 
 	for _, choice := range choices {

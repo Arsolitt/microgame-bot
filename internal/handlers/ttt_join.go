@@ -65,9 +65,6 @@ func TTTJoin(gameRepo tttRepository.ITTTRepository, userRepo userRepository.IUse
 				InlineMessageID: query.InlineMessageID,
 				Text:            msg,
 				ParseMode:       "HTML",
-			},
-			&EditMessageReplyMarkupResponse{
-				InlineMessageID: query.InlineMessageID,
 				ReplyMarkup:     boardKeyboard,
 			},
 			&CallbackQueryResponse{
