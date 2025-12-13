@@ -18,4 +18,5 @@ var (
 	ErrCantPlayWithoutPlayers          = errors.New("cant play without players")
 	ErrGameNotFound                    = errors.New("game not found")
 	ErrGamePlayersCantBeEmpty          = errors.New("game players cant be empty")
+	ErrGameIsDraw                      = errors.New("game is draw")
 )

@@ -10,7 +10,7 @@ type RPS struct {
 	status          domain.GameStatus
 	choice1         Choice
 	choice2         Choice
-	winner          user.ID
+	winner          Player
 	inlineMessageID domain.InlineMessageID
 	id              ID
 	player1ID       user.ID
@@ -25,7 +25,7 @@ func New(opts ...RPSOpt) (RPS, error) {
 		status:  domain.GameStatusCreated,
 		choice1: ChoiceEmpty,
 		choice2: ChoiceEmpty,
-		winner:  user.ID{},
+		winner:  PlayerEmpty,
 	}
 
 	for _, opt := range opts {
@@ -64,7 +64,71 @@ func (r RPS) Player1ID() user.ID                      { return r.player1ID }
 func (r RPS) Player2ID() user.ID                      { return r.player2ID }
 func (r RPS) Choice1() Choice                         { return r.choice1 }
 func (r RPS) Choice2() Choice                         { return r.choice2 }
-func (r RPS) Winner() user.ID                         { return r.winner }
+func (r RPS) Winner() Player                          { return r.winner }
 func (r RPS) Status() domain.GameStatus               { return r.status }
 func (r RPS) CreatedAt() time.Time                    { return r.createdAt }
 func (r RPS) UpdatedAt() time.Time                    { return r.updatedAt }
+
+func (r RPS) MakeChoice(playerID user.ID, choice string) (RPS, error) {
+	parsedChoice, err := ChoiceFromString(choice)
+	if err != nil {
+		return RPS{}, err
+	}
+
+	if playerID != r.player1ID && playerID != r.player2ID {
+		return RPS{}, domain.ErrPlayerNotInGame
+	}
+
+	if playerID == r.player1ID {
+		r.choice1 = parsedChoice
+	} else {
+		r.choice2 = parsedChoice
+	}
+
+	if winner := r.checkWinner(); winner != PlayerEmpty {
+		r.winner = winner
+	}
+
+	return r, nil
+}
+
+func (r RPS) IsFinished() bool {
+	return r.winner != PlayerEmpty || r.IsDraw()
+}
+
+func (r RPS) IsDraw() bool {
+	if r.choice1 == r.choice2 {
+		return true
+	}
+	return false
+}
+
+func (r RPS) GetWinnerID() user.ID {
+	if r.winner == Player1 {
+		return r.player1ID
+	}
+	if r.winner == Player2 {
+		return r.player2ID
+	}
+	return user.ID{}
+}
+
+func (r RPS) checkWinner() Player {
+	if r.IsDraw() {
+		return PlayerEmpty
+	}
+
+	if r.choice1 == ChoiceRock && r.choice2 == ChoiceScissors {
+		return Player1
+	}
+
+	if r.choice1 == ChoicePaper && r.choice2 == ChoiceRock {
+		return Player1
+	}
+
+	if r.choice1 == ChoiceScissors && r.choice2 == ChoicePaper {
+		return Player1
+	}
+
+	return Player2
+}

@@ -42,3 +42,20 @@ func (c Choice) Icon() string {
 		return ChoiceEmptyIcon
 	}
 }
+
+func (c Choice) String() string {
+	return string(c)
+}
+
+func ChoiceFromString(choice string) (Choice, error) {
+	switch choice {
+	case ChoiceRock.String():
+		return ChoiceRock, nil
+	case ChoicePaper.String():
+		return ChoicePaper, nil
+	case ChoiceScissors.String():
+		return ChoiceScissors, nil
+	default:
+		return ChoiceEmpty, ErrInvalidChoice
+	}
+}
