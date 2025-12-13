@@ -15,7 +15,7 @@ type RPS struct {
 	ID              uuid.UUID         `gorm:"primaryKey;type:uuid"`
 	Choice1         domainRPS.Choice  `gorm:"not null"`
 	Choice2         domainRPS.Choice  `gorm:"not null"`
-	Winner          domainRPS.Player  `gorm:"not null"`
+	Winner          domain.Player     `gorm:"not null"`
 	Status          domain.GameStatus `gorm:"not null"`
 	InlineMessageID string            `gorm:"not null;uniqueIndex"`
 	CreatorID       user.ID           `gorm:"type:uuid"`
@@ -56,7 +56,7 @@ func (m RPS) FromDomain(u domainRPS.RPS) RPS {
 		Choice1:         domainRPS.Choice(u.Choice1()),
 		Choice2:         domainRPS.Choice(u.Choice2()),
 		Status:          domain.GameStatus(u.Status()),
-		Winner:          domainRPS.Player(u.Winner()),
+		Winner:          domain.Player(u.Winner()),
 		CreatedAt:       u.CreatedAt(),
 		UpdatedAt:       u.UpdatedAt(),
 	}

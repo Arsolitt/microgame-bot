@@ -101,7 +101,7 @@ func WithStatus(status domain.GameStatus) RPSOpt {
 	}
 }
 
-func WithWinner(winner Player) RPSOpt {
+func WithWinner(winner domain.Player) RPSOpt {
 	return func(r *RPS) error {
 		r.winner = winner
 		return nil

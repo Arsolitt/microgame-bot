@@ -10,7 +10,7 @@ type RPS struct {
 	status          domain.GameStatus
 	choice1         Choice
 	choice2         Choice
-	winner          Player
+	winner          domain.Player
 	inlineMessageID domain.InlineMessageID
 	id              ID
 	player1ID       user.ID
@@ -25,7 +25,7 @@ func New(opts ...RPSOpt) (RPS, error) {
 		status:  domain.GameStatusCreated,
 		choice1: ChoiceEmpty,
 		choice2: ChoiceEmpty,
-		winner:  PlayerEmpty,
+		winner:  domain.PlayerEmpty,
 	}
 
 	for _, opt := range opts {
@@ -64,7 +64,7 @@ func (r RPS) Player1ID() user.ID                      { return r.player1ID }
 func (r RPS) Player2ID() user.ID                      { return r.player2ID }
 func (r RPS) Choice1() Choice                         { return r.choice1 }
 func (r RPS) Choice2() Choice                         { return r.choice2 }
-func (r RPS) Winner() Player                          { return r.winner }
+func (r RPS) Winner() domain.Player                   { return r.winner }
 func (r RPS) Status() domain.GameStatus               { return r.status }
 func (r RPS) CreatedAt() time.Time                    { return r.createdAt }
 func (r RPS) UpdatedAt() time.Time                    { return r.updatedAt }
@@ -87,23 +87,19 @@ func (r RPS) JoinGame(playerID user.ID) (RPS, error) {
 	return r, nil
 }
 
-func (r RPS) MakeChoice(playerID user.ID, choice string) (RPS, error) {
-	parsedChoice, err := ChoiceFromString(choice)
-	if err != nil {
-		return RPS{}, err
-	}
+func (r RPS) MakeChoice(playerID user.ID, choice Choice) (RPS, error) {
 
 	if playerID != r.player1ID && playerID != r.player2ID {
 		return RPS{}, domain.ErrPlayerNotInGame
 	}
 
 	if playerID == r.player1ID {
-		r.choice1 = parsedChoice
+		r.choice1 = choice
 	} else {
-		r.choice2 = parsedChoice
+		r.choice2 = choice
 	}
 
-	if winner := r.checkWinner(); winner != PlayerEmpty {
+	if winner := r.checkWinner(); winner != domain.PlayerEmpty {
 		r.winner = winner
 	}
 
@@ -111,7 +107,7 @@ func (r RPS) MakeChoice(playerID user.ID, choice string) (RPS, error) {
 }
 
 func (r RPS) IsFinished() bool {
-	return r.winner != PlayerEmpty || r.IsDraw()
+	return r.winner != domain.PlayerEmpty || r.IsDraw()
 }
 
 func (r RPS) IsDraw() bool {
@@ -131,7 +127,7 @@ func (r RPS) WinnerID() user.ID {
 	return user.ID{}
 }
 
-func (r RPS) PlayerIcon(pr Player) string {
+func (r RPS) PlayerIcon(pr domain.Player) string {
 	if pr == Player1 {
 		return r.choice1.Icon()
 	}
@@ -141,9 +137,9 @@ func (r RPS) PlayerIcon(pr Player) string {
 	return ""
 }
 
-func (r RPS) checkWinner() Player {
+func (r RPS) checkWinner() domain.Player {
 	if r.IsDraw() {
-		return PlayerEmpty
+		return domain.PlayerEmpty
 	}
 
 	if r.choice1 == ChoiceRock && r.choice2 == ChoiceScissors {
