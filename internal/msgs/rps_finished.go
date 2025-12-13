@@ -25,7 +25,7 @@ func RPSFinished(game *rps.RPS, player1 domainUser.User, player2 domainUser.User
 		} else {
 			winner = player2
 		}
-		sb.WriteString(fmt.Sprintf("🏆 <b>Победитель:</b> @%s %s", winner.Username(), game.PlayerIcon(game.Winner())))
+		sb.WriteString(fmt.Sprintf("🏆 <b>Победитель:</b> @%s", winner.Username()))
 	} else if game.IsDraw() {
 		sb.WriteString("🤝 <b>Ничья!</b>")
 	}

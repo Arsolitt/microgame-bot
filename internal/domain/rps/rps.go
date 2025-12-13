@@ -138,6 +138,10 @@ func (r RPS) PlayerIcon(pr domain.Player) string {
 }
 
 func (r RPS) checkWinner() domain.Player {
+	if r.choice1 == ChoiceEmpty || r.choice2 == ChoiceEmpty {
+		return domain.PlayerEmpty
+	}
+
 	if r.IsDraw() {
 		return domain.PlayerEmpty
 	}
