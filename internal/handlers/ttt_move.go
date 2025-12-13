@@ -59,7 +59,7 @@ func TTTMove(gameRepo tttRepository.ITTTRepository, userRepo userRepository.IUse
 
 		boardKeyboard := buildTTTGameBoardKeyboard(&game, playerX, playerO)
 
-		if game.IsGameFinished() {
+		if game.IsFinished() {
 			msg, err := msgs.TTTGameState(game, playerX, playerO)
 			if err != nil {
 				return nil, err
@@ -112,14 +112,4 @@ func extractCellNumber(callbackData string) (int, error) {
 
 func cellNumberToCoords(cellNumber int) (row, col int) {
 	return cellNumber / 3, cellNumber % 3
-}
-
-func getSuccessMessage(game *ttt.TTT) string {
-	if game.Winner() != ttt.PlayerEmpty {
-		return "Победа! 🎉"
-	}
-	if game.IsDraw() {
-		return "Ничья!"
-	}
-	return "Ход сделан!"
 }

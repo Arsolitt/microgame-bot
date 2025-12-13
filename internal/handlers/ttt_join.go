@@ -105,14 +105,14 @@ func buildTTTGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO d
 		rows = append(rows, buttons)
 	}
 
-	if !game.IsGameFinished() {
+	if !game.IsFinished() {
 		var currentPlayer domainUser.User
 		if game.Turn() == ttt.PlayerX {
 			currentPlayer = playerX
 		} else {
 			currentPlayer = playerO
 		}
-		turnText := fmt.Sprintf("🎯 Ход: @%s %s", currentPlayer.Username(), game.Turn().Symbol())
+		turnText := fmt.Sprintf("🎯 Ход: @%s %s", currentPlayer.Username(), ttt.PlayerSymbol(game.Turn()))
 		rows = append(rows, []telego.InlineKeyboardButton{
 			{
 				Text:         turnText,
