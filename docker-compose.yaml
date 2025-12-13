@@ -34,7 +34,6 @@ services:
 
   nats:
     image: nats:2.12.1
-    container_name: nats
     command: ["-c", "/etc/nats/nats.conf"]
     environment:
       - NATS_URL=nats://nats:4222

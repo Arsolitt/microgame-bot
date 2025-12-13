@@ -90,7 +90,7 @@ func TestJoinGame_ErrorGameFull(t *testing.T) {
 
 	_, err = game.JoinGame(newPlayerID)
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrGameFull)
+	assert.ErrorIs(t, err, domain.ErrGameFull)
 }
 
 func TestJoinGame_ErrorPlayerAlreadyInGameAsX(t *testing.T) {
@@ -109,7 +109,7 @@ func TestJoinGame_ErrorPlayerAlreadyInGameAsX(t *testing.T) {
 
 	_, err = game.JoinGame(playerXID)
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrPlayerAlreadyInGame)
+	assert.ErrorIs(t, err, domain.ErrPlayerAlreadyInGame)
 }
 
 func TestJoinGame_ErrorPlayerAlreadyInGameAsO(t *testing.T) {
@@ -128,7 +128,7 @@ func TestJoinGame_ErrorPlayerAlreadyInGameAsO(t *testing.T) {
 
 	_, err = game.JoinGame(playerOID)
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrPlayerAlreadyInGame)
+	assert.ErrorIs(t, err, domain.ErrPlayerAlreadyInGame)
 }
 
 func TestJoinGame_ValidBoardAfterJoin(t *testing.T) {
@@ -191,5 +191,5 @@ func TestJoinGame_BothPlayersCanJoinSequentially(t *testing.T) {
 	player3ID := user.ID(utils.NewUniqueID())
 	_, err = game.JoinGame(player3ID)
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrGameFull)
+	assert.ErrorIs(t, err, domain.ErrGameFull)
 }

@@ -7,24 +7,6 @@ import (
 	"time"
 )
 
-const (
-	PlayerEmpty Player = ""
-	PlayerX     Player = "X"
-	PlayerO     Player = "O"
-)
-
-const (
-	CellEmpty Cell = ""
-	CellX     Cell = "X"
-	CellO     Cell = "O"
-)
-
-const (
-	CellXIcon     = "❌"
-	CellOIcon     = "⭕"
-	CellEmptyIcon = "⬜"
-)
-
 type TTT struct {
 	board           [3][3]Cell
 	turn            Player
@@ -57,13 +39,13 @@ func New(opts ...TTTOpt) (TTT, error) {
 		return TTT{}, domain.ErrIDRequired
 	}
 	if t.inlineMessageID.IsZero() {
-		return TTT{}, ErrInlineMessageIDRequired
+		return TTT{}, domain.ErrInlineMessageIDRequired
 	}
 	if t.creatorID.IsZero() {
-		return TTT{}, ErrCreatorIDRequired
+		return TTT{}, domain.ErrCreatorIDRequired
 	}
 	if (t.playerXID.IsZero() || t.playerOID.IsZero()) && t.IsGameFinished() {
-		return TTT{}, ErrCantBeFinishedWithoutTwoPlayers
+		return TTT{}, domain.ErrCantBeFinishedWithoutTwoPlayers
 	}
 	if err := t.validateBoard(); err != nil {
 		return TTT{}, err
@@ -91,7 +73,7 @@ func (t TTT) GetPlayerFigure(userID user.ID) (Player, error) {
 	if t.playerOID == userID {
 		return PlayerO, nil
 	}
-	return PlayerEmpty, ErrPlayerNotInGame
+	return PlayerEmpty, domain.ErrPlayerNotInGame
 }
 
 // IsPlayerTurn checks if it's the turn of the player with given user ID.

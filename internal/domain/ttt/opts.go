@@ -45,7 +45,7 @@ func WithIDFromUUID(id uuid.UUID) TTTOpt {
 func WithInlineMessageID(inlineMessageID domain.InlineMessageID) TTTOpt {
 	return func(t *TTT) error {
 		if inlineMessageID.IsZero() {
-			return ErrInlineMessageIDRequired
+			return domain.ErrInlineMessageIDRequired
 		}
 		t.inlineMessageID = inlineMessageID
 		return nil
@@ -59,7 +59,7 @@ func WithInlineMessageIDFromString(inlineMessageID string) TTTOpt {
 func WithCreatorID(creatorID user.ID) TTTOpt {
 	return func(t *TTT) error {
 		if creatorID.IsZero() {
-			return ErrCreatorIDRequired
+			return domain.ErrCreatorIDRequired
 		}
 		t.creatorID = creatorID
 		return nil
@@ -105,7 +105,7 @@ func WithBoard(board [3][3]Cell) TTTOpt {
 func WithRandomFirstPlayer() TTTOpt {
 	return func(t *TTT) error {
 		if t.creatorID.IsZero() {
-			return ErrCreatorIDRequired
+			return domain.ErrCreatorIDRequired
 		}
 
 		if utils.RandInt(2) == 0 {
@@ -121,7 +121,7 @@ func WithRandomFirstPlayer() TTTOpt {
 func WithCreatorAsX() TTTOpt {
 	return func(t *TTT) error {
 		if t.creatorID.IsZero() {
-			return ErrCreatorIDRequired
+			return domain.ErrCreatorIDRequired
 		}
 		t.playerXID = t.creatorID
 		return nil
@@ -132,7 +132,7 @@ func WithCreatorAsX() TTTOpt {
 func WithCreatorAsO() TTTOpt {
 	return func(t *TTT) error {
 		if t.creatorID.IsZero() {
-			return ErrCreatorIDRequired
+			return domain.ErrCreatorIDRequired
 		}
 		t.playerOID = t.creatorID
 		return nil

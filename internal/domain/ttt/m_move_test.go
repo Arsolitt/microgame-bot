@@ -92,7 +92,7 @@ func TestMakeMove_GameAlreadyFinished(t *testing.T) {
 
 	_, err := game.MakeMove(1, 2, playerOID)
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrGameOver)
+	assert.ErrorIs(t, err, domain.ErrGameOver)
 }
 
 func TestMakeMove_WaitingForOpponent(t *testing.T) {
@@ -111,7 +111,7 @@ func TestMakeMove_WaitingForOpponent(t *testing.T) {
 
 	_, err := game.MakeMove(0, 0, playerXID)
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrWaitingForOpponent)
+	assert.ErrorIs(t, err, domain.ErrWaitingForOpponent)
 }
 
 func TestMakeMove_PlayerNotInGame(t *testing.T) {
@@ -120,7 +120,7 @@ func TestMakeMove_PlayerNotInGame(t *testing.T) {
 
 	_, err := game.MakeMove(0, 0, randomUserID)
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrPlayerNotInGame)
+	assert.ErrorIs(t, err, domain.ErrPlayerNotInGame)
 }
 
 func TestMakeMove_NotPlayersTurn(t *testing.T) {
@@ -129,7 +129,7 @@ func TestMakeMove_NotPlayersTurn(t *testing.T) {
 	// It's X's turn, but O tries to move
 	_, err := game.MakeMove(0, 0, playerOID)
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrNotPlayersTurn)
+	assert.ErrorIs(t, err, domain.ErrNotPlayersTurn)
 }
 
 func TestMakeMove_OutOfBounds(t *testing.T) {

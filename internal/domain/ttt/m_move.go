@@ -1,16 +1,19 @@
 package ttt
 
-import "microgame-bot/internal/domain/user"
+import (
+	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/user"
+)
 
 // MakeMove attempts to make a move at the specified coordinates for the given user.
 func (t TTT) MakeMove(row, col int, userID user.ID) (TTT, error) {
 	if t.IsGameFinished() {
-		return TTT{}, ErrGameOver
+		return TTT{}, domain.ErrGameOver
 	}
 
 	// Check if both players are in game
 	if t.playerXID.IsZero() || t.playerOID.IsZero() {
-		return TTT{}, ErrWaitingForOpponent
+		return TTT{}, domain.ErrWaitingForOpponent
 	}
 
 	player, err := t.GetPlayerFigure(userID)
@@ -19,7 +22,7 @@ func (t TTT) MakeMove(row, col int, userID user.ID) (TTT, error) {
 	}
 
 	if player != t.turn {
-		return TTT{}, ErrNotPlayersTurn
+		return TTT{}, domain.ErrNotPlayersTurn
 	}
 
 	if row < 0 || row > 2 || col < 0 || col > 2 {

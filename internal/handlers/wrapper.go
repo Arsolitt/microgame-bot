@@ -3,8 +3,8 @@ package handlers
 import (
 	"errors"
 	"log/slog"
-	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/logger"
+	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/ttt"
 
 	"github.com/mymmrac/telego"
@@ -12,16 +12,16 @@ import (
 )
 
 var errorStatusMap = map[error]string{
-	ttt.ErrGameFull:            "Игра уже заполнена",
-	ttt.ErrPlayerAlreadyInGame: "Вы уже в игре",
-	ttt.ErrWaitingForOpponent:  "Ожидание второго игрока",
-	ttt.ErrInvalidMove:         "Неверный ход",
-	ttt.ErrCellOccupied:        "Ячейка уже занята",
-	ttt.ErrGameOver:            "Игра завершена",
-	ttt.ErrPlayerNotInGame:     "Вы не участвуете в игре",
-	ttt.ErrOutOfBounds:         "Координаты выходят за пределы доски",
-	ttt.ErrNotPlayersTurn:      "Не ваш ход",
-	core.ErrGameNotFound:       "Игра не найдена",
+	domain.ErrGameNotFound:        "Игра не найдена",
+	domain.ErrGameFull:            "Игра уже заполнена",
+	domain.ErrPlayerAlreadyInGame: "Вы уже в игре",
+	domain.ErrWaitingForOpponent:  "Ожидание второго игрока",
+	domain.ErrGameOver:            "Игра завершена",
+	domain.ErrPlayerNotInGame:     "Вы не участвуете в игре",
+	domain.ErrNotPlayersTurn:      "Не ваш ход",
+	ttt.ErrInvalidMove:            "Неверный ход",
+	ttt.ErrCellOccupied:           "Ячейка уже занята",
+	ttt.ErrOutOfBounds:            "Координаты выходят за пределы доски",
 }
 
 func getCustomErrorMessage(target error) string {

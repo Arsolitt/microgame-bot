@@ -35,7 +35,7 @@ type PostgresConfig struct {
 
 type TelegramConfig struct {
 	Token    TelegramToken `env:"TOKEN"     validate:"required"`
-	AdminIDs []int64       `env:"ADMIN_IDS" validate:"required,min=1"`
+	AdminIDs []int64       `env:"ADMIN_IDS" validate:""`
 	Debug    bool          `env:"DEBUG"                               env-default:"false"`
 }
 

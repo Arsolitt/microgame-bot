@@ -130,7 +130,7 @@ func TestNew_ValidationError(t *testing.T) {
 				WithInlineMessageID(domain.InlineMessageID("")),
 				WithCreatorID(creatorID),
 			},
-			expectedError: ErrInlineMessageIDRequired,
+			expectedError: domain.ErrInlineMessageIDRequired,
 		},
 		{
 			name: "CreatorID is zero",
@@ -139,7 +139,7 @@ func TestNew_ValidationError(t *testing.T) {
 				WithInlineMessageID(inlineMessageID),
 				WithCreatorID(user.ID(uuid.Nil)),
 			},
-			expectedError: ErrCreatorIDRequired,
+			expectedError: domain.ErrCreatorIDRequired,
 		},
 		{
 			name:          "No options",
@@ -160,7 +160,7 @@ func TestNew_ValidationError(t *testing.T) {
 				WithID(id),
 				WithCreatorID(creatorID),
 			},
-			expectedError: ErrInlineMessageIDRequired,
+			expectedError: domain.ErrInlineMessageIDRequired,
 		},
 		{
 			name: "Missing CreatorID",
@@ -168,7 +168,7 @@ func TestNew_ValidationError(t *testing.T) {
 				WithID(id),
 				WithInlineMessageID(inlineMessageID),
 			},
-			expectedError: ErrCreatorIDRequired,
+			expectedError: domain.ErrCreatorIDRequired,
 		},
 	}
 
@@ -216,7 +216,7 @@ func TestWithRandomFirstPlayer_WithoutCreatorID(t *testing.T) {
 	)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrCreatorIDRequired)
+	assert.ErrorIs(t, err, domain.ErrCreatorIDRequired)
 }
 
 func TestWithCreatorAsX_WithoutCreatorID(t *testing.T) {
@@ -230,7 +230,7 @@ func TestWithCreatorAsX_WithoutCreatorID(t *testing.T) {
 	)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrCreatorIDRequired)
+	assert.ErrorIs(t, err, domain.ErrCreatorIDRequired)
 }
 
 func TestWithCreatorAsO_WithoutCreatorID(t *testing.T) {
@@ -244,7 +244,7 @@ func TestWithCreatorAsO_WithoutCreatorID(t *testing.T) {
 	)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrCreatorIDRequired)
+	assert.ErrorIs(t, err, domain.ErrCreatorIDRequired)
 }
 
 func TestNew_BoardValidation(t *testing.T) {
