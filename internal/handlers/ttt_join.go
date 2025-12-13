@@ -54,7 +54,7 @@ func TTTJoin(gameRepo tttRepository.ITTTRepository, userRepo userRepository.IUse
 			playerO = creator
 		}
 
-		boardKeyboard := buildGameBoardKeyboard(&game, playerX, playerO)
+		boardKeyboard := buildTTTGameBoardKeyboard(&game, playerX, playerO)
 		msg, err := msgs.TTTGameStarted(&game, creator, player2)
 		if err != nil {
 			return nil, err
@@ -78,7 +78,7 @@ func TTTJoin(gameRepo tttRepository.ITTTRepository, userRepo userRepository.IUse
 	}
 }
 
-func buildGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO domainUser.User) *telego.InlineKeyboardMarkup {
+func buildTTTGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO domainUser.User) *telego.InlineKeyboardMarkup {
 	rows := make([][]telego.InlineKeyboardButton, 0, 4)
 
 	for row := range 3 {
