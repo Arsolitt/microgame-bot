@@ -15,5 +15,7 @@ var (
 	ErrInlineMessageIDRequired         = errors.New("inline message ID required")
 	ErrWaitingForOpponent              = errors.New("waiting for opponent to join")
 	ErrCantBeFinishedWithoutTwoPlayers = errors.New("cant be finished without two players")
+	ErrCantPlayWithoutPlayers          = errors.New("cant play without players")
 	ErrGameNotFound                    = errors.New("game not found")
+	ErrGamePlayersCantBeEmpty          = errors.New("game players cant be empty")
 )

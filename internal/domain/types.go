@@ -6,7 +6,7 @@ type (
 )
 
 const (
-	GameStatusEmpty             GameStatus = "created"
+	GameStatusCreated           GameStatus = "created"
 	GameStatusWaitingForPlayers GameStatus = "waiting_for_players"
 	GameStatusInProgress        GameStatus = "in_progress"
 	GameStatusFinished          GameStatus = "finished"
