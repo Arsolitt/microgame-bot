@@ -2,7 +2,6 @@ package gorm
 
 import (
 	"context"
-	"microgame-bot/internal/core"
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/ttt"
 	"microgame-bot/internal/domain/user"
@@ -67,7 +66,7 @@ func (r *Repository) UpdateGame(ctx context.Context, game ttt.TTT) (ttt.TTT, err
 	model := TTT{}.FromDomain(game)
 	rows, err := gorm.G[TTT](r.db).Where("id = ?", model.ID).Updates(ctx, model)
 	if rows == 0 {
-		return ttt.TTT{}, core.ErrGameNotFound
+		return ttt.TTT{}, domain.ErrGameNotFound
 	}
 	if err != nil {
 		return ttt.TTT{}, err

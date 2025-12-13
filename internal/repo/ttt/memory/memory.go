@@ -2,7 +2,6 @@ package memory
 
 import (
 	"context"
-	"microgame-bot/internal/core"
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/ttt"
 	"sync"
@@ -37,7 +36,7 @@ func (r *Repository) GameByMessageID(ctx context.Context, id domain.InlineMessag
 		}
 	}
 
-	return ttt.TTT{}, core.ErrGameNotFound
+	return ttt.TTT{}, domain.ErrGameNotFound
 }
 
 func (r *Repository) GameByID(ctx context.Context, id ttt.ID) (ttt.TTT, error) {
@@ -46,7 +45,7 @@ func (r *Repository) GameByID(ctx context.Context, id ttt.ID) (ttt.TTT, error) {
 
 	game, ok := r.games[id]
 	if !ok {
-		return ttt.TTT{}, core.ErrGameNotFound
+		return ttt.TTT{}, domain.ErrGameNotFound
 	}
 	return game, nil
 }
