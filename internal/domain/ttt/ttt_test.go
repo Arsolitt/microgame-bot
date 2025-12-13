@@ -25,7 +25,7 @@ func TestNew_Success(t *testing.T) {
 		WithPlayerXID(playerXID),
 		WithPlayerOID(playerOID),
 		WithTurn(PlayerX),
-		WithWinner(PlayerEmpty),
+		WithWinner(domain.PlayerEmpty),
 	)
 
 	if err != nil {
@@ -38,7 +38,7 @@ func TestNew_Success(t *testing.T) {
 	assert.Equal(t, playerXID, game.PlayerXID())
 	assert.Equal(t, playerOID, game.PlayerOID())
 	assert.Equal(t, PlayerX, game.Turn())
-	assert.Equal(t, PlayerEmpty, game.Winner())
+	assert.Equal(t, domain.PlayerEmpty, game.Winner())
 }
 
 func TestWithRandomFirstPlayer(t *testing.T) {
@@ -198,7 +198,7 @@ func TestWithNewID_GeneratesUniqueID(t *testing.T) {
 	assert.Equal(t, creatorID, game.CreatorID())
 	assert.False(t, game.ID().IsZero())
 	assert.Equal(t, PlayerX, game.Turn())
-	assert.Equal(t, PlayerEmpty, game.Winner())
+	assert.Equal(t, domain.PlayerEmpty, game.Winner())
 
 	// Creator should be assigned to either X or O
 	assert.True(t, game.PlayerXID() == creatorID || game.PlayerOID() == creatorID,
@@ -257,8 +257,8 @@ func TestNew_BoardValidation(t *testing.T) {
 	tests := []struct {
 		name          string
 		board         [3][3]Cell
-		turn          Player
-		winner        Player
+		turn          domain.Player
+		winner        domain.Player
 		expectedError string
 	}{
 		{
@@ -269,7 +269,7 @@ func TestNew_BoardValidation(t *testing.T) {
 				{CellEmpty, CellEmpty, CellEmpty},
 			},
 			turn:          PlayerX,
-			winner:        PlayerEmpty,
+			winner:        domain.PlayerEmpty,
 			expectedError: "figure count is invalid",
 		},
 		{
@@ -280,7 +280,7 @@ func TestNew_BoardValidation(t *testing.T) {
 				{CellEmpty, CellEmpty, CellEmpty},
 			},
 			turn:          PlayerX,
-			winner:        PlayerEmpty,
+			winner:        domain.PlayerEmpty,
 			expectedError: "figure count is invalid",
 		},
 		{
@@ -291,7 +291,7 @@ func TestNew_BoardValidation(t *testing.T) {
 				{CellEmpty, CellEmpty, CellEmpty},
 			},
 			turn:          PlayerX,
-			winner:        PlayerEmpty,
+			winner:        domain.PlayerEmpty,
 			expectedError: "both players cannot win simultaneously",
 		},
 		{
@@ -302,7 +302,7 @@ func TestNew_BoardValidation(t *testing.T) {
 				{CellEmpty, CellO, CellEmpty},
 			},
 			turn:          PlayerO,
-			winner:        PlayerEmpty,
+			winner:        domain.PlayerEmpty,
 			expectedError: "if X won, X must have made the last move (countX == countO + 1)",
 		},
 		{
@@ -335,7 +335,7 @@ func TestNew_BoardValidation(t *testing.T) {
 				{CellEmpty, CellEmpty, CellEmpty},
 			},
 			turn:          PlayerO,
-			winner:        PlayerEmpty,
+			winner:        domain.PlayerEmpty,
 			expectedError: "",
 		},
 	}

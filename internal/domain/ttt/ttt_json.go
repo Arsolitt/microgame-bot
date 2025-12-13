@@ -11,8 +11,8 @@ import (
 func (t TTT) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Board           [3][3]Cell             `json:"board"`
-		Turn            Player                 `json:"turn"`
-		Winner          Player                 `json:"winner"`
+		Turn            domain.Player          `json:"turn"`
+		Winner          domain.Player          `json:"winner"`
 		InlineMessageID domain.InlineMessageID `json:"inline_message_id"`
 		ID              ID                     `json:"id"`
 		PlayerXID       user.ID                `json:"player_x_id"`
@@ -38,8 +38,8 @@ func (t TTT) MarshalJSON() ([]byte, error) {
 func (t *TTT) UnmarshalJSON(data []byte) error {
 	var aux struct {
 		Board           [3][3]Cell             `json:"board"`
-		Turn            Player                 `json:"turn"`
-		Winner          Player                 `json:"winner"`
+		Turn            domain.Player          `json:"turn"`
+		Winner          domain.Player          `json:"winner"`
 		InlineMessageID domain.InlineMessageID `json:"inline_message_id"`
 		ID              ID                     `json:"id"`
 		PlayerXID       user.ID                `json:"player_x_id"`

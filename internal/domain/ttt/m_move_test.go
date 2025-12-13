@@ -38,8 +38,8 @@ func TestMakeMove_Success(t *testing.T) {
 	cell, _ := game.GetCell(0, 0)
 	assert.Equal(t, CellX, cell)
 	assert.Equal(t, PlayerO, game.Turn(), "turn should switch to O")
-	assert.Equal(t, PlayerEmpty, game.Winner(), "no winner yet")
-	assert.False(t, game.IsGameFinished())
+	assert.Equal(t, domain.PlayerEmpty, game.Winner(), "no winner yet")
+	assert.False(t, game.IsFinished())
 }
 
 func TestMakeMove_MultipleMoves(t *testing.T) {
@@ -194,7 +194,7 @@ func TestMakeMove_WinByRow(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, PlayerX, game.Winner())
-	assert.True(t, game.IsGameFinished())
+	assert.True(t, game.IsFinished())
 }
 
 func TestMakeMove_WinByColumn(t *testing.T) {
@@ -222,7 +222,7 @@ func TestMakeMove_WinByColumn(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, PlayerO, game.Winner())
-	assert.True(t, game.IsGameFinished())
+	assert.True(t, game.IsFinished())
 }
 
 func TestMakeMove_WinByDiagonal(t *testing.T) {
@@ -250,7 +250,7 @@ func TestMakeMove_WinByDiagonal(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, PlayerX, game.Winner())
-		assert.True(t, game.IsGameFinished())
+		assert.True(t, game.IsFinished())
 	})
 
 	t.Run("anti diagonal", func(t *testing.T) {
@@ -277,7 +277,7 @@ func TestMakeMove_WinByDiagonal(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, PlayerO, game.Winner())
-		assert.True(t, game.IsGameFinished())
+		assert.True(t, game.IsFinished())
 	})
 }
 
@@ -306,8 +306,8 @@ func TestMakeMove_Draw(t *testing.T) {
 	game, err = game.MakeMove(2, 2, playerXID)
 	require.NoError(t, err)
 
-	assert.Equal(t, PlayerEmpty, game.Winner())
-	assert.True(t, game.IsGameFinished())
+	assert.Equal(t, domain.PlayerEmpty, game.Winner())
+	assert.True(t, game.IsFinished())
 	assert.True(t, game.IsDraw())
 }
 
@@ -337,11 +337,11 @@ func TestMakeMove_FullGame(t *testing.T) {
 		require.NoError(t, err, "move %d failed", i)
 
 		if i < len(moves)-1 {
-			assert.False(t, game.IsGameFinished(), "game shouldn't be finished at move %d", i)
+			assert.False(t, game.IsFinished(), "game shouldn't be finished at move %d", i)
 		}
 	}
 
-	assert.True(t, game.IsGameFinished())
+	assert.True(t, game.IsFinished())
 	assert.Equal(t, PlayerX, game.Winner())
 }
 

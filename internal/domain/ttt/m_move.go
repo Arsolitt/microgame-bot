@@ -7,7 +7,7 @@ import (
 
 // MakeMove attempts to make a move at the specified coordinates for the given user.
 func (t TTT) MakeMove(row, col int, userID user.ID) (TTT, error) {
-	if t.IsGameFinished() {
+	if t.IsFinished() {
 		return TTT{}, domain.ErrGameOver
 	}
 
@@ -35,7 +35,7 @@ func (t TTT) MakeMove(row, col int, userID user.ID) (TTT, error) {
 
 	t.board[row][col] = playerToCell(player)
 
-	if winner := t.checkWinner(); winner != PlayerEmpty {
+	if winner := t.checkWinner(); winner != domain.PlayerEmpty {
 		t.winner = winner
 	} else {
 		t = t.switchTurn()

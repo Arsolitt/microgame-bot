@@ -1,16 +1,13 @@
 package ttt
 
-type (
-	Player string
-)
+import "microgame-bot/internal/domain"
 
 const (
-	PlayerEmpty Player = ""
-	PlayerX     Player = "X"
-	PlayerO     Player = "O"
+	PlayerX domain.Player = "X"
+	PlayerO domain.Player = "O"
 )
 
-func (p Player) Symbol() string {
+func PlayerSymbol(p domain.Player) string {
 	switch p {
 	case PlayerX:
 		return CellXIcon

@@ -80,14 +80,14 @@ func WithPlayerOID(playerOID user.ID) TTTOpt {
 	}
 }
 
-func WithTurn(turn Player) TTTOpt {
+func WithTurn(turn domain.Player) TTTOpt {
 	return func(t *TTT) error {
 		t.turn = turn
 		return nil
 	}
 }
 
-func WithWinner(winner Player) TTTOpt {
+func WithWinner(winner domain.Player) TTTOpt {
 	return func(t *TTT) error {
 		t.winner = winner
 		return nil
