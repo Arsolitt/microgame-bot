@@ -50,10 +50,22 @@ func startup() error {
 		return err
 	}
 
-	db.AutoMigrate(&gormUserRepository.User{})
-	db.AutoMigrate(&gormGSRepository.GameSession{})
-	db.AutoMigrate(&gormTTTRepository.TTT{})
-	db.AutoMigrate(&gormRPSRepository.RPS{})
+	err = db.AutoMigrate(&gormUserRepository.User{})
+	if err != nil {
+		return err
+	}
+	err = db.AutoMigrate(&gormGSRepository.GameSession{})
+	if err != nil {
+		return err
+	}
+	err = db.AutoMigrate(&gormTTTRepository.TTT{})
+	if err != nil {
+		return err
+	}
+	err = db.AutoMigrate(&gormRPSRepository.RPS{})
+	if err != nil {
+		return err
+	}
 
 	userLocker := memoryLocker.New[user.ID]()
 	_ = memoryFSM.New()
@@ -99,8 +111,8 @@ func startup() error {
 	rpsG := bh.Group(th.CallbackDataPrefix("g::rps::"))
 	rpsG.Use(mdw.GameProvider(memoryLocker.New[rps.ID](), rpsRepo, gsRepo, "rps"))
 
-	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSJoin(rpsRepo, userRepo)), th.CallbackDataPrefix("g::rps::join::"))
-	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSMove(rpsRepo, userRepo)), th.CallbackDataPrefix("g::rps::choice::"))
+	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSJoin(rpsRepo, userRepo, gsRepo)), th.CallbackDataPrefix("g::rps::join::"))
+	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSMove(rpsRepo, userRepo, gsRepo)), th.CallbackDataPrefix("g::rps::choice::"))
 
 	tttUow := uowGorm.New(db,
 		uowGorm.WithGSRepo(gormGSRepository.New(db)),
