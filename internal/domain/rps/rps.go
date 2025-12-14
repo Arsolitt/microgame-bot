@@ -70,6 +70,17 @@ func (r RPS) CreatedAt() time.Time      { return r.createdAt }
 func (r RPS) UpdatedAt() time.Time      { return r.updatedAt }
 func (r RPS) GameSessionID() gs.ID      { return r.gameSessionID }
 
+func (r RPS) Participants() []user.ID {
+	participants := []user.ID{}
+	if !r.player1ID.IsZero() {
+		participants = append(participants, r.player1ID)
+	}
+	if !r.player2ID.IsZero() {
+		participants = append(participants, r.player2ID)
+	}
+	return participants
+}
+
 func (r RPS) JoinGame(playerID user.ID) (RPS, error) {
 	if !r.player1ID.IsZero() && !r.player2ID.IsZero() {
 		return RPS{}, domain.ErrGameFull

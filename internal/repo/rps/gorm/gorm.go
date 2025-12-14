@@ -2,6 +2,8 @@ package gorm
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
@@ -67,24 +69,24 @@ func (r *Repository) GamesByCreatorID(ctx context.Context, id user.ID) ([]rps.RP
 
 func (r *Repository) UpdateGame(ctx context.Context, game rps.RPS) (rps.RPS, error) {
 	model := RPS{}.FromDomain(game)
-	rows, err := gorm.G[RPS](r.db).Where("id = ?", model.ID).Updates(ctx, model)
-	if rows == 0 {
-		return rps.RPS{}, domain.ErrGameNotFound
-	}
+	_, err := gorm.G[RPS](r.db).Where("id = ?", model.ID.String()).Updates(ctx, model)
 	if err != nil {
-		return rps.RPS{}, err
+		return rps.RPS{}, fmt.Errorf("failed to update game in gorm database: %w", err)
 	}
-	model, err = gorm.G[RPS](r.db).Where("id = ?", model.ID).First(ctx)
+	model, err = gorm.G[RPS](r.db).Where("id = ?", model.ID.String()).First(ctx)
 	if err != nil {
-		return rps.RPS{}, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return rps.RPS{}, fmt.Errorf("game not found while updating gorm database: %w", domain.ErrGameNotFound)
+		} else {
+			return rps.RPS{}, fmt.Errorf("failed to get game by ID from gorm database: %w", err)
+		}
 	}
 	return model.ToDomain()
 }
 
-func (r *Repository) GamesBySessionIDAndStatus(ctx context.Context, id gs.ID, status domain.GameStatus) ([]rps.RPS, error) {
+func (r *Repository) GamesBySessionID(ctx context.Context, id gs.ID) ([]rps.RPS, error) {
 	models, err := gorm.G[RPS](r.db).
 		Where("game_session_id = ?", id.String()).
-		Where("status = ?", status).
 		Find(ctx)
 	if err != nil {
 		return nil, err
