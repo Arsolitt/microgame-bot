@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"microgame-bot/internal/core"
+	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/rps"
 	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
@@ -44,6 +46,20 @@ func RPSMove(gameRepo rpsRepository.IRPSRepository, userRepo userRepository.IUse
 		game, err = gameRepo.UpdateGame(ctx, game)
 		if err != nil {
 			return nil, err
+		}
+
+		session, ok := ctx.Value(core.ContextKeyGameSession).(gs.GameSession)
+		if !ok {
+			slog.ErrorContext(ctx, "Game session not found")
+			return nil, core.ErrGameSessionNotFoundInContext
+		}
+
+		finishedGames, err := gameRepo.GamesBySessionIDAndStatus(ctx, session.ID(), domain.GameStatusFinished)
+		if err != nil {
+			return nil, err
+		}
+		if len(finishedGames) == session.GameCount() {
+			return nil, domain.ErrGameOver
 		}
 
 		player1, err := userRepo.UserByID(ctx, game.Player1ID())

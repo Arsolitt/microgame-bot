@@ -2,7 +2,10 @@ package gorm
 
 import (
 	"context"
+	"log/slog"
+	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/ttt"
 	"microgame-bot/internal/domain/user"
 
@@ -76,4 +79,24 @@ func (r *Repository) UpdateGame(ctx context.Context, game ttt.TTT) (ttt.TTT, err
 		return ttt.TTT{}, err
 	}
 	return model.ToDomain()
+}
+
+func (r *Repository) GamesBySessionIDAndStatus(ctx context.Context, id gs.ID, status domain.GameStatus) ([]ttt.TTT, error) {
+	models, err := gorm.G[TTT](r.db).
+		Where("game_session_id = ?", id.String()).
+		Where("status = ?", status).
+		Find(ctx)
+	if err != nil {
+		return nil, err
+	}
+	results := make([]ttt.TTT, len(models))
+	for i, model := range models {
+		results[i], err = model.ToDomain()
+		if err != nil {
+			ctx = logger.WithLogValue(ctx, logger.ModelIDField, model.ID)
+			slog.WarnContext(ctx, "Failed to convert model to domain", logger.ErrorField, err)
+			continue
+		}
+	}
+	return results, nil
 }

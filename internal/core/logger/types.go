@@ -41,4 +41,5 @@ const (
 	EventIDField         = "event_id"
 	GameIDField          = "game_id"
 	GameNameField        = "game_name"
+	ModelIDField         = "model_id"
 )

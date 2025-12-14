@@ -3,6 +3,7 @@ package rps
 import (
 	"context"
 	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/rps"
 	"microgame-bot/internal/domain/user"
 )
@@ -11,6 +12,7 @@ type IRPSGetter interface {
 	GameByMessageID(ctx context.Context, id domain.InlineMessageID) (rps.RPS, error)
 	GameByID(ctx context.Context, id rps.ID) (rps.RPS, error)
 	GamesByCreatorID(ctx context.Context, id user.ID) ([]rps.RPS, error)
+	GamesBySessionIDAndStatus(ctx context.Context, id gs.ID, status domain.GameStatus) ([]rps.RPS, error)
 }
 
 type IRPSCreator interface {
