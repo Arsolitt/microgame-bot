@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
@@ -30,7 +31,7 @@ func (r *Repository) CreateGame(ctx context.Context, game ttt.TTT) (ttt.TTT, err
 
 func (r *Repository) GameByMessageID(ctx context.Context, id domain.InlineMessageID) (ttt.TTT, error) {
 	model, err := gorm.G[TTT](r.db).
-		Where("inline_message_id = ?", string(id)).
+		Where("inline_message_id = ?", id.String()).
 		First(ctx)
 	if err != nil {
 		return ttt.TTT{}, err
@@ -67,14 +68,14 @@ func (r *Repository) GamesByCreatorID(ctx context.Context, id user.ID) ([]ttt.TT
 
 func (r *Repository) UpdateGame(ctx context.Context, game ttt.TTT) (ttt.TTT, error) {
 	model := TTT{}.FromDomain(game)
-	rows, err := gorm.G[TTT](r.db).Where("id = ?", model.ID).Updates(ctx, model)
+	rows, err := gorm.G[TTT](r.db).Where("id = ?", model.ID.String()).Updates(ctx, model)
 	if rows == 0 {
-		return ttt.TTT{}, domain.ErrGameNotFound
+		return ttt.TTT{}, fmt.Errorf("game not found while updating: %w", domain.ErrGameNotFound)
 	}
 	if err != nil {
 		return ttt.TTT{}, err
 	}
-	model, err = gorm.G[TTT](r.db).Where("id = ?", model.ID).First(ctx)
+	model, err = gorm.G[TTT](r.db).Where("id = ?", model.ID.String()).First(ctx)
 	if err != nil {
 		return ttt.TTT{}, err
 	}
