@@ -3,7 +3,13 @@ package domain
 type (
 	InlineMessageID string
 	GameStatus      string
+	GameName        string
 	Player          string
+)
+
+const (
+	GameNameRPS GameName = "rps"
+	GameNameTTT GameName = "ttt"
 )
 
 const (

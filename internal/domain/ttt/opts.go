@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/user"
 	"microgame-bot/internal/utils"
 	"time"
@@ -171,3 +172,11 @@ func WithStatus(status domain.GameStatus) TTTOpt {
 		return nil
 	}
 }
+
+func WithGameSessionID(gameSessionID gs.ID) TTTOpt {
+	return func(t *TTT) error {
+		t.gameSessionID = gameSessionID
+		return nil
+	}
+}
+
