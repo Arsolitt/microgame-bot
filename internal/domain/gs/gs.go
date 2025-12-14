@@ -18,7 +18,8 @@ type GameSession struct {
 
 func New(opts ...GameSessionOpt) (GameSession, error) {
 	gs := &GameSession{
-		status: domain.GameStatusCreated,
+		status:     domain.GameStatusCreated,
+		roundCount: 1,
 	}
 
 	for _, opt := range opts {
@@ -33,6 +34,9 @@ func New(opts ...GameSessionOpt) (GameSession, error) {
 	}
 	if gs.status.IsZero() {
 		return GameSession{}, domain.ErrGameStatusRequired
+	}
+	if gs.roundCount <= 0 {
+		return GameSession{}, domain.ErrRoundCountRequired
 	}
 
 	return *gs, nil
