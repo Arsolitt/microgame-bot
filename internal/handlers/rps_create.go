@@ -3,6 +3,7 @@ package handlers
 import (
 	"log/slog"
 	"microgame-bot/internal/core"
+	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/rps"
 	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
@@ -33,6 +34,7 @@ func RPSCreate(gameRepo repository.IRPSRepository) CallbackQueryHandlerFunc {
 			rps.WithInlineMessageIDFromString(query.InlineMessageID),
 			rps.WithCreatorID(user.ID()),
 			rps.WithPlayer1ID(user.ID()),
+			rps.WithStatus(domain.GameStatusWaitingForPlayers),
 		)
 		if err != nil {
 			return nil, err

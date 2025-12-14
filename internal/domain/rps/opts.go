@@ -96,6 +96,12 @@ func WithChoice2(choice Choice) RPSOpt {
 
 func WithStatus(status domain.GameStatus) RPSOpt {
 	return func(r *RPS) error {
+		if status.IsZero() {
+			return domain.ErrGameStatusRequired
+		}
+		if !status.IsValid() {
+			return domain.ErrInvalidGameStatus
+		}
 		r.status = status
 		return nil
 	}

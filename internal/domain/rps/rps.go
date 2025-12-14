@@ -84,6 +84,8 @@ func (r RPS) JoinGame(playerID user.ID) (RPS, error) {
 		r.player2ID = playerID
 	}
 
+	r.status = domain.GameStatusInProgress
+
 	return r, nil
 }
 
@@ -101,6 +103,7 @@ func (r RPS) MakeChoice(playerID user.ID, choice Choice) (RPS, error) {
 
 	if winner := r.checkWinner(); winner != domain.PlayerEmpty {
 		r.winner = winner
+		r.status = domain.GameStatusFinished
 	}
 
 	return r, nil
