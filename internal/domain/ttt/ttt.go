@@ -18,6 +18,7 @@ type TTT struct {
 	creatorID       user.ID
 	createdAt       time.Time
 	updatedAt       time.Time
+	status          domain.GameStatus
 }
 
 // New creates a new TTT instance with the given options
@@ -62,6 +63,7 @@ func (t TTT) PlayerOID() user.ID                      { return t.playerOID }
 func (t TTT) Turn() domain.Player                     { return t.turn }
 func (t TTT) Winner() domain.Player                   { return t.winner }
 func (t TTT) Board() [3][3]Cell                       { return t.board }
+func (t TTT) Status() domain.GameStatus               { return t.status }
 func (t TTT) CreatedAt() time.Time                    { return t.createdAt }
 func (t TTT) UpdatedAt() time.Time                    { return t.updatedAt }
 
@@ -130,6 +132,7 @@ func (t TTT) Reset() TTT {
 	t.board = [3][3]Cell{}
 	t.turn = PlayerX
 	t.winner = domain.PlayerEmpty
+	t.status = domain.GameStatusCreated
 	return t
 }
 

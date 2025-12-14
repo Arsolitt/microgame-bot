@@ -3,6 +3,7 @@ package handlers
 import (
 	"log/slog"
 	"microgame-bot/internal/core"
+	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/ttt"
 	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
@@ -33,6 +34,7 @@ func TTTCreate(gameRepo repository.ITTTRepository) CallbackQueryHandlerFunc {
 			ttt.WithInlineMessageIDFromString(query.InlineMessageID),
 			ttt.WithCreatorID(user.ID()),
 			ttt.WithRandomFirstPlayer(),
+			ttt.WithStatus(domain.GameStatusWaitingForPlayers),
 		)
 		if err != nil {
 			return nil, err

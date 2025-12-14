@@ -37,6 +37,7 @@ func (t TTT) MakeMove(row, col int, userID user.ID) (TTT, error) {
 
 	if winner := t.checkWinner(); winner != domain.PlayerEmpty {
 		t.winner = winner
+		t.status = domain.GameStatusFinished
 	} else {
 		t = t.switchTurn()
 	}

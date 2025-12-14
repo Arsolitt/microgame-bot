@@ -158,3 +158,16 @@ func WithUpdatedAt(updatedAt time.Time) TTTOpt {
 		return nil
 	}
 }
+
+func WithStatus(status domain.GameStatus) TTTOpt {
+	return func(t *TTT) error {
+		if status.IsZero() {
+			return domain.ErrGameStatusRequired
+		}
+		if !status.IsValid() {
+			return domain.ErrInvalidGameStatus
+		}
+		t.status = status
+		return nil
+	}
+}

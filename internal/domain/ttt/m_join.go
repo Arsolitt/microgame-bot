@@ -26,5 +26,7 @@ func (t TTT) JoinGame(playerID user.ID) (TTT, error) {
 		return TTT{}, err
 	}
 
+	t.status = domain.GameStatusInProgress
+
 	return t, nil
 }

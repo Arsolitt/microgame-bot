@@ -19,4 +19,6 @@ var (
 	ErrGameNotFound                    = errors.New("game not found")
 	ErrGamePlayersCantBeEmpty          = errors.New("game players cant be empty")
 	ErrGameIsDraw                      = errors.New("game is draw")
+	ErrGameStatusRequired              = errors.New("game status required")
+	ErrInvalidGameStatus               = errors.New("invalid game status")
 )
