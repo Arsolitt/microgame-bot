@@ -2,6 +2,7 @@ package rps
 
 import (
 	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/user"
 	"time"
 )
@@ -11,6 +12,7 @@ type RPS struct {
 	choice1         Choice
 	choice2         Choice
 	winner          domain.Player
+	gameSessionID   gs.ID
 	inlineMessageID domain.InlineMessageID
 	id              ID
 	player1ID       user.ID
@@ -68,6 +70,7 @@ func (r RPS) Winner() domain.Player                   { return r.winner }
 func (r RPS) Status() domain.GameStatus               { return r.status }
 func (r RPS) CreatedAt() time.Time                    { return r.createdAt }
 func (r RPS) UpdatedAt() time.Time                    { return r.updatedAt }
+func (r RPS) GameSessionID() gs.ID                    { return r.gameSessionID }
 
 func (r RPS) JoinGame(playerID user.ID) (RPS, error) {
 	if !r.player1ID.IsZero() && !r.player2ID.IsZero() {

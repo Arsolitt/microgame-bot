@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/user"
 	"microgame-bot/internal/utils"
 	"time"
@@ -130,6 +131,13 @@ func WithUpdatedAt(updatedAt time.Time) RPSOpt {
 			return domain.ErrUpdatedAtRequired
 		}
 		r.updatedAt = updatedAt
+		return nil
+	}
+}
+
+func WithGameSessionID(gameSessionID gs.ID) RPSOpt {
+	return func(r *RPS) error {
+		r.gameSessionID = gameSessionID
 		return nil
 	}
 }
