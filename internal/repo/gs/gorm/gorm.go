@@ -3,9 +3,9 @@ package gorm
 import (
 	"context"
 	"errors"
+	"fmt"
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/gs"
-	"microgame-bot/internal/utils"
 
 	"gorm.io/gorm"
 )
@@ -20,7 +20,7 @@ func New(db *gorm.DB) *Repository {
 
 func (r *Repository) CreateGameSession(ctx context.Context, gameSession gs.GameSession) (gs.GameSession, error) {
 	model := GameSession{}.FromDomain(gameSession)
-	if err := r.db.WithContext(ctx).Create(&model).Error; err != nil {
+	if err := gorm.G[GameSession](r.db).Create(ctx, &model); err != nil {
 		return gs.GameSession{}, err
 	}
 	return model.ToDomain()
@@ -28,80 +28,40 @@ func (r *Repository) CreateGameSession(ctx context.Context, gameSession gs.GameS
 
 func (r *Repository) UpdateGameSession(ctx context.Context, gameSession gs.GameSession) (gs.GameSession, error) {
 	model := GameSession{}.FromDomain(gameSession)
-	result := r.db.WithContext(ctx).
-		Where("id = ?", model.ID).
-		Updates(model)
-
-	if result.Error != nil {
-		return gs.GameSession{}, result.Error
+	_, err := gorm.G[GameSession](r.db).Where("id = ?", model.ID.String()).Updates(ctx, model)
+	if err != nil {
+		return gs.GameSession{}, fmt.Errorf("failed to update game session in gorm database: %w", err)
 	}
-	if result.RowsAffected == 0 {
-		return gs.GameSession{}, domain.ErrGameNotFound
-	}
-
-	var updated GameSession
-	if err := r.db.WithContext(ctx).Where("id = ?", model.ID).First(&updated).Error; err != nil {
-		return gs.GameSession{}, err
-	}
-	return updated.ToDomain()
-}
-
-func (r *Repository) GameSessionByID(ctx context.Context, id gs.ID) (gs.GameSession, error) {
-	var model GameSession
-	if err := r.db.WithContext(ctx).Where("id = ?", id.String()).First(&model).Error; err != nil {
+	model, err = gorm.G[GameSession](r.db).Where("id = ?", model.ID.String()).First(ctx)
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return gs.GameSession{}, domain.ErrGameNotFound
+			return gs.GameSession{}, fmt.Errorf("game session not found while updating gorm database: %w", domain.ErrGameNotFound)
 		}
-		return gs.GameSession{}, err
+		return gs.GameSession{}, fmt.Errorf("failed to get game session by ID from gorm database: %w", err)
 	}
 	return model.ToDomain()
 }
 
-func (r *Repository) GameSessionByMessageID(ctx context.Context, msgID domain.InlineMessageID) (gs.GameSession, error) {
-	type GameSessionID struct {
-		GameSessionID string `gorm:"column:game_session_id"`
-	}
-
-	var result GameSessionID
-
-	// Try to find in TTT games
-	errTTT := r.db.WithContext(ctx).
-		Table("ttts").
-		Select("game_session_id").
-		Where("inline_message_id = ?", string(msgID)).
-		First(&result).Error
-
-	if errTTT == nil {
-		sessionID, err := utils.UUIDFromString[gs.ID](result.GameSessionID)
-		if err != nil {
-			return gs.GameSession{}, err
+func (r *Repository) GameSessionByID(ctx context.Context, id gs.ID) (gs.GameSession, error) {
+	model, err := gorm.G[GameSession](r.db).Where("id = ?", id.String()).First(ctx)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return gs.GameSession{}, fmt.Errorf("game session not found by ID: %w", domain.ErrGameNotFound)
 		}
-		return r.GameSessionByID(ctx, sessionID)
+		return gs.GameSession{}, fmt.Errorf("failed to get game session by ID from gorm database: %w", err)
 	}
+	return model.ToDomain()
+}
 
-	// Try to find in RPS games
-	errRPS := r.db.WithContext(ctx).
-		Table("rps").
-		Select("game_session_id").
-		Where("inline_message_id = ?", string(msgID)).
-		First(&result).Error
-
-	if errRPS == nil {
-		sessionID, err := utils.UUIDFromString[gs.ID](result.GameSessionID)
-		if err != nil {
-			return gs.GameSession{}, err
+func (r *Repository) GameSessionByMessageID(ctx context.Context, id domain.InlineMessageID) (gs.GameSession, error) {
+	model, err := gorm.G[GameSession](r.db).
+		Where("inline_message_id = ?", string(id)).
+		First(ctx)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return gs.GameSession{}, fmt.Errorf("game session not found by message ID: %w", domain.ErrGameNotFound)
 		}
-		return r.GameSessionByID(ctx, sessionID)
+		return gs.GameSession{}, fmt.Errorf("failed to get game session by message ID from gorm database: %w", err)
 	}
-
-	// Not found in either table
-	if errors.Is(errTTT, gorm.ErrRecordNotFound) && errors.Is(errRPS, gorm.ErrRecordNotFound) {
-		return gs.GameSession{}, domain.ErrGameNotFound
-	}
-
-	// Return the first non-NotFound error
-	if !errors.Is(errTTT, gorm.ErrRecordNotFound) {
-		return gs.GameSession{}, errTTT
-	}
-	return gs.GameSession{}, errRPS
+	return model.ToDomain()
 }

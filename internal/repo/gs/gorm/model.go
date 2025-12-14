@@ -4,12 +4,10 @@ import (
 	"microgame-bot/internal/domain"
 	domainGS "microgame-bot/internal/domain/gs"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type GameSession struct {
-	ID              uuid.UUID              `gorm:"primaryKey;type:uuid"`
+	ID              domainGS.ID            `gorm:"primaryKey;type:uuid"`
 	GameName        domain.GameName        `gorm:"not null"`
 	GameCount       int                    `gorm:"not null"`
 	InlineMessageID domain.InlineMessageID `gorm:"not null;uniqueIndex"`
@@ -22,25 +20,27 @@ type GameSession struct {
 // TODO: add tests
 func (m GameSession) ToDomain() (domainGS.GameSession, error) {
 	return domainGS.New(
-		domainGS.WithIDFromUUID(m.ID),
+		domainGS.WithID(m.ID),
 		domainGS.WithGameName(m.GameName),
 		domainGS.WithGameCount(m.GameCount),
 		domainGS.WithBet(m.Bet),
 		domainGS.WithStatus(m.Status),
 		domainGS.WithCreatedAt(m.CreatedAt),
 		domainGS.WithUpdatedAt(m.UpdatedAt),
+		domainGS.WithInlineMessageID(m.InlineMessageID),
 	)
 }
 
 // TODO: add tests
 func (m GameSession) FromDomain(u domainGS.GameSession) GameSession {
 	return GameSession{
-		ID:        uuid.UUID(u.ID()),
-		GameName:  domain.GameName(u.GameName()),
-		GameCount: u.GameCount(),
-		Bet:       u.Bet(),
-		Status:    domain.GameStatus(u.Status()),
-		CreatedAt: u.CreatedAt(),
-		UpdatedAt: u.UpdatedAt(),
+		ID:              u.ID(),
+		GameName:        domain.GameName(u.GameName()),
+		GameCount:       u.GameCount(),
+		Bet:             u.Bet(),
+		Status:          domain.GameStatus(u.Status()),
+		CreatedAt:       u.CreatedAt(),
+		UpdatedAt:       u.UpdatedAt(),
+		InlineMessageID: u.InlineMessageID(),
 	}
 }
