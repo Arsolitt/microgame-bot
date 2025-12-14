@@ -9,18 +9,17 @@ import (
 )
 
 type TTT struct {
-	board           [3][3]Cell
-	turn            domain.Player
-	winner          domain.Player
-	gameSessionID   gs.ID
-	inlineMessageID domain.InlineMessageID
-	id              ID
-	playerXID       user.ID
-	playerOID       user.ID
-	creatorID       user.ID
-	createdAt       time.Time
-	updatedAt       time.Time
-	status          domain.GameStatus
+	board         [3][3]Cell
+	turn          domain.Player
+	winner        domain.Player
+	gameSessionID gs.ID
+	id            ID
+	playerXID     user.ID
+	playerOID     user.ID
+	creatorID     user.ID
+	createdAt     time.Time
+	updatedAt     time.Time
+	status        domain.GameStatus
 }
 
 // New creates a new TTT instance with the given options
@@ -41,9 +40,6 @@ func New(opts ...TTTOpt) (TTT, error) {
 	if t.id.IsZero() {
 		return TTT{}, domain.ErrIDRequired
 	}
-	if t.inlineMessageID.IsZero() {
-		return TTT{}, domain.ErrInlineMessageIDRequired
-	}
 	if t.creatorID.IsZero() {
 		return TTT{}, domain.ErrCreatorIDRequired
 	}
@@ -57,18 +53,17 @@ func New(opts ...TTTOpt) (TTT, error) {
 	return *t, nil
 }
 
-func (t TTT) ID() ID                                  { return t.id }
-func (t TTT) InlineMessageID() domain.InlineMessageID { return t.inlineMessageID }
-func (t TTT) CreatorID() user.ID                      { return t.creatorID }
-func (t TTT) PlayerXID() user.ID                      { return t.playerXID }
-func (t TTT) PlayerOID() user.ID                      { return t.playerOID }
-func (t TTT) Turn() domain.Player                     { return t.turn }
-func (t TTT) Winner() domain.Player                   { return t.winner }
-func (t TTT) Board() [3][3]Cell                       { return t.board }
-func (t TTT) Status() domain.GameStatus               { return t.status }
-func (t TTT) CreatedAt() time.Time                    { return t.createdAt }
-func (t TTT) UpdatedAt() time.Time                    { return t.updatedAt }
-func (t TTT) GameSessionID() gs.ID                    { return t.gameSessionID }
+func (t TTT) ID() ID                    { return t.id }
+func (t TTT) CreatorID() user.ID        { return t.creatorID }
+func (t TTT) PlayerXID() user.ID        { return t.playerXID }
+func (t TTT) PlayerOID() user.ID        { return t.playerOID }
+func (t TTT) Turn() domain.Player       { return t.turn }
+func (t TTT) Winner() domain.Player     { return t.winner }
+func (t TTT) Board() [3][3]Cell         { return t.board }
+func (t TTT) Status() domain.GameStatus { return t.status }
+func (t TTT) CreatedAt() time.Time      { return t.createdAt }
+func (t TTT) UpdatedAt() time.Time      { return t.updatedAt }
+func (t TTT) GameSessionID() gs.ID      { return t.gameSessionID }
 
 // GetPlayerFigure returns the player symbol (X or O) for the given user ID.
 func (t TTT) GetPlayerFigure(userID user.ID) (domain.Player, error) {
