@@ -24,5 +24,5 @@ var (
 	ErrGameSessionIDRequired           = errors.New("game session ID required")
 	ErrInvalidGameType                 = errors.New("invalid game type")
 	ErrMultipleGamesInProgress         = errors.New("multiple games in progress")
-	ErrRoundCountRequired              = errors.New("round count required")
+	ErrGameCountRequired               = errors.New("round count required")
 )

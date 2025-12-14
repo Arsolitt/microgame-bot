@@ -62,9 +62,9 @@ func WithGameName(gameName domain.GameName) GameSessionOpt {
 	}
 }
 
-func WithRoundCount(roundCount int) GameSessionOpt {
+func WithGameCount(gameCount int) GameSessionOpt {
 	return func(gs *GameSession) error {
-		gs.roundCount = roundCount
+		gs.gameCount = gameCount
 		return nil
 	}
 }

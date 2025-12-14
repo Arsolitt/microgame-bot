@@ -9,7 +9,7 @@ type GameSession struct {
 	id              ID
 	gameName        domain.GameName
 	inlineMessageID domain.InlineMessageID
-	roundCount      int
+	gameCount       int
 	bet             int
 	status          domain.GameStatus
 	createdAt       time.Time
@@ -18,8 +18,8 @@ type GameSession struct {
 
 func New(opts ...GameSessionOpt) (GameSession, error) {
 	gs := &GameSession{
-		status:     domain.GameStatusCreated,
-		roundCount: 1,
+		status:    domain.GameStatusCreated,
+		gameCount: 1,
 	}
 
 	for _, opt := range opts {
@@ -35,8 +35,8 @@ func New(opts ...GameSessionOpt) (GameSession, error) {
 	if gs.status.IsZero() {
 		return GameSession{}, domain.ErrGameStatusRequired
 	}
-	if gs.roundCount <= 0 {
-		return GameSession{}, domain.ErrRoundCountRequired
+	if gs.gameCount <= 0 {
+		return GameSession{}, domain.ErrGameCountRequired
 	}
 
 	return *gs, nil
@@ -44,7 +44,7 @@ func New(opts ...GameSessionOpt) (GameSession, error) {
 
 func (g GameSession) ID() ID                    { return g.id }
 func (g GameSession) GameName() domain.GameName { return g.gameName }
-func (g GameSession) RoundCount() int           { return g.roundCount }
+func (g GameSession) GameCount() int            { return g.gameCount }
 func (g GameSession) Bet() int                  { return g.bet }
 func (g GameSession) Status() domain.GameStatus { return g.status }
 func (g GameSession) CreatedAt() time.Time      { return g.createdAt }
