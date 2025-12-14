@@ -42,10 +42,26 @@ func New(opts ...GameSessionOpt) (GameSession, error) {
 	return *gs, nil
 }
 
-func (g GameSession) ID() ID                    { return g.id }
-func (g GameSession) GameName() domain.GameName { return g.gameName }
-func (g GameSession) GameCount() int            { return g.gameCount }
-func (g GameSession) Bet() int                  { return g.bet }
-func (g GameSession) Status() domain.GameStatus { return g.status }
-func (g GameSession) CreatedAt() time.Time      { return g.createdAt }
-func (g GameSession) UpdatedAt() time.Time      { return g.updatedAt }
+func (g GameSession) ID() ID                                  { return g.id }
+func (g GameSession) GameName() domain.GameName               { return g.gameName }
+func (g GameSession) GameCount() int                          { return g.gameCount }
+func (g GameSession) Bet() int                                { return g.bet }
+func (g GameSession) Status() domain.GameStatus               { return g.status }
+func (g GameSession) CreatedAt() time.Time                    { return g.createdAt }
+func (g GameSession) UpdatedAt() time.Time                    { return g.updatedAt }
+func (g GameSession) InlineMessageID() domain.InlineMessageID { return g.inlineMessageID }
+
+func (g GameSession) ChangeStatus(status domain.GameStatus) (GameSession, error) {
+	if status.IsZero() {
+		return GameSession{}, domain.ErrGameStatusRequired
+	}
+	if status != domain.GameStatusCreated &&
+		status != domain.GameStatusInProgress &&
+		status != domain.GameStatusFinished &&
+		status != domain.GameStatusCancelled {
+		return GameSession{}, domain.ErrInvalidGameStatus
+	}
+
+	g.status = status
+	return g, nil
+}
