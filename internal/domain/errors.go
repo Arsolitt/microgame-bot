@@ -22,4 +22,6 @@ var (
 	ErrGameStatusRequired              = errors.New("game status required")
 	ErrInvalidGameStatus               = errors.New("invalid game status")
 	ErrGameSessionIDRequired           = errors.New("game session ID required")
+	ErrInvalidGameType                 = errors.New("invalid game type")
+	ErrMultipleGamesInProgress         = errors.New("multiple games in progress")
 )

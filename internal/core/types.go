@@ -6,4 +6,5 @@ const (
 	ContextKeyUser          = ContextKey("user")
 	ContextKeyCorrelationID = ContextKey("correlation_id")
 	ContextKeyGame          = ContextKey("game")
+	ContextKeyGameSession   = ContextKey("game_session")
 )

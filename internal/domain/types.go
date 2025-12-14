@@ -32,8 +32,9 @@ func (i InlineMessageID) IsZero() bool {
 	return string(i) == ""
 }
 
-type IGame[ID comparable] interface {
+type IGame[ID comparable, GSID comparable] interface {
 	ID() ID
+	GameSessionID() GSID
 }
 
 func (g GameStatus) IsZero() bool {
@@ -55,4 +56,8 @@ func (g GameStatus) IsValid() bool {
 	default:
 		return false
 	}
+}
+
+func (g GameName) String() string {
+	return string(g)
 }

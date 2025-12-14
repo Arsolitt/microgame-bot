@@ -81,6 +81,7 @@ func startup() error {
 	// gameRepo := memoryTTTRepository.New()
 	tttRepo := gormTTTRepository.New(db)
 	rpsRepo := gormRPSRepository.New(db)
+	gsRepo := gormGSRepository.New(db)
 
 	bh.Use(
 		mdw.CorrelationIDProvider(),
@@ -90,13 +91,13 @@ func startup() error {
 	bh.HandleInlineQuery(handlers.WrapInlineQuery(handlers.GameSelector()), th.AnyInlineQuery())
 
 	tttG := bh.Group(th.CallbackDataPrefix("g::ttt::"))
-	tttG.Use(mdw.GameProvider(memoryLocker.New[ttt.ID](), tttRepo, "ttt"))
+	tttG.Use(mdw.GameProvider(memoryLocker.New[ttt.ID](), tttRepo, gsRepo, "ttt"))
 
 	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTJoin(tttRepo, userRepo)), th.CallbackDataPrefix("g::ttt::join::"))
 	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTMove(tttRepo, userRepo)), th.CallbackDataPrefix("g::ttt::move::"))
 
 	rpsG := bh.Group(th.CallbackDataPrefix("g::rps::"))
-	rpsG.Use(mdw.GameProvider(memoryLocker.New[rps.ID](), rpsRepo, "rps"))
+	rpsG.Use(mdw.GameProvider(memoryLocker.New[rps.ID](), rpsRepo, gsRepo, "rps"))
 
 	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSJoin(rpsRepo, userRepo)), th.CallbackDataPrefix("g::rps::join::"))
 	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSMove(rpsRepo, userRepo)), th.CallbackDataPrefix("g::rps::choice::"))
