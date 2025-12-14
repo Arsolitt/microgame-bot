@@ -43,20 +43,6 @@ func WithIDFromUUID(id uuid.UUID) RPSOpt {
 	return WithID(ID(id))
 }
 
-func WithInlineMessageID(inlineMessageID domain.InlineMessageID) RPSOpt {
-	return func(r *RPS) error {
-		if inlineMessageID.IsZero() {
-			return domain.ErrInlineMessageIDRequired
-		}
-		r.inlineMessageID = inlineMessageID
-		return nil
-	}
-}
-
-func WithInlineMessageIDFromString(inlineMessageID string) RPSOpt {
-	return WithInlineMessageID(domain.InlineMessageID(inlineMessageID))
-}
-
 func WithCreatorID(creatorID user.ID) RPSOpt {
 	return func(r *RPS) error {
 		if creatorID.IsZero() {

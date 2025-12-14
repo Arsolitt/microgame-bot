@@ -8,18 +8,17 @@ import (
 )
 
 type RPS struct {
-	status          domain.GameStatus
-	choice1         Choice
-	choice2         Choice
-	winner          domain.Player
-	gameSessionID   gs.ID
-	inlineMessageID domain.InlineMessageID
-	id              ID
-	player1ID       user.ID
-	player2ID       user.ID
-	creatorID       user.ID
-	createdAt       time.Time
-	updatedAt       time.Time
+	status        domain.GameStatus
+	choice1       Choice
+	choice2       Choice
+	winner        domain.Player
+	gameSessionID gs.ID
+	id            ID
+	player1ID     user.ID
+	player2ID     user.ID
+	creatorID     user.ID
+	createdAt     time.Time
+	updatedAt     time.Time
 }
 
 func New(opts ...RPSOpt) (RPS, error) {
@@ -40,8 +39,8 @@ func New(opts ...RPSOpt) (RPS, error) {
 	if r.id.IsZero() {
 		return RPS{}, domain.ErrIDRequired
 	}
-	if r.inlineMessageID.IsZero() {
-		return RPS{}, domain.ErrInlineMessageIDRequired
+	if r.gameSessionID.IsZero() {
+		return RPS{}, domain.ErrGameSessionIDRequired
 	}
 	if r.creatorID.IsZero() {
 		return RPS{}, domain.ErrCreatorIDRequired
@@ -59,18 +58,17 @@ func New(opts ...RPSOpt) (RPS, error) {
 	return *r, nil
 }
 
-func (r RPS) ID() ID                                  { return r.id }
-func (r RPS) InlineMessageID() domain.InlineMessageID { return r.inlineMessageID }
-func (r RPS) CreatorID() user.ID                      { return r.creatorID }
-func (r RPS) Player1ID() user.ID                      { return r.player1ID }
-func (r RPS) Player2ID() user.ID                      { return r.player2ID }
-func (r RPS) Choice1() Choice                         { return r.choice1 }
-func (r RPS) Choice2() Choice                         { return r.choice2 }
-func (r RPS) Winner() domain.Player                   { return r.winner }
-func (r RPS) Status() domain.GameStatus               { return r.status }
-func (r RPS) CreatedAt() time.Time                    { return r.createdAt }
-func (r RPS) UpdatedAt() time.Time                    { return r.updatedAt }
-func (r RPS) GameSessionID() gs.ID                    { return r.gameSessionID }
+func (r RPS) ID() ID                    { return r.id }
+func (r RPS) CreatorID() user.ID        { return r.creatorID }
+func (r RPS) Player1ID() user.ID        { return r.player1ID }
+func (r RPS) Player2ID() user.ID        { return r.player2ID }
+func (r RPS) Choice1() Choice           { return r.choice1 }
+func (r RPS) Choice2() Choice           { return r.choice2 }
+func (r RPS) Winner() domain.Player     { return r.winner }
+func (r RPS) Status() domain.GameStatus { return r.status }
+func (r RPS) CreatedAt() time.Time      { return r.createdAt }
+func (r RPS) UpdatedAt() time.Time      { return r.updatedAt }
+func (r RPS) GameSessionID() gs.ID      { return r.gameSessionID }
 
 func (r RPS) JoinGame(playerID user.ID) (RPS, error) {
 	if !r.player1ID.IsZero() && !r.player2ID.IsZero() {

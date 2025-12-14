@@ -21,4 +21,5 @@ var (
 	ErrGameIsDraw                      = errors.New("game is draw")
 	ErrGameStatusRequired              = errors.New("game status required")
 	ErrInvalidGameStatus               = errors.New("invalid game status")
+	ErrGameSessionIDRequired           = errors.New("game session ID required")
 )
