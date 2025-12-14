@@ -22,9 +22,11 @@ import (
 	memoryFSM "microgame-bot/internal/fsm/memory"
 	"microgame-bot/internal/handlers"
 	memoryLocker "microgame-bot/internal/locker/memory"
+	gormGSRepository "microgame-bot/internal/repo/gs/gorm"
 	gormRPSRepository "microgame-bot/internal/repo/rps/gorm"
 	gormTTTRepository "microgame-bot/internal/repo/ttt/gorm"
 	gormUserRepository "microgame-bot/internal/repo/user/gorm"
+	uowGorm "microgame-bot/internal/uow/gorm"
 
 	gormLogger "gorm.io/gorm/logger"
 )
@@ -49,6 +51,7 @@ func startup() error {
 	}
 
 	db.AutoMigrate(&gormUserRepository.User{})
+	db.AutoMigrate(&gormGSRepository.GameSession{})
 	db.AutoMigrate(&gormTTTRepository.TTT{})
 	db.AutoMigrate(&gormRPSRepository.RPS{})
 
@@ -98,8 +101,17 @@ func startup() error {
 	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSJoin(rpsRepo, userRepo)), th.CallbackDataPrefix("g::rps::join::"))
 	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSMove(rpsRepo, userRepo)), th.CallbackDataPrefix("g::rps::choice::"))
 
-	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(tttRepo)), th.CallbackDataEqual("create::ttt"))
-	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSCreate(rpsRepo)), th.CallbackDataEqual("create::rps"))
+	tttUow := uowGorm.New(db,
+		uowGorm.WithGSRepo(gormGSRepository.New(db)),
+		uowGorm.WithTTTRepo(gormTTTRepository.New(db)),
+	)
+	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(tttUow)), th.CallbackDataEqual("create::ttt"))
+
+	rpsUow := uowGorm.New(db,
+		uowGorm.WithGSRepo(gormGSRepository.New(db)),
+		uowGorm.WithRPSRepo(gormRPSRepository.New(db)),
+	)
+	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSCreate(rpsUow)), th.CallbackDataEqual("create::rps"))
 
 	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.Empty()), th.CallbackDataEqual("empty"))
 

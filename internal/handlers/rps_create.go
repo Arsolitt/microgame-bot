@@ -4,18 +4,18 @@ import (
 	"log/slog"
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/domain"
+	domainGS "microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/rps"
 	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
-
-	repository "microgame-bot/internal/repo/rps"
+	"microgame-bot/internal/uow"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
-func RPSCreate(gameRepo repository.IRPSRepository) CallbackQueryHandlerFunc {
+func RPSCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		slog.DebugContext(ctx, "Create game callback received")
 
@@ -29,17 +29,40 @@ func RPSCreate(gameRepo repository.IRPSRepository) CallbackQueryHandlerFunc {
 			return nil, core.ErrInvalidUpdate
 		}
 
-		game, err := rps.New(
-			rps.WithNewID(),
-			rps.WithInlineMessageIDFromString(query.InlineMessageID),
-			rps.WithCreatorID(user.ID()),
-			rps.WithPlayer1ID(user.ID()),
-			rps.WithStatus(domain.GameStatusWaitingForPlayers),
+		session, err := domainGS.New(
+			domainGS.WithNewID(),
+			domainGS.WithGameName(domain.GameNameRPS),
+			domainGS.WithInlineMessageIDFromString(query.InlineMessageID),
 		)
 		if err != nil {
 			return nil, err
 		}
-		game, err = gameRepo.CreateGame(ctx, game)
+		game, err := rps.New(
+			rps.WithNewID(),
+			rps.WithCreatorID(user.ID()),
+			rps.WithPlayer1ID(user.ID()),
+			rps.WithStatus(domain.GameStatusWaitingForPlayers),
+			rps.WithGameSessionID(session.ID()),
+		)
+		err = unit.Do(ctx, func(unit uow.IUnitOfWork) error {
+			gsR, err := unit.GameSessionRepo()
+			if err != nil {
+				return err
+			}
+			gR, err := unit.RPSRepo()
+			if err != nil {
+				return err
+			}
+			session, err = gsR.CreateGameSession(ctx, session)
+			if err != nil {
+				return err
+			}
+			game, err = gR.CreateGame(ctx, game)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 		if err != nil {
 			return nil, err
 		}

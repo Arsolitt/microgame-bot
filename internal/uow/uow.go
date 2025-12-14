@@ -13,7 +13,7 @@ type IUnitOfWork interface {
 	Do(ctx context.Context, fn func(uow IUnitOfWork) error) error
 
 	UserRepo() (userRepo.IUserRepository, error)
-	TTTRepo() (tttRepo.ITTTRepository, error)
 	GameSessionRepo() (gsRepo.IGSRepository, error)
-	GameRepo() (rpsRepo.IRPSRepository, error)
+	TTTRepo() (tttRepo.ITTTRepository, error)
+	RPSRepo() (rpsRepo.IRPSRepository, error)
 }
