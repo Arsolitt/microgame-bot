@@ -41,6 +41,20 @@ func WithIDFromUUID(id uuid.UUID) GameSessionOpt {
 	return WithID(ID(id))
 }
 
+func WithInlineMessageID(inlineMessageID domain.InlineMessageID) GameSessionOpt {
+	return func(r *GameSession) error {
+		if inlineMessageID.IsZero() {
+			return domain.ErrInlineMessageIDRequired
+		}
+		r.inlineMessageID = inlineMessageID
+		return nil
+	}
+}
+
+func WithInlineMessageIDFromString(inlineMessageID string) GameSessionOpt {
+	return WithInlineMessageID(domain.InlineMessageID(inlineMessageID))
+}
+
 func WithGameName(gameName domain.GameName) GameSessionOpt {
 	return func(gs *GameSession) error {
 		gs.gameName = gameName

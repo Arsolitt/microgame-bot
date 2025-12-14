@@ -26,18 +26,18 @@ func (r *Repository) CreateGame(ctx context.Context, game ttt.TTT) error {
 	return nil
 }
 
-func (r *Repository) GameByMessageID(ctx context.Context, id domain.InlineMessageID) (ttt.TTT, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+// func (r *Repository) GameByMessageID(ctx context.Context, id domain.InlineMessageID) (ttt.TTT, error) {
+// 	r.mu.RLock()
+// 	defer r.mu.RUnlock()
 
-	for _, game := range r.games {
-		if game.InlineMessageID() == id {
-			return game, nil
-		}
-	}
+// 	for _, game := range r.games {
+// 		if game.InlineMessageID() == id {
+// 			return game, nil
+// 		}
+// 	}
 
-	return ttt.TTT{}, domain.ErrGameNotFound
-}
+// 	return ttt.TTT{}, domain.ErrGameNotFound
+// }
 
 func (r *Repository) GameByID(ctx context.Context, id ttt.ID) (ttt.TTT, error) {
 	r.mu.RLock()

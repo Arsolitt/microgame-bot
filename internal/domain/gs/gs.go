@@ -6,13 +6,14 @@ import (
 )
 
 type GameSession struct {
-	id         ID
-	gameName   domain.GameName
-	roundCount int
-	bet        int
-	status     domain.GameStatus
-	createdAt  time.Time
-	updatedAt  time.Time
+	id              ID
+	gameName        domain.GameName
+	inlineMessageID domain.InlineMessageID
+	roundCount      int
+	bet             int
+	status          domain.GameStatus
+	createdAt       time.Time
+	updatedAt       time.Time
 }
 
 func New(opts ...GameSessionOpt) (GameSession, error) {

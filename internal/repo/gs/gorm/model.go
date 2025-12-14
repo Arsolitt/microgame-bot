@@ -9,13 +9,14 @@ import (
 )
 
 type GameSession struct {
-	ID         uuid.UUID         `gorm:"primaryKey;type:uuid"`
-	GameName   domain.GameName   `gorm:"not null"`
-	RoundCount int               `gorm:"not null"`
-	Bet        int               `gorm:"not null"`
-	Status     domain.GameStatus `gorm:"not null"`
-	CreatedAt  time.Time         `gorm:"not null"`
-	UpdatedAt  time.Time         `gorm:"not null"`
+	ID              uuid.UUID              `gorm:"primaryKey;type:uuid"`
+	GameName        domain.GameName        `gorm:"not null"`
+	RoundCount      int                    `gorm:"not null"`
+	InlineMessageID domain.InlineMessageID `gorm:"not null;uniqueIndex"`
+	Bet             int                    `gorm:"not null"`
+	Status          domain.GameStatus      `gorm:"not null"`
+	CreatedAt       time.Time              `gorm:"not null"`
+	UpdatedAt       time.Time              `gorm:"not null"`
 }
 
 // TODO: add tests

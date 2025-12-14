@@ -2,8 +2,13 @@ package gs
 
 import (
 	"context"
+	"errors"
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/gs"
+)
+
+var (
+	ErrGameNotRegistered = errors.New("game not registered")
 )
 
 type IGSGetter interface {
