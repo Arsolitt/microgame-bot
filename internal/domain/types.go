@@ -1,5 +1,13 @@
 package domain
 
+import (
+	"context"
+	"fmt"
+	"reflect"
+
+	"gorm.io/gorm/schema"
+)
+
 type (
 	InlineMessageID string
 	GameStatus      string
@@ -60,4 +68,23 @@ func (g GameStatus) IsValid() bool {
 
 func (g GameName) String() string {
 	return string(g)
+}
+
+// Scan implements gorm.Serializer interface for reading from database
+func (id *InlineMessageID) Scan(ctx context.Context, field *schema.Field, dst reflect.Value, dbValue interface{}) error {
+	switch value := dbValue.(type) {
+	case []byte:
+		*id = InlineMessageID(string(value))
+	case string:
+		*id = InlineMessageID(value)
+	case nil:
+		*id = InlineMessageID("")
+	default:
+		return fmt.Errorf("unsupported data type for UUID: %T", dbValue)
+	}
+	return nil
+}
+
+func (i InlineMessageID) Value(ctx context.Context, field *schema.Field, dst reflect.Value, fieldValue interface{}) (interface{}, error) {
+	return i.String(), nil
 }
