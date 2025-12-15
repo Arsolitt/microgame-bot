@@ -7,6 +7,7 @@ import (
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/rps"
+	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
 	gsRepository "microgame-bot/internal/repo/gs"
 	rpsRepository "microgame-bot/internal/repo/rps"
@@ -134,22 +135,20 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
 			}
 
-			var winnerUsername string
+			var winner domainUser.User
 			if result.SeriesWinner == player1.ID() {
-				winnerUsername = string(player1.Username())
+				winner = player1
 			} else {
-				winnerUsername = string(player2.Username())
+				winner = player2
 			}
 
-			msg := fmt.Sprintf(
-				"🎮 <b>Серия завершена!</b>\n\n"+
-					"Счёт: %d - %d\n"+
-					"Ничьих: %d\n\n"+
-					"🏆 <b>Победитель серии:</b> @%s",
+			msg := msgs.RPSSeriesCompleted(
+				player1,
+				player2,
 				result.Scores[player1.ID()],
 				result.Scores[player2.ID()],
 				result.Draws,
-				winnerUsername,
+				winner,
 			)
 
 			return ResponseChain{
@@ -160,7 +159,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				},
 				&CallbackQueryResponse{
 					CallbackQueryID: query.ID,
-					Text:            fmt.Sprintf("🎉 Серия завершена! Победил @%s", winnerUsername),
+					Text:            msgs.RPSSeriesCompletedAlert(winner),
 				},
 			}, nil
 		}
@@ -195,15 +194,11 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
 			}
 
-			msg := fmt.Sprintf(
-				"<b>Раунд завершен!</b>\n\n"+
-					"Текущий счёт:\n"+
-					"@%s: %d\n"+
-					"@%s: %d\n"+
-					"Ничьих: %d\n\n"+
-					"🎮 Начинаем следующий раунд!",
-				player1.Username(), result.Scores[player1.ID()],
-				player2.Username(), result.Scores[player2.ID()],
+			msg := msgs.RPSRoundCompleted(
+				player1,
+				player2,
+				result.Scores[player1.ID()],
+				result.Scores[player2.ID()],
 				result.Draws,
 			)
 
@@ -229,13 +224,11 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 		}
 
 		// Добавляем текущий счет
-		msg += fmt.Sprintf(
-			"\n\nТекущий счёт:\n"+
-				"@%s: %d\n"+
-				"@%s: %d\n"+
-				"Ничьих: %d",
-			player1.Username(), result.Scores[player1.ID()],
-			player2.Username(), result.Scores[player2.ID()],
+		msg += msgs.RPSCurrentScore(
+			player1,
+			player2,
+			result.Scores[player1.ID()],
+			result.Scores[player2.ID()],
 			result.Draws,
 		)
 
