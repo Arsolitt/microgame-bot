@@ -29,6 +29,28 @@ func RPSSeriesCompletedAlert(winner domainUser.User) string {
 	return fmt.Sprintf("🎉 Серия завершена! Победил @%s", winner.Username())
 }
 
+// RPSSeriesDraw generates message when series ends in a draw
+func RPSSeriesDraw(
+	player1 domainUser.User,
+	player2 domainUser.User,
+	player1Score int,
+	player2Score int,
+	draws int,
+) string {
+	var sb strings.Builder
+	sb.WriteString("🎮 <b>Серия завершена!</b>\n\n")
+	sb.WriteString(fmt.Sprintf("Счёт: %d - %d\n", player1Score, player2Score))
+	sb.WriteString(fmt.Sprintf("Ничьих: %d\n\n", draws))
+	sb.WriteString("🤝 <b>Ничья!</b>")
+
+	return sb.String()
+}
+
+// RPSSeriesDrawAlert generates short alert message for callback query when series ends in draw
+func RPSSeriesDrawAlert() string {
+	return "🤝 Серия завершена! Ничья."
+}
+
 // RPSRoundCompleted generates message when round is finished and new round starts
 func RPSRoundCompleted(
 	player1 domainUser.User,

@@ -71,6 +71,13 @@ func (sm *SessionManager) CalculateResult() SessionResult {
 	}
 
 	finishedCount := sm.countFinishedGames()
+
+	if finishedCount >= sm.session.gameCount {
+		result.IsCompleted = true
+		result.SeriesWinner = user.ID{}
+		return result
+	}
+
 	result.NeedsNewRound = finishedCount < sm.session.gameCount &&
 		!sm.hasActiveGame()
 

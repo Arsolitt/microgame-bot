@@ -140,6 +140,28 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
 			}
 
+			if result.SeriesWinner.IsZero() {
+				msg := msgs.RPSSeriesDraw(
+					player1,
+					player2,
+					result.Scores[player1.ID()],
+					result.Scores[player2.ID()],
+					result.Draws,
+				)
+
+				return ResponseChain{
+					&EditMessageTextResponse{
+						InlineMessageID: query.InlineMessageID,
+						Text:            msg,
+						ParseMode:       "HTML",
+					},
+					&CallbackQueryResponse{
+						CallbackQueryID: query.ID,
+						Text:            msgs.RPSSeriesDrawAlert(),
+					},
+				}, nil
+			}
+
 			var winner domainUser.User
 			if result.SeriesWinner == player1.ID() {
 				winner = player1
