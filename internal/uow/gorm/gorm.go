@@ -73,28 +73,18 @@ func (u *UnitOfWork) TTTRepo() (tttRepo.ITTTRepository, error) {
 	return u.tttRepo, nil
 }
 
-func (u *UnitOfWork) GameSessionRepo() (gsRepo.IGSRepository, error) {
+func (u *UnitOfWork) GSRepo() (gsRepo.IGSRepository, error) {
 	if u.gsRepo == nil {
 		return nil, errors.New("gs repository is not set")
 	}
 	return u.gsRepo, nil
 }
 
-func (u *UnitOfWork) GameRepo() (rpsRepo.IRPSRepository, error) {
+func (u *UnitOfWork) RPSRepo() (rpsRepo.IRPSRepository, error) {
 	if u.rpsRepo == nil {
 		return nil, errors.New("rps repository is not set")
 	}
 	return u.rpsRepo, nil
-}
-
-// GSRepo deprecated: use GameSessionRepo
-func (u *UnitOfWork) GSRepo() (gsRepo.IGSRepository, error) {
-	return u.GameSessionRepo()
-}
-
-// RPSRepo deprecated: use GameRepo
-func (u *UnitOfWork) RPSRepo() (rpsRepo.IRPSRepository, error) {
-	return u.GameRepo()
 }
 
 type UnitOfWorkOpt func(*UnitOfWork) error
