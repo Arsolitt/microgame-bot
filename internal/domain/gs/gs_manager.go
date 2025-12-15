@@ -9,6 +9,7 @@ type SessionResult struct {
 	Scores        map[user.ID]int
 	Draws         int
 	IsCompleted   bool
+	IsDraw        bool
 	SeriesWinner  user.ID
 	NeedsNewRound bool
 	Participants  []user.ID
@@ -74,7 +75,7 @@ func (sm *SessionManager) CalculateResult() SessionResult {
 
 	if finishedCount >= sm.session.gameCount {
 		result.IsCompleted = true
-		result.SeriesWinner = user.ID{}
+		result.IsDraw = true
 		return result
 	}
 

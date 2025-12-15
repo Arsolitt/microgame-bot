@@ -140,7 +140,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
 			}
 
-			if result.SeriesWinner.IsZero() {
+			if result.IsDraw {
 				msg := msgs.RPSSeriesDraw(
 					player1,
 					player2,
