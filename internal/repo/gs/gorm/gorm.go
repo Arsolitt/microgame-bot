@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/gs"
+	"microgame-bot/internal/repo"
+	"microgame-bot/internal/utils"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository struct {
@@ -43,12 +46,26 @@ func (r *Repository) UpdateGameSession(ctx context.Context, gameSession gs.GameS
 }
 
 func (r *Repository) GameSessionByID(ctx context.Context, id gs.ID) (gs.GameSession, error) {
-	model, err := gorm.G[GameSession](r.db).Where("id = ?", id.String()).First(ctx)
+	return r.gameSessionByID(ctx, id)
+}
+
+func (r *Repository) GameSessionByIDLocked(ctx context.Context, id gs.ID) (gs.GameSession, error) {
+	if !utils.IsInGormTransaction(r.db) {
+		return gs.GameSession{}, repo.ErrNotInTransaction
+	}
+	return r.gameSessionByID(ctx, id, clause.Locking{Strength: "UPDATE"})
+}
+
+func (r *Repository) gameSessionByID(ctx context.Context, id gs.ID, opts ...clause.Expression) (gs.GameSession, error) {
+	const OPERATION_NAME = "repo::gs::gorm::gameSessionByID"
+	model, err := gorm.G[GameSession](r.db, opts...).
+		Where("id = ?", id.String()).
+		First(ctx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return gs.GameSession{}, fmt.Errorf("game session not found by ID: %w", domain.ErrGameNotFound)
+			return gs.GameSession{}, fmt.Errorf("game session not found by ID in %s: %w", OPERATION_NAME, domain.ErrGameNotFound)
 		}
-		return gs.GameSession{}, fmt.Errorf("failed to get game session by ID from gorm database: %w", err)
+		return gs.GameSession{}, fmt.Errorf("failed to get game session by ID from gorm database in %s: %w", OPERATION_NAME, err)
 	}
 	return model.ToDomain()
 }
@@ -58,10 +75,7 @@ func (r *Repository) GameSessionByMessageID(ctx context.Context, id domain.Inlin
 		Where("inline_message_id = ?", string(id)).
 		First(ctx)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return gs.GameSession{}, fmt.Errorf("game session not found by message ID: %w", domain.ErrGameNotFound)
-		}
-		return gs.GameSession{}, fmt.Errorf("failed to get game session by message ID from gorm database: %w", err)
+		return gs.GameSession{}, err
 	}
 	return model.ToDomain()
 }

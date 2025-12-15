@@ -14,6 +14,7 @@ var (
 type IGSGetter interface {
 	GameSessionByMessageID(ctx context.Context, id domain.InlineMessageID) (gs.GameSession, error)
 	GameSessionByID(ctx context.Context, id gs.ID) (gs.GameSession, error)
+	GameSessionByIDLocked(ctx context.Context, id gs.ID) (gs.GameSession, error)
 }
 
 type IGSCreator interface {
