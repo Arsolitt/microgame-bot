@@ -48,6 +48,10 @@ func extractGameID[ID utils.UUIDBasedID](callbackData string) (ID, error) {
 		var zero ID
 		return zero, err
 	}
+	if utils.UUIDIsZero(id) {
+		var zero ID
+		return zero, ErrInvalidCallbackData
+	}
 	return id, nil
 }
 

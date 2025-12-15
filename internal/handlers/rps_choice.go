@@ -13,6 +13,7 @@ import (
 	rpsRepository "microgame-bot/internal/repo/rps"
 	userRepository "microgame-bot/internal/repo/user"
 	"microgame-bot/internal/uow"
+	"microgame-bot/internal/utils"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -37,6 +38,10 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 		if err != nil {
 			return nil, fmt.Errorf("failed to extract game ID from callback data in %s: %w", OPERATION_NAME, err)
 		}
+
+		rawCtx := ctx.Context()
+		rawCtx = logger.WithLogValue(rawCtx, logger.GameIDField, utils.UUIDString(gameID))
+		ctx = ctx.WithContext(rawCtx)
 
 		var game rps.RPS
 		err = unit.Do(ctx, func(uow uow.IUnitOfWork) error {
@@ -171,7 +176,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				if err != nil {
 					return fmt.Errorf("failed to get game repository in %s: %w", OPERATION_NAME, err)
 				}
-				nextGame, err := rps.New(
+				nextGame, err = rps.New(
 					rps.WithNewID(),
 					rps.WithGameSessionID(session.ID()),
 					rps.WithCreatorID(game.CreatorID()),

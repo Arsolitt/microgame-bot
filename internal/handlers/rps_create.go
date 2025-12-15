@@ -35,7 +35,7 @@ func RPSCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 			domainGS.WithNewID(),
 			domainGS.WithGameName(domain.GameNameRPS),
 			domainGS.WithInlineMessageID(inlineMessageID),
-			// domainGS.WithGameCount(3),
+			domainGS.WithGameCount(3),
 		)
 		if err != nil {
 			return nil, err
