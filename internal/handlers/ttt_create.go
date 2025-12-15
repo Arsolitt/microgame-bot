@@ -3,6 +3,7 @@ package handlers
 import (
 	"log/slog"
 	"microgame-bot/internal/core"
+	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
 	domainGS "microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/ttt"
@@ -16,8 +17,10 @@ import (
 )
 
 func TTTCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
+	const OPERATION_NAME = "handlers::ttt_create"
+	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
-		slog.DebugContext(ctx, "Create game callback received")
+		l.DebugContext(ctx, "Create TTT game callback received")
 
 		user, ok := ctx.Value(core.ContextKeyUser).(domainUser.User)
 		if !ok {
@@ -67,7 +70,7 @@ func TTTCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 			return nil
 		})
 		if err != nil {
-			return nil, err
+			return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
 		}
 
 		msg, err := msgs.TTTStart(user, game)

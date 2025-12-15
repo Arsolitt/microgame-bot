@@ -131,7 +131,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				return nil
 			})
 			if err != nil {
-				return nil, fmt.Errorf("failed do transaction in %s: %w", OPERATION_NAME, err)
+				return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
 			}
 
 			var winnerUsername string
@@ -192,7 +192,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				return nil
 			})
 			if err != nil {
-				return nil, fmt.Errorf("failed do transaction in %s: %w", OPERATION_NAME, err)
+				return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
 			}
 
 			msg := fmt.Sprintf(

@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"log/slog"
+	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
 	domainGS "microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/rps"
@@ -16,8 +17,9 @@ import (
 
 func RPSCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 	const OPERATION_NAME = "handlers::rps_create"
+	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
-		slog.DebugContext(ctx, "Create RPS game callback received")
+		l.DebugContext(ctx, "Create RPS game callback received")
 
 		user, err := userFromContext(ctx)
 		if err != nil {
@@ -70,7 +72,7 @@ func RPSCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 
 		msg, err := msgs.RPSStart(user, game)
 		if err != nil {
-			return nil, err
+			return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
 		}
 
 		return ResponseChain{

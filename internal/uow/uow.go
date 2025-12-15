@@ -2,10 +2,17 @@ package uow
 
 import (
 	"context"
+	"fmt"
 	gsRepo "microgame-bot/internal/repo/gs"
 	rpsRepo "microgame-bot/internal/repo/rps"
 	tttRepo "microgame-bot/internal/repo/ttt"
 	userRepo "microgame-bot/internal/repo/user"
+)
+
+var (
+	ErrFailedToDoTransaction = func(operationName string, err error) error {
+		return fmt.Errorf("failed to do transaction in %s: %w", operationName, err)
+	}
 )
 
 // IUnitOfWork provides transactional operations over multiple repositories

@@ -16,8 +16,9 @@ import (
 
 func RPSJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 	const OPERATION_NAME = "handlers::rps_join"
+	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
-		slog.DebugContext(ctx, "RPS Join callback received", logger.OperationField, OPERATION_NAME)
+		l.DebugContext(ctx, "RPS Join callback received")
 
 		player2, err := userFromContext(ctx)
 		if err != nil {
@@ -71,6 +72,9 @@ func RPSJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 
 			return nil
 		})
+		if err != nil {
+			return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
+		}
 
 		creator, err := userRepo.UserByID(ctx, game.CreatorID())
 		if err != nil {
