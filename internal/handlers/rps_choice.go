@@ -142,6 +142,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 
 			if result.IsDraw {
 				msg := msgs.RPSSeriesDraw(
+					allGames,
 					player1,
 					player2,
 					result.Scores[player1.ID()],
@@ -170,6 +171,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 			}
 
 			msg := msgs.RPSSeriesCompleted(
+				allGames,
 				player1,
 				player2,
 				result.Scores[player1.ID()],
@@ -222,6 +224,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 			}
 
 			msg := msgs.RPSRoundCompleted(
+				allGames,
 				player1,
 				player2,
 				result.Scores[player1.ID()],
@@ -244,14 +247,8 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				},
 			}, nil
 		}
-		// Показываем результат текущего раунда
-		msg, err := msgs.RPSFinished(&game, player1, player2)
-		if err != nil {
-			return nil, err
-		}
-
-		// Добавляем текущий счет
-		msg += msgs.RPSCurrentScore(
+		msg := msgs.RPSRoundFinishedWithScore(
+			allGames,
 			player1,
 			player2,
 			result.Scores[player1.ID()],

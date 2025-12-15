@@ -2,12 +2,44 @@ package msgs
 
 import (
 	"fmt"
+	"microgame-bot/internal/domain/rps"
 	domainUser "microgame-bot/internal/domain/user"
 	"strings"
 )
 
+// getCreatorUsername returns creator username based on creator ID
+func getCreatorUsername(creatorID domainUser.ID, player1 domainUser.User, player2 domainUser.User) string {
+	if creatorID == player1.ID() {
+		return string(player1.Username())
+	}
+	return string(player2.Username())
+}
+
+// buildRPSRoundsHistory generates rounds history section
+func buildRPSRoundsHistory(games []rps.RPS, player1 domainUser.User, player2 domainUser.User) string {
+	var sb strings.Builder
+
+	roundNum := 1
+	for _, game := range games {
+		if game.IsFinished() {
+			sb.WriteString(fmt.Sprintf(
+				"Раунд %d:\n@%s %s\n@%s %s\n",
+				roundNum,
+				player1.Username(),
+				game.Choice1().Icon(),
+				player2.Username(),
+				game.Choice2().Icon(),
+			))
+			roundNum++
+		}
+	}
+
+	return sb.String()
+}
+
 // RPSSeriesCompleted generates message when series is finished
 func RPSSeriesCompleted(
+	games []rps.RPS,
 	player1 domainUser.User,
 	player2 domainUser.User,
 	player1Score int,
@@ -16,10 +48,14 @@ func RPSSeriesCompleted(
 	winner domainUser.User,
 ) string {
 	var sb strings.Builder
-	sb.WriteString("🎮 <b>Серия завершена!</b>\n\n")
-	sb.WriteString(fmt.Sprintf("Счёт: %d - %d\n", player1Score, player2Score))
-	sb.WriteString(fmt.Sprintf("Ничьих: %d\n\n", draws))
-	sb.WriteString(fmt.Sprintf("🏆 <b>Победитель серии:</b> @%s", winner.Username()))
+	creatorUsername := getCreatorUsername(games[0].CreatorID(), player1, player2)
+	sb.WriteString(fmt.Sprintf("@%s запустил игру <b>камень-ножницы-бумага</b>\n\n", creatorUsername))
+	sb.WriteString(buildRPSRoundsHistory(games, player1, player2))
+	sb.WriteString("\n")
+	sb.WriteString(fmt.Sprintf("🏆 <b>Победитель серии:</b> @%s (%d - %d)", winner.Username(), player1Score, player2Score))
+	if draws > 0 {
+		sb.WriteString(fmt.Sprintf("\nНичьих: %d", draws))
+	}
 
 	return sb.String()
 }
@@ -31,6 +67,7 @@ func RPSSeriesCompletedAlert(winner domainUser.User) string {
 
 // RPSSeriesDraw generates message when series ends in a draw
 func RPSSeriesDraw(
+	games []rps.RPS,
 	player1 domainUser.User,
 	player2 domainUser.User,
 	player1Score int,
@@ -38,10 +75,14 @@ func RPSSeriesDraw(
 	draws int,
 ) string {
 	var sb strings.Builder
-	sb.WriteString("🎮 <b>Серия завершена!</b>\n\n")
-	sb.WriteString(fmt.Sprintf("Счёт: %d - %d\n", player1Score, player2Score))
-	sb.WriteString(fmt.Sprintf("Ничьих: %d\n\n", draws))
-	sb.WriteString("🤝 <b>Ничья!</b>")
+	creatorUsername := getCreatorUsername(games[0].CreatorID(), player1, player2)
+	sb.WriteString(fmt.Sprintf("@%s запустил игру <b>камень-ножницы-бумага</b>\n\n", creatorUsername))
+	sb.WriteString(buildRPSRoundsHistory(games, player1, player2))
+	sb.WriteString("\n")
+	sb.WriteString(fmt.Sprintf("🤝 <b>Ничья!</b> (%d - %d)", player1Score, player2Score))
+	if draws > 0 {
+		sb.WriteString(fmt.Sprintf("\nНичьих: %d", draws))
+	}
 
 	return sb.String()
 }
@@ -53,6 +94,7 @@ func RPSSeriesDrawAlert() string {
 
 // RPSRoundCompleted generates message when round is finished and new round starts
 func RPSRoundCompleted(
+	games []rps.RPS,
 	player1 domainUser.User,
 	player2 domainUser.User,
 	player1Score int,
@@ -60,18 +102,24 @@ func RPSRoundCompleted(
 	draws int,
 ) string {
 	var sb strings.Builder
-	sb.WriteString("<b>Раунд завершен!</b>\n\n")
+	creatorUsername := getCreatorUsername(games[0].CreatorID(), player1, player2)
+	sb.WriteString(fmt.Sprintf("@%s запустил игру <b>камень-ножницы-бумага</b>\n\n", creatorUsername))
+	sb.WriteString(buildRPSRoundsHistory(games, player1, player2))
+	sb.WriteString("\n")
 	sb.WriteString("Текущий счёт:\n")
-	sb.WriteString(fmt.Sprintf("@%s: %d\n", player1.Username(), player1Score))
-	sb.WriteString(fmt.Sprintf("@%s: %d\n", player2.Username(), player2Score))
-	sb.WriteString(fmt.Sprintf("Ничьих: %d\n\n", draws))
-	sb.WriteString("🎮 Начинаем следующий раунд!")
+	sb.WriteString(fmt.Sprintf("👤 Игрок 1: @%s %s - %d\n", player1.Username(), rps.ChoiceHiddenIcon, player1Score))
+	sb.WriteString(fmt.Sprintf("👤 Игрок 2: @%s %s - %d\n", player2.Username(), rps.ChoiceHiddenIcon, player2Score))
+	if draws > 0 {
+		sb.WriteString(fmt.Sprintf("Ничьих: %d\n", draws))
+	}
+	sb.WriteString("🎲 Игроки делают выбор...")
 
 	return sb.String()
 }
 
-// RPSCurrentScore generates current score section to append to other messages
-func RPSCurrentScore(
+// RPSRoundFinishedWithScore generates message showing round result with history and current score
+func RPSRoundFinishedWithScore(
+	games []rps.RPS,
 	player1 domainUser.User,
 	player2 domainUser.User,
 	player1Score int,
@@ -79,10 +127,17 @@ func RPSCurrentScore(
 	draws int,
 ) string {
 	var sb strings.Builder
-	sb.WriteString("\n\nТекущий счёт:\n")
-	sb.WriteString(fmt.Sprintf("@%s: %d\n", player1.Username(), player1Score))
-	sb.WriteString(fmt.Sprintf("@%s: %d\n", player2.Username(), player2Score))
-	sb.WriteString(fmt.Sprintf("Ничьих: %d", draws))
+	creatorUsername := getCreatorUsername(games[0].CreatorID(), player1, player2)
+	sb.WriteString(fmt.Sprintf("@%s запустил игру <b>камень-ножницы-бумага</b>\n\n", creatorUsername))
+	sb.WriteString(buildRPSRoundsHistory(games, player1, player2))
+	sb.WriteString("\n")
+	sb.WriteString("Текущий счёт:\n")
+	sb.WriteString(fmt.Sprintf("👤 Игрок 1: @%s %s - %d\n", player1.Username(), rps.ChoiceHiddenIcon, player1Score))
+	sb.WriteString(fmt.Sprintf("👤 Игрок 2: @%s %s - %d\n", player2.Username(), rps.ChoiceHiddenIcon, player2Score))
+	if draws > 0 {
+		sb.WriteString(fmt.Sprintf("Ничьих: %d\n", draws))
+	}
+	sb.WriteString("🎲 Игроки делают выбор...")
 
 	return sb.String()
 }
