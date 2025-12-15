@@ -26,7 +26,6 @@ func UserProvider(
 		var username string
 		var privateChatID *int64
 		var groupChatID *int64
-		var inlineMessageID *string
 		var chatInstance *int64
 		if update.Message != nil {
 			userTelegramID = update.Message.From.ID
@@ -43,9 +42,6 @@ func UserProvider(
 			firstName = update.CallbackQuery.From.FirstName
 			lastName = update.CallbackQuery.From.LastName
 			username = update.CallbackQuery.From.Username
-			if update.CallbackQuery.InlineMessageID != "" {
-				inlineMessageID = &update.CallbackQuery.InlineMessageID
-			}
 			if update.CallbackQuery.Message != nil && update.CallbackQuery.Message.IsAccessible() {
 				chat := update.CallbackQuery.Message.GetChat()
 				if chat.Type == "private" {
@@ -64,7 +60,6 @@ func UserProvider(
 			firstName = update.InlineQuery.From.FirstName
 			lastName = update.InlineQuery.From.LastName
 			username = update.InlineQuery.From.Username
-			inlineMessageID = &update.InlineQuery.ID
 		} else {
 			return core.ErrInvalidUpdate
 		}
@@ -78,10 +73,9 @@ func UserProvider(
 		rawCtx = logger.WithLogValue(rawCtx, logger.UserNameField, username)
 		rawCtx = logger.WithLogValue(rawCtx, logger.PrivateChatIDField, privateChatID)
 		rawCtx = logger.WithLogValue(rawCtx, logger.GroupChatIDField, groupChatID)
-		rawCtx = logger.WithLogValue(rawCtx, logger.InlineMessageIDField, inlineMessageID)
 		rawCtx = logger.WithLogValue(rawCtx, logger.ChatInstanceField, chatInstance)
+
 		ctx = ctx.WithContext(rawCtx)
-		l.DebugContext(ctx, "UserProvider middleware started")
 
 		var user domainUser.User
 		user, err := userRepo.UserByTelegramID(ctx, userTelegramID)
@@ -114,23 +108,14 @@ func UserProvider(
 		ctx = ctx.WithContext(rawCtx)
 		ctx = ctx.WithValue(core.ContextKeyUser, user)
 
-		l.DebugContext(ctx, "Trying to lock user")
 		err = locker.Lock(user.ID())
 		if err != nil {
 			return err
 		}
-		l.DebugContext(ctx, "User locked")
+		defer locker.Unlock(user.ID())
 
-		updateErr := ctx.Next(update)
-		lockerErr := locker.Unlock(user.ID())
-		l.DebugContext(ctx, "User unlocked")
-		if lockerErr != nil {
-			return err
-		}
-		if updateErr != nil {
-			return err
-		}
+		l.DebugContext(ctx, "UserProvider middleware finished")
 
-		return nil
+		return ctx.Next(update)
 	}
 }

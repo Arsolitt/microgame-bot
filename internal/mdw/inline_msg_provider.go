@@ -16,13 +16,13 @@ func InlineMsgProvider(
 ) func(ctx *th.Context, update telego.Update) error {
 	const OPERATION_NAME = "middleware::inline_msg_provider"
 	return func(ctx *th.Context, update telego.Update) error {
-		var inlineMessageID string
+		var inlineMessageID domain.InlineMessageID
 		if update.CallbackQuery != nil {
 			if update.CallbackQuery.InlineMessageID != "" {
-				inlineMessageID = update.CallbackQuery.InlineMessageID
+				inlineMessageID = domain.InlineMessageID(update.CallbackQuery.InlineMessageID)
 			}
 		} else if update.InlineQuery != nil {
-			inlineMessageID = update.InlineQuery.ID
+			inlineMessageID = domain.InlineMessageID(update.InlineQuery.ID)
 		} else {
 			return ctx.Next(update)
 		}
@@ -30,11 +30,10 @@ func InlineMsgProvider(
 		l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
 
 		rawCtx := ctx.Context()
+		rawCtx = logger.WithLogValue(rawCtx, logger.InlineMessageIDField, inlineMessageID)
+		rawCtx = ctx.WithValue(core.ContextKeyInlineMessageID, inlineMessageID)
 		ctx = ctx.WithContext(rawCtx)
-		l.DebugContext(ctx, "InlineMsgProvider middleware started")
-
-		ctx = ctx.WithContext(rawCtx)
-		ctx = ctx.WithValue(core.ContextKeyInlineMessageID, inlineMessageID)
+		l.DebugContext(ctx, "InlineMsgProvider middleware finished")
 
 		err := locker.Lock(domain.InlineMessageID(inlineMessageID))
 		if err != nil {
