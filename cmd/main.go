@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/logger"
@@ -51,19 +52,19 @@ func startup() error {
 
 	err = db.AutoMigrate(&gormUserRepository.User{})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to migrate user table: %w", err)
 	}
 	err = db.AutoMigrate(&gormGSRepository.GameSession{})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to migrate game session table: %w", err)
 	}
 	err = db.AutoMigrate(&gormTTTRepository.TTT{})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to migrate ttt table: %w", err)
 	}
 	err = db.AutoMigrate(&gormRPSRepository.RPS{})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to migrate rps table: %w", err)
 	}
 
 	userLocker := memoryLocker.New[user.ID]()
