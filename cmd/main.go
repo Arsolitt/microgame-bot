@@ -91,8 +91,8 @@ func startup() error {
 	userRepo := gormUserRepository.New(db)
 	// gameRepo := memoryTTTRepository.New()
 	_ = gormTTTRepository.New(db)
-	rpsRepo := gormRPSRepository.New(db)
-	gsRepo := gormGSRepository.New(db)
+	_ = gormRPSRepository.New(db)
+	_ = gormGSRepository.New(db)
 
 	inlineMsgLocker := memoryLocker.New[domain.InlineMessageID]()
 
@@ -113,20 +113,28 @@ func startup() error {
 	rpsG := bh.Group(th.CallbackDataPrefix("g::rps::"))
 	// rpsG.Use(mdw.GameProvider(memoryLocker.New[rps.ID](), rpsRepo, gsRepo, "rps"))
 
-	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSJoin(rpsRepo, userRepo, gsRepo)), th.CallbackDataPrefix("g::rps::join::"))
-	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSMove(rpsRepo, userRepo, gsRepo)), th.CallbackDataPrefix("g::rps::choice::"))
-
-	tttUow := uowGorm.New(db,
-		uowGorm.WithGSRepo(gormGSRepository.New(db)),
-		uowGorm.WithTTTRepo(gormTTTRepository.New(db)),
-	)
-	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(tttUow)), th.CallbackDataEqual("create::ttt"))
-
-	rpsUow := uowGorm.New(db,
+	rpsJoinUnit := uowGorm.New(db,
 		uowGorm.WithGSRepo(gormGSRepository.New(db)),
 		uowGorm.WithRPSRepo(gormRPSRepository.New(db)),
 	)
-	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSCreate(rpsUow)), th.CallbackDataEqual("create::rps"))
+	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSJoin(userRepo, rpsJoinUnit)), th.CallbackDataPrefix("g::rps::join::"))
+	rpsChoiceUnit := uowGorm.New(db,
+		uowGorm.WithGSRepo(gormGSRepository.New(db)),
+		uowGorm.WithRPSRepo(gormRPSRepository.New(db)),
+	)
+	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSChoice(userRepo, rpsChoiceUnit)), th.CallbackDataPrefix("g::rps::choice::"))
+
+	// tttUow := uowGorm.New(db,
+	// 	uowGorm.WithGSRepo(gormGSRepository.New(db)),
+	// 	uowGorm.WithTTTRepo(gormTTTRepository.New(db)),
+	// )
+	// bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(tttUow)), th.CallbackDataEqual("create::ttt"))
+
+	rpsCreateUnit := uowGorm.New(db,
+		uowGorm.WithGSRepo(gormGSRepository.New(db)),
+		uowGorm.WithRPSRepo(gormRPSRepository.New(db)),
+	)
+	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSCreate(rpsCreateUnit)), th.CallbackDataEqual("create::rps"))
 
 	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.Empty()), th.CallbackDataEqual("empty"))
 

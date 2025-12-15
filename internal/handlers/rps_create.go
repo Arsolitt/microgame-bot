@@ -46,7 +46,7 @@ func RPSCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 			rps.WithGameSessionID(session.ID()),
 		)
 		err = unit.Do(ctx, func(unit uow.IUnitOfWork) error {
-			gsR, err := unit.GameSessionRepo()
+			gsR, err := unit.GSRepo()
 			if err != nil {
 				return err
 			}

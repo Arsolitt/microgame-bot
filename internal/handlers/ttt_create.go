@@ -48,7 +48,7 @@ func TTTCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 			return nil, err
 		}
 		err = unit.Do(ctx, func(unit uow.IUnitOfWork) error {
-			gsR, err := unit.GameSessionRepo()
+			gsR, err := unit.GSRepo()
 			if err != nil {
 				return err
 			}
