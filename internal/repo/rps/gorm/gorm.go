@@ -10,8 +10,11 @@ import (
 	"microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/rps"
 	"microgame-bot/internal/domain/user"
+	"microgame-bot/internal/repo"
+	"microgame-bot/internal/utils"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository struct {
@@ -41,13 +44,14 @@ func (r *Repository) GameByMessageID(ctx context.Context, id domain.InlineMessag
 }
 
 func (r *Repository) GameByID(ctx context.Context, id rps.ID) (rps.RPS, error) {
-	model, err := gorm.G[RPS](r.db).
-		Where("id = ?", id.String()).
-		First(ctx)
-	if err != nil {
-		return rps.RPS{}, err
+	return r.gameByID(ctx, id)
+}
+
+func (r *Repository) GameByIDLocked(ctx context.Context, id rps.ID) (rps.RPS, error) {
+	if !utils.IsInGormTransaction(r.db) {
+		return rps.RPS{}, repo.ErrNotInTransaction
 	}
-	return model.ToDomain()
+	return r.gameByID(ctx, id, clause.Locking{Strength: "UPDATE"})
 }
 
 func (r *Repository) GamesByCreatorID(ctx context.Context, id user.ID) ([]rps.RPS, error) {
@@ -101,4 +105,18 @@ func (r *Repository) GamesBySessionID(ctx context.Context, id gs.ID) ([]rps.RPS,
 		}
 	}
 	return results, nil
+}
+
+func (r *Repository) gameByID(ctx context.Context, id rps.ID, opts ...clause.Expression) (rps.RPS, error) {
+	const OPERATION_NAME = "repo::rps::gorm::gameByID"
+	model, err := gorm.G[RPS](r.db, opts...).
+		Where("id = ?", id.String()).
+		First(ctx)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return rps.RPS{}, fmt.Errorf("game not found by ID in %s: %w", OPERATION_NAME, domain.ErrGameNotFound)
+		}
+		return rps.RPS{}, fmt.Errorf("failed to get game by ID from gorm database in %s: %w", OPERATION_NAME, err)
+	}
+	return model.ToDomain()
 }

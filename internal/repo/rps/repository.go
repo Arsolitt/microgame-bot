@@ -11,6 +11,7 @@ import (
 type IRPSGetter interface {
 	GameByMessageID(ctx context.Context, id domain.InlineMessageID) (rps.RPS, error)
 	GameByID(ctx context.Context, id rps.ID) (rps.RPS, error)
+	GameByIDLocked(ctx context.Context, id rps.ID) (rps.RPS, error)
 	GamesByCreatorID(ctx context.Context, id user.ID) ([]rps.RPS, error)
 	GamesBySessionID(ctx context.Context, id gs.ID) ([]rps.RPS, error)
 }
