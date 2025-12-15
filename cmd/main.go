@@ -5,8 +5,7 @@ import (
 	"log/slog"
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/logger"
-	"microgame-bot/internal/domain/rps"
-	"microgame-bot/internal/domain/ttt"
+	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/user"
 	"microgame-bot/internal/mdw"
 	"os"
@@ -91,25 +90,28 @@ func startup() error {
 	// userRepo := memoryUserRepository.New()
 	userRepo := gormUserRepository.New(db)
 	// gameRepo := memoryTTTRepository.New()
-	tttRepo := gormTTTRepository.New(db)
+	_ = gormTTTRepository.New(db)
 	rpsRepo := gormRPSRepository.New(db)
 	gsRepo := gormGSRepository.New(db)
 
+	inlineMsgLocker := memoryLocker.New[domain.InlineMessageID]()
+
 	bh.Use(
 		mdw.CorrelationIDProvider(),
+		mdw.InlineMsgProvider(inlineMsgLocker),
 		mdw.UserProvider(userLocker, userRepo),
 	)
 
 	bh.HandleInlineQuery(handlers.WrapInlineQuery(handlers.GameSelector()), th.AnyInlineQuery())
 
-	tttG := bh.Group(th.CallbackDataPrefix("g::ttt::"))
-	tttG.Use(mdw.GameProvider(memoryLocker.New[ttt.ID](), tttRepo, gsRepo, "ttt"))
+	// tttG := bh.Group(th.CallbackDataPrefix("g::ttt::"))
+	// tttG.Use(mdw.GameProvider(memoryLocker.New[ttt.ID](), tttRepo, gsRepo, "ttt"))
 
-	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTJoin(tttRepo, userRepo)), th.CallbackDataPrefix("g::ttt::join::"))
-	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTMove(tttRepo, userRepo)), th.CallbackDataPrefix("g::ttt::move::"))
+	// tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTJoin(tttRepo, userRepo)), th.CallbackDataPrefix("g::ttt::join::"))
+	// tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTMove(tttRepo, userRepo)), th.CallbackDataPrefix("g::ttt::move::"))
 
 	rpsG := bh.Group(th.CallbackDataPrefix("g::rps::"))
-	rpsG.Use(mdw.GameProvider(memoryLocker.New[rps.ID](), rpsRepo, gsRepo, "rps"))
+	// rpsG.Use(mdw.GameProvider(memoryLocker.New[rps.ID](), rpsRepo, gsRepo, "rps"))
 
 	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSJoin(rpsRepo, userRepo, gsRepo)), th.CallbackDataPrefix("g::rps::join::"))
 	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSMove(rpsRepo, userRepo, gsRepo)), th.CallbackDataPrefix("g::rps::choice::"))

@@ -1,12 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"log/slog"
-	"microgame-bot/internal/core"
 	"microgame-bot/internal/domain"
 	domainGS "microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/rps"
-	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
 	"microgame-bot/internal/uow"
 
@@ -16,24 +15,25 @@ import (
 )
 
 func RPSCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
+	const OPERATION_NAME = "handlers::rps_create"
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
-		slog.DebugContext(ctx, "Create game callback received")
+		slog.DebugContext(ctx, "Create RPS game callback received")
 
-		user, ok := ctx.Value(core.ContextKeyUser).(domainUser.User)
-		if !ok {
-			slog.ErrorContext(ctx, "User not found")
-			return nil, core.ErrUserNotFoundInContext
+		user, err := userFromContext(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user from context in %s: %w", OPERATION_NAME, err)
 		}
 
-		if query.InlineMessageID == "" {
-			return nil, core.ErrInvalidUpdate
+		inlineMessageID, err := inlineMessageIDFromContext(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get inline message ID from context in %s: %w", OPERATION_NAME, err)
 		}
 
 		session, err := domainGS.New(
 			domainGS.WithNewID(),
 			domainGS.WithGameName(domain.GameNameRPS),
-			domainGS.WithInlineMessageIDFromString(query.InlineMessageID),
-			domainGS.WithGameCount(3),
+			domainGS.WithInlineMessageID(inlineMessageID),
+			// domainGS.WithGameCount(3),
 		)
 		if err != nil {
 			return nil, err
