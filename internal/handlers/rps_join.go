@@ -3,65 +3,78 @@ package handlers
 import (
 	"fmt"
 	"log/slog"
-	"microgame-bot/internal/core"
+	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
-	"microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/rps"
-	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
-	gsRepository "microgame-bot/internal/repo/gs"
-	rpsRepository "microgame-bot/internal/repo/rps"
 	userRepository "microgame-bot/internal/repo/user"
+	"microgame-bot/internal/uow"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
-func RPSJoin(gameRepo rpsRepository.IRPSRepository, userRepo userRepository.IUserRepository, gsRepo gsRepository.IGSRepository) CallbackQueryHandlerFunc {
+func RPSJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
+	const OPERATION_NAME = "handlers::rps_join"
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
-		slog.DebugContext(ctx, "Join callback received")
+		slog.DebugContext(ctx, "RPS Join callback received", logger.OperationField, OPERATION_NAME)
 
-		player2, ok := ctx.Value(core.ContextKeyUser).(domainUser.User)
-		if !ok {
-			slog.ErrorContext(ctx, "User not found")
-			return nil, core.ErrUserNotFoundInContext
-		}
-
-		game, ok := ctx.Value(core.ContextKeyGame).(rps.RPS)
-		if !ok {
-			slog.ErrorContext(ctx, "Game not found")
-			return nil, core.ErrGameNotFoundInContext
-		}
-
-		session, ok := ctx.Value(core.ContextKeyGameSession).(gs.GameSession)
-		if !ok {
-			slog.ErrorContext(ctx, "Game session not found")
-			return nil, core.ErrGameSessionNotFoundInContext
-		}
-
-		game, err := game.JoinGame(player2.ID())
+		player2, err := userFromContext(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get user from context in %s: %w", OPERATION_NAME, err)
 		}
 
-		game, err = gameRepo.UpdateGame(ctx, game)
+		gameID, err := extractGameID[rps.ID](query.Data)
 		if err != nil {
-			return nil, fmt.Errorf("failed to update game: %w", err)
+			return nil, fmt.Errorf("failed to extract game ID from callback data in %s: %w", OPERATION_NAME, err)
 		}
 
-		session, err = session.ChangeStatus(domain.GameStatusInProgress)
-		if err != nil {
-			return nil, err
-		}
+		var game rps.RPS
+		err = unit.Do(ctx, func(uow uow.IUnitOfWork) error {
+			gameRepo, err := uow.RPSRepo()
+			if err != nil {
+				return fmt.Errorf("failed to get game repository in %s: %w", OPERATION_NAME, err)
+			}
+			gsRepo, err := uow.GSRepo()
+			if err != nil {
+				return fmt.Errorf("failed to get game session repository in %s: %w", OPERATION_NAME, err)
+			}
+			game, err = gameRepo.GameByIDLocked(ctx, gameID)
+			if err != nil {
+				return fmt.Errorf("failed to get game by ID with lock in %s: %w", OPERATION_NAME, err)
+			}
 
-		session, err = gsRepo.UpdateGameSession(ctx, session)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update game session: %w", err)
-		}
+			session, err := gsRepo.GameSessionByIDLocked(ctx, game.GameSessionID())
+			if err != nil {
+				return fmt.Errorf("failed to get game session by ID with lock in %s: %w", OPERATION_NAME, err)
+			}
+
+			game, err = game.JoinGame(player2.ID())
+			if err != nil {
+				return err
+			}
+
+			game, err = gameRepo.UpdateGame(ctx, game)
+			if err != nil {
+				return fmt.Errorf("failed to update game: %w", err)
+			}
+
+			session, err = session.ChangeStatus(domain.GameStatusInProgress)
+			if err != nil {
+				return err
+			}
+
+			session, err = gsRepo.UpdateGameSession(ctx, session)
+			if err != nil {
+				return fmt.Errorf("failed to update game session: %w", err)
+			}
+
+			return nil
+		})
 
 		creator, err := userRepo.UserByID(ctx, game.CreatorID())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get creator by ID in %s: %w", OPERATION_NAME, err)
 		}
 
 		boardKeyboard := buildRPSGameBoardKeyboard(&game)
@@ -82,31 +95,5 @@ func RPSJoin(gameRepo rpsRepository.IRPSRepository, userRepo userRepository.IUse
 				Text:            "Игра началась!",
 			},
 		}, nil
-	}
-}
-
-func buildRPSGameBoardKeyboard(game *rps.RPS) *telego.InlineKeyboardMarkup {
-	rows := make([][]telego.InlineKeyboardButton, 0, 3)
-	if game.IsFinished() {
-		return &telego.InlineKeyboardMarkup{
-			InlineKeyboard: rows,
-		}
-	}
-
-	choices := []rps.Choice{rps.ChoiceRock, rps.ChoicePaper, rps.ChoiceScissors}
-
-	for _, choice := range choices {
-		icon := choice.Icon()
-		callbackData := fmt.Sprintf("g::rps::choice::%s::%s", game.ID().String(), choice.String())
-
-		button := telego.InlineKeyboardButton{
-			Text:         icon,
-			CallbackData: callbackData,
-		}
-		rows = append(rows, []telego.InlineKeyboardButton{button})
-	}
-
-	return &telego.InlineKeyboardMarkup{
-		InlineKeyboard: rows,
 	}
 }
