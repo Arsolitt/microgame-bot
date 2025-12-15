@@ -75,7 +75,28 @@ func (sm *SessionManager) CalculateResult() SessionResult {
 
 	if finishedCount >= sm.session.gameCount {
 		result.IsCompleted = true
-		result.IsDraw = true
+
+		// Find player with max score
+		var maxWins int
+		var leader user.ID
+		leaderCount := 0
+
+		for participantID, wins := range result.Scores {
+			if wins > maxWins {
+				maxWins = wins
+				leader = participantID
+				leaderCount = 1
+			} else if wins == maxWins {
+				leaderCount++
+			}
+		}
+
+		if leaderCount > 1 || maxWins == 0 {
+			result.IsDraw = true
+		} else {
+			result.SeriesWinner = leader
+		}
+
 		return result
 	}
 

@@ -52,7 +52,7 @@ func RPSSeriesCompleted(
 	sb.WriteString(fmt.Sprintf("@%s запустил игру <b>камень-ножницы-бумага</b>\n\n", creatorUsername))
 	sb.WriteString(buildRPSRoundsHistory(games, player1, player2))
 	sb.WriteString("\n")
-	sb.WriteString(fmt.Sprintf("🏆 <b>Победитель серии:</b> @%s (%d - %d)", winner.Username(), player1Score, player2Score))
+	sb.WriteString(fmt.Sprintf("🏆 <b>Победитель:</b> @%s (%d - %d)", winner.Username(), player1Score, player2Score))
 	if draws > 0 {
 		sb.WriteString(fmt.Sprintf("\nНичьих: %d", draws))
 	}
@@ -62,7 +62,7 @@ func RPSSeriesCompleted(
 
 // RPSSeriesCompletedAlert generates short alert message for callback query
 func RPSSeriesCompletedAlert(winner domainUser.User) string {
-	return fmt.Sprintf("🎉 Серия завершена! Победил @%s", winner.Username())
+	return fmt.Sprintf("🎉 Победил @%s", winner.Username())
 }
 
 // RPSSeriesDraw generates message when series ends in a draw
@@ -89,7 +89,7 @@ func RPSSeriesDraw(
 
 // RPSSeriesDrawAlert generates short alert message for callback query when series ends in draw
 func RPSSeriesDrawAlert() string {
-	return "🤝 Серия завершена! Ничья."
+	return "🤝 Ничья!"
 }
 
 // RPSRoundCompleted generates message when round is finished and new round starts
