@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/domain"
-	"microgame-bot/internal/domain/gs"
+	se "microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/user"
 	"microgame-bot/internal/utils"
 	"time"
@@ -94,11 +94,15 @@ func WithStatus(status domain.GameStatus) RPSOpt {
 	}
 }
 
-func WithWinner(winner domain.Player) RPSOpt {
+func WithWinnerID(winnerID user.ID) RPSOpt {
 	return func(r *RPS) error {
-		r.winner = winner
+		r.winnerID = winnerID
 		return nil
 	}
+}
+
+func WithWinnerIDFromUUID(winnerID uuid.UUID) RPSOpt {
+	return WithWinnerID(user.ID(winnerID))
 }
 
 func WithCreatedAt(createdAt time.Time) RPSOpt {
@@ -121,9 +125,9 @@ func WithUpdatedAt(updatedAt time.Time) RPSOpt {
 	}
 }
 
-func WithGameSessionID(gameSessionID gs.ID) RPSOpt {
+func WithSessionID(sessionID se.ID) RPSOpt {
 	return func(r *RPS) error {
-		r.gameSessionID = gameSessionID
+		r.sessionID = sessionID
 		return nil
 	}
 }

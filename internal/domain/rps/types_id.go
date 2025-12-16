@@ -49,3 +49,7 @@ func (u ID) String() string {
 func (u ID) IsZero() bool {
 	return utils.UUIDIsZero(u)
 }
+
+func (u ID) UUID() uuid.UUID {
+	return uuid.UUID(u)
+}

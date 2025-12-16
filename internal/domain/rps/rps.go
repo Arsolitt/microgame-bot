@@ -2,31 +2,33 @@ package rps
 
 import (
 	"microgame-bot/internal/domain"
-	"microgame-bot/internal/domain/gs"
+	se "microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/user"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type RPS struct {
-	status        domain.GameStatus
-	choice1       Choice
-	choice2       Choice
-	winner        domain.Player
-	gameSessionID gs.ID
-	id            ID
-	player1ID     user.ID
-	player2ID     user.ID
-	creatorID     user.ID
-	createdAt     time.Time
-	updatedAt     time.Time
+	status    domain.GameStatus
+	choice1   Choice
+	choice2   Choice
+	winnerID  user.ID
+	sessionID se.ID
+	id        ID
+	player1ID user.ID
+	player2ID user.ID
+	creatorID user.ID
+	createdAt time.Time
+	updatedAt time.Time
 }
 
 func New(opts ...RPSOpt) (RPS, error) {
 	r := &RPS{
-		status:  domain.GameStatusCreated,
-		choice1: ChoiceEmpty,
-		choice2: ChoiceEmpty,
-		winner:  domain.PlayerEmpty,
+		status:   domain.GameStatusCreated,
+		choice1:  ChoiceEmpty,
+		choice2:  ChoiceEmpty,
+		winnerID: user.ID{},
 	}
 
 	for _, opt := range opts {
@@ -39,8 +41,8 @@ func New(opts ...RPSOpt) (RPS, error) {
 	if r.id.IsZero() {
 		return RPS{}, domain.ErrIDRequired
 	}
-	if r.gameSessionID.IsZero() {
-		return RPS{}, domain.ErrGameSessionIDRequired
+	if r.sessionID.IsZero() {
+		return RPS{}, domain.ErrSessionIDRequired
 	}
 	if r.creatorID.IsZero() {
 		return RPS{}, domain.ErrCreatorIDRequired
@@ -64,11 +66,13 @@ func (r RPS) Player1ID() user.ID        { return r.player1ID }
 func (r RPS) Player2ID() user.ID        { return r.player2ID }
 func (r RPS) Choice1() Choice           { return r.choice1 }
 func (r RPS) Choice2() Choice           { return r.choice2 }
-func (r RPS) Winner() domain.Player     { return r.winner }
+func (r RPS) Winner() user.ID           { return r.winnerID }
 func (r RPS) Status() domain.GameStatus { return r.status }
 func (r RPS) CreatedAt() time.Time      { return r.createdAt }
 func (r RPS) UpdatedAt() time.Time      { return r.updatedAt }
-func (r RPS) GameSessionID() gs.ID      { return r.gameSessionID }
+func (r RPS) SessionID() se.ID          { return r.sessionID }
+func (r RPS) IDtoUUID() uuid.UUID       { return uuid.UUID(r.id) }
+func (r RPS) Type() domain.GameType     { return domain.GameTypeRPS }
 
 func (r RPS) Participants() []user.ID {
 	participants := []user.ID{}
@@ -113,8 +117,8 @@ func (r RPS) MakeChoice(playerID user.ID, choice Choice) (RPS, error) {
 		r.choice2 = choice
 	}
 
-	if winner := r.checkWinner(); winner != domain.PlayerEmpty {
-		r.winner = winner
+	if winnerID := r.tryWinnerID(); !winnerID.IsZero() {
+		r.winnerID = winnerID
 		r.status = domain.GameStatusFinished
 	}
 
@@ -122,7 +126,7 @@ func (r RPS) MakeChoice(playerID user.ID, choice Choice) (RPS, error) {
 }
 
 func (r RPS) IsFinished() bool {
-	return r.winner != domain.PlayerEmpty || r.IsDraw()
+	return !r.winnerID.IsZero() || r.IsDraw()
 }
 
 func (r RPS) IsDraw() bool {
@@ -133,10 +137,10 @@ func (r RPS) IsDraw() bool {
 }
 
 func (r RPS) WinnerID() user.ID {
-	if r.winner == Player1 {
+	if r.winnerID == r.player1ID {
 		return r.player1ID
 	}
-	if r.winner == Player2 {
+	if r.winnerID == r.player2ID {
 		return r.player2ID
 	}
 	return user.ID{}
@@ -152,26 +156,26 @@ func (r RPS) PlayerIcon(pr domain.Player) string {
 	return ""
 }
 
-func (r RPS) checkWinner() domain.Player {
+func (r RPS) tryWinnerID() user.ID {
 	if r.choice1 == ChoiceEmpty || r.choice2 == ChoiceEmpty {
-		return domain.PlayerEmpty
+		return user.ID{}
 	}
 
 	if r.IsDraw() {
-		return domain.PlayerEmpty
+		return user.ID{}
 	}
 
 	if r.choice1 == ChoiceRock && r.choice2 == ChoiceScissors {
-		return Player1
+		return r.player1ID
 	}
 
 	if r.choice1 == ChoicePaper && r.choice2 == ChoiceRock {
-		return Player1
+		return r.player1ID
 	}
 
 	if r.choice1 == ChoiceScissors && r.choice2 == ChoicePaper {
-		return Player1
+		return r.player1ID
 	}
 
-	return Player2
+	return r.player2ID
 }
