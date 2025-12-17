@@ -22,11 +22,11 @@ import (
 	memoryFSM "microgame-bot/internal/fsm/memory"
 	"microgame-bot/internal/handlers"
 	memoryLocker "microgame-bot/internal/locker/memory"
-	gormGSRepository "microgame-bot/internal/repo/gs/gorm"
-	gormRPSRepository "microgame-bot/internal/repo/rps/gorm"
-	gormTTTRepository "microgame-bot/internal/repo/ttt/gorm"
-	gormUserRepository "microgame-bot/internal/repo/user/gorm"
-	uowGorm "microgame-bot/internal/uow/gorm"
+	gormGameRepository "microgame-bot/internal/repo/game"
+	gormRPSRepository "microgame-bot/internal/repo/game/rps"
+	gormSessionRepository "microgame-bot/internal/repo/session"
+	gormUserRepository "microgame-bot/internal/repo/user"
+	uowGorm "microgame-bot/internal/uow"
 
 	gormLogger "gorm.io/gorm/logger"
 )
@@ -54,17 +54,13 @@ func startup() error {
 	if err != nil {
 		return fmt.Errorf("failed to migrate user table: %w", err)
 	}
-	err = db.AutoMigrate(&gormGSRepository.GameSession{})
+	err = db.AutoMigrate(&gormSessionRepository.Session{})
 	if err != nil {
 		return fmt.Errorf("failed to migrate game session table: %w", err)
 	}
-	err = db.AutoMigrate(&gormTTTRepository.TTT{})
+	err = db.AutoMigrate(&gormGameRepository.Game{})
 	if err != nil {
-		return fmt.Errorf("failed to migrate ttt table: %w", err)
-	}
-	err = db.AutoMigrate(&gormRPSRepository.RPS{})
-	if err != nil {
-		return fmt.Errorf("failed to migrate rps table: %w", err)
+		return fmt.Errorf("failed to migrate game table: %w", err)
 	}
 
 	userLocker := memoryLocker.New[user.ID]()
@@ -91,9 +87,9 @@ func startup() error {
 	// userRepo := memoryUserRepository.New()
 	userRepo := gormUserRepository.New(db)
 	// gameRepo := memoryTTTRepository.New()
-	_ = gormTTTRepository.New(db)
-	_ = gormRPSRepository.New(db)
-	_ = gormGSRepository.New(db)
+	// _ = gormTTTRepository.New(db)
+	rpsRepo := gormRPSRepository.New(db)
+	sessionRepo := gormSessionRepository.New(db)
 
 	inlineMsgLocker := memoryLocker.New[domain.InlineMessageID]()
 
@@ -115,13 +111,13 @@ func startup() error {
 	// rpsG.Use(mdw.GameProvider(memoryLocker.New[rps.ID](), rpsRepo, gsRepo, "rps"))
 
 	rpsJoinUnit := uowGorm.New(db,
-		uowGorm.WithGSRepo(gormGSRepository.New(db)),
-		uowGorm.WithRPSRepo(gormRPSRepository.New(db)),
+		uowGorm.WithSessionRepo(sessionRepo),
+		uowGorm.WithRPSRepo(rpsRepo),
 	)
 	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSJoin(userRepo, rpsJoinUnit)), th.CallbackDataPrefix("g::rps::join::"))
 	rpsChoiceUnit := uowGorm.New(db,
-		uowGorm.WithGSRepo(gormGSRepository.New(db)),
-		uowGorm.WithRPSRepo(gormRPSRepository.New(db)),
+		uowGorm.WithSessionRepo(sessionRepo),
+		uowGorm.WithRPSRepo(rpsRepo),
 	)
 	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSChoice(userRepo, rpsChoiceUnit)), th.CallbackDataPrefix("g::rps::choice::"))
 
@@ -132,8 +128,8 @@ func startup() error {
 	// bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(tttUow)), th.CallbackDataEqual("create::ttt"))
 
 	rpsCreateUnit := uowGorm.New(db,
-		uowGorm.WithGSRepo(gormGSRepository.New(db)),
-		uowGorm.WithRPSRepo(gormRPSRepository.New(db)),
+		uowGorm.WithSessionRepo(sessionRepo),
+		uowGorm.WithRPSRepo(rpsRepo),
 	)
 	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSCreate(rpsCreateUnit)), th.CallbackDataEqual("create::rps"))
 
