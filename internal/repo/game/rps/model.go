@@ -1,4 +1,4 @@
-package game
+package rps
 
 import (
 	"encoding/json"

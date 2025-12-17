@@ -1,4 +1,4 @@
-package game
+package rps
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/rps"
-	gs "microgame-bot/internal/domain/session"
+	"microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/user"
 	"microgame-bot/internal/repo"
 	"microgame-bot/internal/utils"
@@ -66,7 +66,7 @@ func (r *Repository) GamesByCreatorID(ctx context.Context, id user.ID) ([]rps.RP
 	return results, nil
 }
 
-func (r *Repository) GamesBySessionID(ctx context.Context, id gs.ID) ([]rps.RPS, error) {
+func (r *Repository) GamesBySessionID(ctx context.Context, id session.ID) ([]rps.RPS, error) {
 	models, err := gorm.G[gM.Game](r.db).
 		Where("game_session_id = ?", id.String()).
 		Find(ctx)
