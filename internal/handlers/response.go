@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"microgame-bot/internal/domain"
+	"microgame-bot/internal/domain/user"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -107,12 +107,12 @@ func (r *CallbackQueryResponse) Handle(ctx *th.Context) error {
 type iSuccessMessageDefiner interface {
 	IsFinished() bool
 	IsDraw() bool
-	Winner() domain.Player
+	WinnerID() user.ID
 }
 
 func getSuccessMessage(game iSuccessMessageDefiner) string {
-	if game.Winner() != domain.PlayerEmpty {
-		return "Победа! 🎉"
+	if !game.WinnerID().IsZero() {
+		return "Игра закончена!"
 	}
 	if game.IsDraw() {
 		return "Ничья!"
