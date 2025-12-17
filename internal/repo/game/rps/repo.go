@@ -68,7 +68,7 @@ func (r *Repository) GamesByCreatorID(ctx context.Context, id user.ID) ([]rps.RP
 
 func (r *Repository) GamesBySessionID(ctx context.Context, id session.ID) ([]rps.RPS, error) {
 	models, err := gorm.G[gM.Game](r.db).
-		Where("game_session_id = ?", id.String()).
+		Where("session_id = ?", id.String()).
 		Find(ctx)
 	if err != nil {
 		return nil, err
