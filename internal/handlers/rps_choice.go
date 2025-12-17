@@ -5,12 +5,12 @@ import (
 	"log/slog"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
-	"microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/rps"
+	domainSession "microgame-bot/internal/domain/session"
 	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
-	gsRepository "microgame-bot/internal/repo/gs"
-	rpsRepository "microgame-bot/internal/repo/rps"
+	rpsRepository "microgame-bot/internal/repo/game/rps"
+	sRepository "microgame-bot/internal/repo/session"
 	userRepository "microgame-bot/internal/repo/user"
 	"microgame-bot/internal/uow"
 	"microgame-bot/internal/utils"
@@ -79,13 +79,13 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 			}, nil
 		}
 
-		var gsGetter gsRepository.IGSGetter
-		gsGetter, err = unit.GSRepo()
+		var gsGetter sRepository.ISessionGetter
+		gsGetter, err = unit.SessionRepo()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get game session repository in %s: %w", OPERATION_NAME, err)
 		}
 
-		session, err := gsGetter.GameSessionByID(ctx, game.GameSessionID())
+		session, err := gsGetter.SessionByID(ctx, game.SessionID())
 		if err != nil {
 			return nil, fmt.Errorf("failed to get game session by ID in %s: %w", OPERATION_NAME, err)
 		}
@@ -101,12 +101,12 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 			return nil, fmt.Errorf("failed to get games by session ID: %w", err)
 		}
 
-		games := make([]gs.IGame, len(allGames))
+		games := make([]domainSession.IGame, len(allGames))
 		for i, g := range allGames {
 			games[i] = g
 		}
 
-		manager := gs.NewSessionManager(session, games)
+		manager := domainSession.NewSessionManager(session, games)
 		result := manager.CalculateResult()
 
 		player1, err := userGetter.UserByID(ctx, game.Player1ID())
@@ -121,7 +121,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 
 		if result.IsCompleted {
 			err = unit.Do(ctx, func(uow uow.IUnitOfWork) error {
-				gsRepo, err := uow.GSRepo()
+				gsRepo, err := uow.SessionRepo()
 				if err != nil {
 					return fmt.Errorf("failed to get game session repository in %s: %w", OPERATION_NAME, err)
 				}
@@ -129,7 +129,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				if err != nil {
 					return fmt.Errorf("failed to change status of game session: %w", err)
 				}
-				session, err = gsRepo.UpdateGameSession(ctx, session)
+				session, err = gsRepo.UpdateSession(ctx, session)
 				if err != nil {
 					return fmt.Errorf("failed to update game session: %w", err)
 				}
@@ -158,7 +158,6 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 					},
 					&CallbackQueryResponse{
 						CallbackQueryID: query.ID,
-						Text:            msgs.RPSSeriesDrawAlert(),
 					},
 				}, nil
 			}
@@ -188,7 +187,6 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				},
 				&CallbackQueryResponse{
 					CallbackQueryID: query.ID,
-					Text:            msgs.RPSSeriesCompletedAlert(winner),
 				},
 			}, nil
 		}
@@ -202,7 +200,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				}
 				nextGame, err = rps.New(
 					rps.WithNewID(),
-					rps.WithGameSessionID(session.ID()),
+					rps.WithSessionID(session.ID()),
 					rps.WithCreatorID(game.CreatorID()),
 					rps.WithPlayer1ID(game.Player1ID()),
 					rps.WithPlayer2ID(game.Player2ID()),
@@ -243,7 +241,6 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				},
 				&CallbackQueryResponse{
 					CallbackQueryID: query.ID,
-					Text:            getSuccessMessage(game),
 				},
 			}, nil
 		}
@@ -265,7 +262,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 			},
 			&CallbackQueryResponse{
 				CallbackQueryID: query.ID,
-				Text:            getSuccessMessage(game),
+				Text:            "Ход сделан!",
 			},
 		}, nil
 	}

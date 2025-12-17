@@ -36,7 +36,7 @@ func RPSJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 			if err != nil {
 				return fmt.Errorf("failed to get game repository in %s: %w", OPERATION_NAME, err)
 			}
-			gsRepo, err := uow.GSRepo()
+			gsRepo, err := uow.SessionRepo()
 			if err != nil {
 				return fmt.Errorf("failed to get game session repository in %s: %w", OPERATION_NAME, err)
 			}
@@ -45,7 +45,7 @@ func RPSJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 				return fmt.Errorf("failed to get game by ID with lock in %s: %w", OPERATION_NAME, err)
 			}
 
-			session, err := gsRepo.GameSessionByIDLocked(ctx, game.GameSessionID())
+			session, err := gsRepo.SessionByIDLocked(ctx, game.SessionID())
 			if err != nil {
 				return fmt.Errorf("failed to get game session by ID with lock in %s: %w", OPERATION_NAME, err)
 			}
@@ -65,9 +65,9 @@ func RPSJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 				return err
 			}
 
-			session, err = gsRepo.UpdateGameSession(ctx, session)
+			session, err = gsRepo.UpdateSession(ctx, session)
 			if err != nil {
-				return fmt.Errorf("failed to update game session: %w", err)
+				return fmt.Errorf("failed to update session: %w", err)
 			}
 
 			return nil

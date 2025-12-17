@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
-	domainGS "microgame-bot/internal/domain/gs"
 	"microgame-bot/internal/domain/rps"
+	domainSession "microgame-bot/internal/domain/session"
 	"microgame-bot/internal/msgs"
 	"microgame-bot/internal/uow"
 
@@ -31,11 +31,11 @@ func RPSCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 			return nil, fmt.Errorf("failed to get inline message ID from context in %s: %w", OPERATION_NAME, err)
 		}
 
-		session, err := domainGS.New(
-			domainGS.WithNewID(),
-			domainGS.WithGameName(domain.GameNameRPS),
-			domainGS.WithInlineMessageID(inlineMessageID),
-			domainGS.WithGameCount(3),
+		session, err := domainSession.New(
+			domainSession.WithNewID(),
+			domainSession.WithGameType(domain.GameTypeRPS),
+			domainSession.WithInlineMessageID(inlineMessageID),
+			domainSession.WithGameCount(3),
 		)
 		if err != nil {
 			return nil, err
@@ -45,10 +45,10 @@ func RPSCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 			rps.WithCreatorID(user.ID()),
 			rps.WithPlayer1ID(user.ID()),
 			rps.WithStatus(domain.GameStatusWaitingForPlayers),
-			rps.WithGameSessionID(session.ID()),
+			rps.WithSessionID(session.ID()),
 		)
 		err = unit.Do(ctx, func(unit uow.IUnitOfWork) error {
-			gsR, err := unit.GSRepo()
+			sR, err := unit.SessionRepo()
 			if err != nil {
 				return err
 			}
@@ -56,7 +56,7 @@ func RPSCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 			if err != nil {
 				return err
 			}
-			session, err = gsR.CreateGameSession(ctx, session)
+			session, err = sR.CreateSession(ctx, session)
 			if err != nil {
 				return err
 			}
