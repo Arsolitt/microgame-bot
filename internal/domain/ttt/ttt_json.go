@@ -3,7 +3,7 @@ package ttt
 import (
 	"encoding/json"
 	"microgame-bot/internal/domain"
-	"microgame-bot/internal/domain/gs"
+	"microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/user"
 	"time"
 )
@@ -14,7 +14,7 @@ func (t TTT) MarshalJSON() ([]byte, error) {
 		Board         [3][3]Cell    `json:"board"`
 		Turn          domain.Player `json:"turn"`
 		Winner        domain.Player `json:"winner"`
-		GameSessionID gs.ID         `json:"game_session_id"`
+		GameSessionID session.ID    `json:"game_session_id"`
 		ID            ID            `json:"id"`
 		PlayerXID     user.ID       `json:"player_x_id"`
 		PlayerOID     user.ID       `json:"player_o_id"`
@@ -41,7 +41,7 @@ func (t *TTT) UnmarshalJSON(data []byte) error {
 		Board         [3][3]Cell    `json:"board"`
 		Turn          domain.Player `json:"turn"`
 		Winner        domain.Player `json:"winner"`
-		GameSessionID gs.ID         `json:"game_session_id"`
+		GameSessionID session.ID    `json:"game_session_id"`
 		ID            ID            `json:"id"`
 		PlayerXID     user.ID       `json:"player_x_id"`
 		PlayerOID     user.ID       `json:"player_o_id"`

@@ -3,7 +3,7 @@ package ttt
 import (
 	"errors"
 	"microgame-bot/internal/domain"
-	"microgame-bot/internal/domain/gs"
+	"microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/user"
 	"time"
 )
@@ -12,7 +12,7 @@ type TTT struct {
 	board         [3][3]Cell
 	turn          domain.Player
 	winner        domain.Player
-	gameSessionID gs.ID
+	gameSessionID session.ID
 	id            ID
 	playerXID     user.ID
 	playerOID     user.ID
@@ -63,7 +63,7 @@ func (t TTT) Board() [3][3]Cell         { return t.board }
 func (t TTT) Status() domain.GameStatus { return t.status }
 func (t TTT) CreatedAt() time.Time      { return t.createdAt }
 func (t TTT) UpdatedAt() time.Time      { return t.updatedAt }
-func (t TTT) GameSessionID() gs.ID      { return t.gameSessionID }
+func (t TTT) GameSessionID() session.ID { return t.gameSessionID }
 
 // GetPlayerFigure returns the player symbol (X or O) for the given user ID.
 func (t TTT) GetPlayerFigure(userID user.ID) (domain.Player, error) {
