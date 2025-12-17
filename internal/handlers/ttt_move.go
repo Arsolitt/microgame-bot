@@ -8,7 +8,7 @@ import (
 	"microgame-bot/internal/domain/ttt"
 	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
-	tttRepository "microgame-bot/internal/repo/ttt"
+	tttRepository "microgame-bot/internal/repo/game/ttt"
 	userRepository "microgame-bot/internal/repo/user"
 	"strings"
 

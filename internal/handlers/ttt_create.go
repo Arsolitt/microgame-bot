@@ -5,7 +5,7 @@ import (
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
-	domainGS "microgame-bot/internal/domain/gs"
+	domainSession "microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/ttt"
 	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
@@ -32,10 +32,10 @@ func TTTCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 			return nil, core.ErrInvalidUpdate
 		}
 
-		session, err := domainGS.New(
-			domainGS.WithNewID(),
-			domainGS.WithGameName(domain.GameNameRPS),
-			domainGS.WithInlineMessageIDFromString(query.InlineMessageID),
+		session, err := domainSession.New(
+			domainSession.WithNewID(),
+			domainSession.WithGameType(domain.GameTypeTTT),
+			domainSession.WithInlineMessageIDFromString(query.InlineMessageID),
 		)
 		if err != nil {
 			return nil, err
@@ -45,13 +45,13 @@ func TTTCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 			ttt.WithCreatorID(user.ID()),
 			ttt.WithRandomFirstPlayer(),
 			ttt.WithStatus(domain.GameStatusWaitingForPlayers),
-			ttt.WithGameSessionID(session.ID()),
+			ttt.WithSessionID(session.ID()),
 		)
 		if err != nil {
 			return nil, err
 		}
 		err = unit.Do(ctx, func(unit uow.IUnitOfWork) error {
-			gsR, err := unit.GSRepo()
+			sR, err := unit.SessionRepo()
 			if err != nil {
 				return err
 			}
@@ -59,7 +59,7 @@ func TTTCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 			if err != nil {
 				return err
 			}
-			session, err = gsR.CreateGameSession(ctx, session)
+			session, err = sR.CreateSession(ctx, session)
 			if err != nil {
 				return err
 			}
