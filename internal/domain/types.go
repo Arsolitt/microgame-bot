@@ -11,13 +11,13 @@ import (
 type (
 	InlineMessageID string
 	GameStatus      string
-	GameName        string
+	GameType        string
 	Player          string
 )
 
 const (
-	GameNameRPS GameName = "rps"
-	GameNameTTT GameName = "ttt"
+	GameTypeRPS GameType = "rps"
+	GameTypeTTT GameType = "ttt"
 )
 
 const (
@@ -42,7 +42,7 @@ func (i InlineMessageID) IsZero() bool {
 
 type IGame[ID comparable, GSID comparable] interface {
 	ID() ID
-	GameSessionID() GSID
+	SessionID() GSID
 }
 
 func (g GameStatus) IsZero() bool {
@@ -66,7 +66,7 @@ func (g GameStatus) IsValid() bool {
 	}
 }
 
-func (g GameName) String() string {
+func (g GameType) String() string {
 	return string(g)
 }
 
