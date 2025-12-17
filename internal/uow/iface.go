@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"microgame-bot/internal/repo/game/rps"
+	"microgame-bot/internal/repo/game/ttt"
 	"microgame-bot/internal/repo/session"
 	"microgame-bot/internal/repo/user"
 )
@@ -20,6 +21,6 @@ type IUnitOfWork interface {
 
 	UserRepo() (user.IUserRepository, error)
 	SessionRepo() (session.ISessionRepository, error)
-	// TTTRepo() (tttRepo.ITTTRepository, error)
+	TTTRepo() (ttt.ITTTRepository, error)
 	RPSRepo() (rps.IRPSRepository, error)
 }

@@ -4,18 +4,17 @@ import (
 	"context"
 	"errors"
 	"microgame-bot/internal/repo/game/rps"
+	"microgame-bot/internal/repo/game/ttt"
 	"microgame-bot/internal/repo/session"
-
-	// "microgame-bot/internal/repo/ttt"
 	"microgame-bot/internal/repo/user"
 
 	"gorm.io/gorm"
 )
 
 type UnitOfWork struct {
-	db       *gorm.DB
-	userRepo user.IUserRepository
-	// tttRepo  tttRepo.ITTTRepository
+	db          *gorm.DB
+	userRepo    user.IUserRepository
+	tttRepo     ttt.ITTTRepository
 	sessionRepo session.ISessionRepository
 	rpsRepo     rps.IRPSRepository
 }
@@ -61,12 +60,12 @@ func (u *UnitOfWork) UserRepo() (user.IUserRepository, error) {
 	return u.userRepo, nil
 }
 
-// func (u *UnitOfWork) TTTRepo() (tttRepo.ITTTRepository, error) {
-// 	if u.tttRepo == nil {
-// 		return nil, errors.New("ttt repository is not set")
-// 	}
-// 	return u.tttRepo, nil
-// }
+func (u *UnitOfWork) TTTRepo() (ttt.ITTTRepository, error) {
+	if u.tttRepo == nil {
+		return nil, errors.New("ttt repository is not set")
+	}
+	return u.tttRepo, nil
+}
 
 func (u *UnitOfWork) SessionRepo() (session.ISessionRepository, error) {
 	if u.sessionRepo == nil {
