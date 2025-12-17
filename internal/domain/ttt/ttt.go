@@ -9,25 +9,24 @@ import (
 )
 
 type TTT struct {
-	board         [3][3]Cell
-	turn          domain.Player
-	winner        domain.Player
-	gameSessionID session.ID
-	id            ID
-	playerXID     user.ID
-	playerOID     user.ID
-	creatorID     user.ID
-	createdAt     time.Time
-	updatedAt     time.Time
-	status        domain.GameStatus
+	board     [3][3]Cell
+	turn      domain.Player
+	winnerID  user.ID
+	sessionID session.ID
+	id        ID
+	playerXID user.ID
+	playerOID user.ID
+	creatorID user.ID
+	createdAt time.Time
+	updatedAt time.Time
+	status    domain.GameStatus
 }
 
 // New creates a new TTT instance with the given options
 func New(opts ...TTTOpt) (TTT, error) {
 	t := &TTT{
-		board:  [3][3]Cell{},
-		turn:   PlayerX,
-		winner: domain.PlayerEmpty,
+		board: [3][3]Cell{},
+		turn:  PlayerX,
 	}
 
 	for _, opt := range opts {
@@ -58,12 +57,12 @@ func (t TTT) CreatorID() user.ID        { return t.creatorID }
 func (t TTT) PlayerXID() user.ID        { return t.playerXID }
 func (t TTT) PlayerOID() user.ID        { return t.playerOID }
 func (t TTT) Turn() domain.Player       { return t.turn }
-func (t TTT) Winner() domain.Player     { return t.winner }
+func (t TTT) WinnerID() user.ID         { return t.winnerID }
 func (t TTT) Board() [3][3]Cell         { return t.board }
 func (t TTT) Status() domain.GameStatus { return t.status }
 func (t TTT) CreatedAt() time.Time      { return t.createdAt }
 func (t TTT) UpdatedAt() time.Time      { return t.updatedAt }
-func (t TTT) GameSessionID() session.ID { return t.gameSessionID }
+func (t TTT) SessionID() session.ID     { return t.sessionID }
 
 // GetPlayerFigure returns the player symbol (X or O) for the given user ID.
 func (t TTT) GetPlayerFigure(userID user.ID) (domain.Player, error) {
@@ -85,25 +84,14 @@ func (t TTT) IsPlayerTurn(userID user.ID) bool {
 	return symbol == t.turn
 }
 
-// GetWinnerID returns the user ID of the winner, if any.
-func (t TTT) GetWinnerID() user.ID {
-	if t.winner == PlayerX {
-		return t.playerXID
-	}
-	if t.winner == PlayerO {
-		return t.playerOID
-	}
-	return user.ID{}
-}
-
 // IsFinished returns true if the game has ended.
 func (t TTT) IsFinished() bool {
-	return t.winner != domain.PlayerEmpty || t.IsDraw()
+	return !t.winnerID.IsZero() || t.IsDraw()
 }
 
 // IsDraw returns true if the game is a draw.
 func (t TTT) IsDraw() bool {
-	if t.winner != domain.PlayerEmpty {
+	if !t.winnerID.IsZero() {
 		return false
 	}
 
@@ -129,7 +117,7 @@ func (t TTT) GetCell(row, col int) (Cell, error) {
 func (t TTT) Reset() TTT {
 	t.board = [3][3]Cell{}
 	t.turn = PlayerX
-	t.winner = domain.PlayerEmpty
+	t.winnerID = user.ID{}
 	t.status = domain.GameStatusCreated
 	return t
 }
@@ -145,15 +133,15 @@ func (t TTT) switchTurn() TTT {
 }
 
 // checkWinner checks if there is a winner and returns the winner.
-func (t TTT) checkWinner() domain.Player {
+func (t TTT) checkWinner() user.ID {
 	hasX, hasO := t.checkWinners()
 	if hasX {
-		return PlayerX
+		return t.playerXID
 	}
 	if hasO {
-		return PlayerO
+		return t.playerOID
 	}
-	return domain.PlayerEmpty
+	return user.ID{}
 }
 
 // playerToCell converts Player to Cell.

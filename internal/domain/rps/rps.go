@@ -25,10 +25,9 @@ type RPS struct {
 
 func New(opts ...RPSOpt) (RPS, error) {
 	r := &RPS{
-		status:   domain.GameStatusCreated,
-		choice1:  ChoiceEmpty,
-		choice2:  ChoiceEmpty,
-		winnerID: user.ID{},
+		status:  domain.GameStatusCreated,
+		choice1: ChoiceEmpty,
+		choice2: ChoiceEmpty,
 	}
 
 	for _, opt := range opts {

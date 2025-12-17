@@ -74,9 +74,9 @@ func WithTurn(turn domain.Player) TTTOpt {
 	}
 }
 
-func WithWinner(winner domain.Player) TTTOpt {
+func WithWinnerID(winnerID user.ID) TTTOpt {
 	return func(t *TTT) error {
-		t.winner = winner
+		t.winnerID = winnerID
 		return nil
 	}
 }
@@ -159,9 +159,9 @@ func WithStatus(status domain.GameStatus) TTTOpt {
 	}
 }
 
-func WithGameSessionID(gameSessionID session.ID) TTTOpt {
+func WithSessionID(sessionID session.ID) TTTOpt {
 	return func(t *TTT) error {
-		t.gameSessionID = gameSessionID
+		t.sessionID = sessionID
 		return nil
 	}
 }

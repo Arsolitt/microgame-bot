@@ -11,43 +11,43 @@ import (
 // TODO: add tests
 func (t TTT) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Board         [3][3]Cell    `json:"board"`
-		Turn          domain.Player `json:"turn"`
-		Winner        domain.Player `json:"winner"`
-		GameSessionID session.ID    `json:"game_session_id"`
-		ID            ID            `json:"id"`
-		PlayerXID     user.ID       `json:"player_x_id"`
-		PlayerOID     user.ID       `json:"player_o_id"`
-		CreatorID     user.ID       `json:"creator_id"`
-		CreatedAt     time.Time     `json:"created_at"`
-		UpdatedAt     time.Time     `json:"updated_at"`
+		Board     [3][3]Cell    `json:"board"`
+		Turn      domain.Player `json:"turn"`
+		WinnerID  user.ID       `json:"winner_id"`
+		SessionID session.ID    `json:"session_id"`
+		ID        ID            `json:"id"`
+		PlayerXID user.ID       `json:"player_x_id"`
+		PlayerOID user.ID       `json:"player_o_id"`
+		CreatorID user.ID       `json:"creator_id"`
+		CreatedAt time.Time     `json:"created_at"`
+		UpdatedAt time.Time     `json:"updated_at"`
 	}{
-		ID:            t.id,
-		GameSessionID: t.gameSessionID,
-		CreatorID:     t.creatorID,
-		PlayerXID:     t.playerXID,
-		PlayerOID:     t.playerOID,
-		Board:         t.board,
-		Turn:          t.turn,
-		Winner:        t.winner,
-		CreatedAt:     t.createdAt,
-		UpdatedAt:     t.updatedAt,
+		ID:        t.id,
+		SessionID: t.sessionID,
+		CreatorID: t.creatorID,
+		PlayerXID: t.playerXID,
+		PlayerOID: t.playerOID,
+		Board:     t.board,
+		Turn:      t.turn,
+		WinnerID:  t.winnerID,
+		CreatedAt: t.createdAt,
+		UpdatedAt: t.updatedAt,
 	})
 }
 
 // TODO: add tests
 func (t *TTT) UnmarshalJSON(data []byte) error {
 	var aux struct {
-		Board         [3][3]Cell    `json:"board"`
-		Turn          domain.Player `json:"turn"`
-		Winner        domain.Player `json:"winner"`
-		GameSessionID session.ID    `json:"game_session_id"`
-		ID            ID            `json:"id"`
-		PlayerXID     user.ID       `json:"player_x_id"`
-		PlayerOID     user.ID       `json:"player_o_id"`
-		CreatorID     user.ID       `json:"creator_id"`
-		CreatedAt     time.Time     `json:"created_at"`
-		UpdatedAt     time.Time     `json:"updated_at"`
+		Board     [3][3]Cell    `json:"board"`
+		Turn      domain.Player `json:"turn"`
+		WinnerID  user.ID       `json:"winner_id"`
+		SessionID session.ID    `json:"session_id"`
+		ID        ID            `json:"id"`
+		PlayerXID user.ID       `json:"player_x_id"`
+		PlayerOID user.ID       `json:"player_o_id"`
+		CreatorID user.ID       `json:"creator_id"`
+		CreatedAt time.Time     `json:"created_at"`
+		UpdatedAt time.Time     `json:"updated_at"`
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -55,13 +55,13 @@ func (t *TTT) UnmarshalJSON(data []byte) error {
 
 	ttt, err := New(
 		WithID(aux.ID),
-		WithGameSessionID(aux.GameSessionID),
+		WithSessionID(aux.SessionID),
 		WithCreatorID(aux.CreatorID),
 		WithPlayerXID(aux.PlayerXID),
 		WithPlayerOID(aux.PlayerOID),
 		WithBoard(aux.Board),
 		WithTurn(aux.Turn),
-		WithWinner(aux.Winner),
+		WithWinnerID(aux.WinnerID),
 		WithCreatedAt(aux.CreatedAt),
 		WithUpdatedAt(aux.UpdatedAt),
 	)
