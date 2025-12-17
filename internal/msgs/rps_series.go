@@ -61,9 +61,9 @@ func RPSSeriesCompleted(
 }
 
 // RPSSeriesCompletedAlert generates short alert message for callback query
-func RPSSeriesCompletedAlert(winner domainUser.User) string {
-	return fmt.Sprintf("🎉 Победил @%s", winner.Username())
-}
+// func RPSSeriesCompletedAlert(winner domainUser.User) string {
+// 	return fmt.Sprintf("🎉 Победил @%s", winner.Username())
+// }
 
 // RPSSeriesDraw generates message when series ends in a draw
 func RPSSeriesDraw(
@@ -88,9 +88,9 @@ func RPSSeriesDraw(
 }
 
 // RPSSeriesDrawAlert generates short alert message for callback query when series ends in draw
-func RPSSeriesDrawAlert() string {
-	return "🤝 Ничья!"
-}
+// func RPSSeriesDrawAlert() string {
+// 	return "🤝 Ничья!"
+// }
 
 // RPSRoundCompleted generates message when round is finished and new round starts
 func RPSRoundCompleted(

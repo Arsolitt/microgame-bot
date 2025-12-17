@@ -2,7 +2,6 @@ package msgs
 
 import (
 	"fmt"
-	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/rps"
 	domainUser "microgame-bot/internal/domain/user"
 	"strings"
@@ -18,9 +17,9 @@ func RPSFinished(game *rps.RPS, player1 domainUser.User, player2 domainUser.User
 	sb.WriteString(fmt.Sprintf("👤 <b>Игрок 2:</b> @%s %s", player2.Username(), game.Choice2().Icon()))
 	sb.WriteString("\n")
 
-	if game.Winner() != domain.PlayerEmpty {
+	if !game.WinnerID().IsZero() {
 		var winner domainUser.User
-		if game.Winner() == rps.Player1 {
+		if game.WinnerID() == game.Player1ID() {
 			winner = player1
 		} else {
 			winner = player2
