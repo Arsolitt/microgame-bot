@@ -12,8 +12,8 @@ import (
 	"os"
 	"os/signal"
 
-	"gorm.io/driver/sqlite" // Sqlite driver based on CGO
-	// "github.com/glebarez/sqlite" // Pure go SQLite driver, checkout https://github.com/glebarez/sqlite for details
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"github.com/mymmrac/telego"
@@ -43,9 +43,18 @@ func startup() error {
 	logger.InitLogger(cfg.Logs)
 	slog.Info("Logger initialized successfully")
 
-	db, err := gorm.Open(sqlite.Open("gorm.db"), &gorm.Config{
+	gormConfig := &gorm.Config{
 		Logger: gormLogger.Default.LogMode(gormLogger.Silent),
-	})
+	}
+	var dialector gorm.Dialector
+	switch cfg.App.GormDialector {
+	case "sqlite":
+		dialector = sqlite.Open(cfg.Sqlite.URL)
+	case "postgres":
+		dialector = postgres.Open(cfg.Postgres.URL)
+	}
+
+	db, err := gorm.Open(dialector, gormConfig)
 	if err != nil {
 		return err
 	}

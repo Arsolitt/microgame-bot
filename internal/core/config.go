@@ -13,6 +13,7 @@ type TelegramToken string
 type Config struct {
 	Nats     NatsConfig     `env-prefix:"NATS__"`
 	Postgres PostgresConfig `env-prefix:"POSTGRES__"`
+	Sqlite   SqliteConfig   `env-prefix:"SQLITE__"`
 	Logs     LogsConfig     `env-prefix:"LOGS__"`
 	Telegram TelegramConfig `env-prefix:"TELEGRAM__"`
 	App      AppConfig      `env-prefix:"APP__"`
@@ -26,7 +27,7 @@ type LogsConfig struct {
 }
 
 type SqliteConfig struct {
-	URL string `env:"URL" env-default:"./data/whitelist.db" validate:"required"`
+	URL string `env:"URL" env-default:"file::memory:?cache=shared" validate:"required"`
 }
 
 type PostgresConfig struct {
@@ -40,7 +41,8 @@ type TelegramConfig struct {
 }
 
 type AppConfig struct {
-	MaxRequestsPerUser int `env:"MAX_REQUESTS_PER_USER" env-default:"3" validate:"min=1"`
+	MaxRequestsPerUser int    `env:"MAX_REQUESTS_PER_USER" env-default:"3" validate:"min=1"`
+	GormDialector      string `env:"GORM_DIALECTOR" env-default:"sqlite" validate:"oneof=sqlite postgres"`
 }
 
 type NatsConfig struct {
