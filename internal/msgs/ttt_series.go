@@ -23,7 +23,7 @@ func buildTTTRoundsHistory(games []ttt.TTT, playerX domainUser.User, playerO dom
 	roundNum := 1
 	for _, game := range games {
 		if game.IsFinished() {
-			sb.WriteString(fmt.Sprintf("Раунд %d: ", roundNum))
+			sb.WriteString(fmt.Sprintf("<b>Раунд %d:</b> ", roundNum))
 			if game.IsDraw() {
 				sb.WriteString("Ничья\n")
 			} else if !game.WinnerID().IsZero() {
