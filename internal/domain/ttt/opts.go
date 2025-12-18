@@ -60,6 +60,10 @@ func WithPlayerXID(playerXID user.ID) TTTOpt {
 	}
 }
 
+func WithPlayerXIDFromUUID(playerXID uuid.UUID) TTTOpt {
+	return WithPlayerXID(user.ID(playerXID))
+}
+
 func WithPlayerOID(playerOID user.ID) TTTOpt {
 	return func(t *TTT) error {
 		t.playerOID = playerOID
@@ -67,11 +71,19 @@ func WithPlayerOID(playerOID user.ID) TTTOpt {
 	}
 }
 
-func WithTurn(turn domain.Player) TTTOpt {
+func WithPlayerOIDFromUUID(playerOID uuid.UUID) TTTOpt {
+	return WithPlayerOID(user.ID(playerOID))
+}
+
+func WithTurn(turn user.ID) TTTOpt {
 	return func(t *TTT) error {
 		t.turn = turn
 		return nil
 	}
+}
+
+func WithTurnFromUUID(turn uuid.UUID) TTTOpt {
+	return WithTurn(user.ID(turn))
 }
 
 func WithWinnerID(winnerID user.ID) TTTOpt {
@@ -79,6 +91,10 @@ func WithWinnerID(winnerID user.ID) TTTOpt {
 		t.winnerID = winnerID
 		return nil
 	}
+}
+
+func WithWinnerIDFromUUID(winnerID uuid.UUID) TTTOpt {
+	return WithWinnerID(user.ID(winnerID))
 }
 
 func WithBoard(board [3][3]Cell) TTTOpt {

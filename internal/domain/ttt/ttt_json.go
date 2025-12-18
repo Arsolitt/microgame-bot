@@ -2,7 +2,6 @@ package ttt
 
 import (
 	"encoding/json"
-	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/user"
 	"time"
@@ -11,16 +10,16 @@ import (
 // TODO: add tests
 func (t TTT) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Board     [3][3]Cell    `json:"board"`
-		Turn      domain.Player `json:"turn"`
-		WinnerID  user.ID       `json:"winner_id"`
-		SessionID session.ID    `json:"session_id"`
-		ID        ID            `json:"id"`
-		PlayerXID user.ID       `json:"player_x_id"`
-		PlayerOID user.ID       `json:"player_o_id"`
-		CreatorID user.ID       `json:"creator_id"`
-		CreatedAt time.Time     `json:"created_at"`
-		UpdatedAt time.Time     `json:"updated_at"`
+		Board     [3][3]Cell `json:"board"`
+		Turn      user.ID    `json:"turn"`
+		WinnerID  user.ID    `json:"winner_id"`
+		SessionID session.ID `json:"session_id"`
+		ID        ID         `json:"id"`
+		PlayerXID user.ID    `json:"player_x_id"`
+		PlayerOID user.ID    `json:"player_o_id"`
+		CreatorID user.ID    `json:"creator_id"`
+		CreatedAt time.Time  `json:"created_at"`
+		UpdatedAt time.Time  `json:"updated_at"`
 	}{
 		ID:        t.id,
 		SessionID: t.sessionID,
@@ -38,16 +37,16 @@ func (t TTT) MarshalJSON() ([]byte, error) {
 // TODO: add tests
 func (t *TTT) UnmarshalJSON(data []byte) error {
 	var aux struct {
-		Board     [3][3]Cell    `json:"board"`
-		Turn      domain.Player `json:"turn"`
-		WinnerID  user.ID       `json:"winner_id"`
-		SessionID session.ID    `json:"session_id"`
-		ID        ID            `json:"id"`
-		PlayerXID user.ID       `json:"player_x_id"`
-		PlayerOID user.ID       `json:"player_o_id"`
-		CreatorID user.ID       `json:"creator_id"`
-		CreatedAt time.Time     `json:"created_at"`
-		UpdatedAt time.Time     `json:"updated_at"`
+		Board     [3][3]Cell `json:"board"`
+		Turn      user.ID    `json:"turn"`
+		WinnerID  user.ID    `json:"winner_id"`
+		SessionID session.ID `json:"session_id"`
+		ID        ID         `json:"id"`
+		PlayerXID user.ID    `json:"player_x_id"`
+		PlayerOID user.ID    `json:"player_o_id"`
+		CreatorID user.ID    `json:"creator_id"`
+		CreatedAt time.Time  `json:"created_at"`
+		UpdatedAt time.Time  `json:"updated_at"`
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err

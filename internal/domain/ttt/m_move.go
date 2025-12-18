@@ -16,12 +16,7 @@ func (t TTT) MakeMove(row, col int, userID user.ID) (TTT, error) {
 		return TTT{}, domain.ErrWaitingForOpponent
 	}
 
-	player, err := t.GetPlayerFigure(userID)
-	if err != nil {
-		return TTT{}, err
-	}
-
-	if player != t.turn {
+	if !t.IsPlayerTurn(userID) {
 		return TTT{}, domain.ErrNotPlayersTurn
 	}
 
@@ -33,7 +28,7 @@ func (t TTT) MakeMove(row, col int, userID user.ID) (TTT, error) {
 		return TTT{}, ErrCellOccupied
 	}
 
-	t.board[row][col] = playerToCell(player)
+	t.board[row][col] = t.PlayerCell(userID)
 
 	if winnerID := t.checkWinner(); !winnerID.IsZero() {
 		t.winnerID = winnerID

@@ -6,27 +6,28 @@ import (
 	"microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/user"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type TTT struct {
-	board     [3][3]Cell
-	turn      domain.Player
-	winnerID  user.ID
-	sessionID session.ID
 	id        ID
+	creatorID user.ID
 	playerXID user.ID
 	playerOID user.ID
-	creatorID user.ID
+	status    domain.GameStatus
+	winnerID  user.ID
+	sessionID session.ID
+	turn      user.ID
+	board     [3][3]Cell
 	createdAt time.Time
 	updatedAt time.Time
-	status    domain.GameStatus
 }
 
 // New creates a new TTT instance with the given options
 func New(opts ...TTTOpt) (TTT, error) {
 	t := &TTT{
 		board: [3][3]Cell{},
-		turn:  PlayerX,
 	}
 
 	for _, opt := range opts {
@@ -45,6 +46,12 @@ func New(opts ...TTTOpt) (TTT, error) {
 	if (t.playerXID.IsZero() || t.playerOID.IsZero()) && t.IsFinished() {
 		return TTT{}, domain.ErrCantBeFinishedWithoutTwoPlayers
 	}
+
+	// Set turn to X player by default if not set
+	if t.turn.IsZero() && !t.playerXID.IsZero() {
+		t.turn = t.playerXID
+	}
+
 	if err := t.validateBoard(); err != nil {
 		return TTT{}, err
 	}
@@ -56,32 +63,42 @@ func (t TTT) ID() ID                    { return t.id }
 func (t TTT) CreatorID() user.ID        { return t.creatorID }
 func (t TTT) PlayerXID() user.ID        { return t.playerXID }
 func (t TTT) PlayerOID() user.ID        { return t.playerOID }
-func (t TTT) Turn() domain.Player       { return t.turn }
+func (t TTT) Turn() user.ID             { return t.turn }
 func (t TTT) WinnerID() user.ID         { return t.winnerID }
 func (t TTT) Board() [3][3]Cell         { return t.board }
 func (t TTT) Status() domain.GameStatus { return t.status }
 func (t TTT) CreatedAt() time.Time      { return t.createdAt }
 func (t TTT) UpdatedAt() time.Time      { return t.updatedAt }
 func (t TTT) SessionID() session.ID     { return t.sessionID }
+func (t TTT) IDtoUUID() uuid.UUID       { return uuid.UUID(t.id) }
+func (t TTT) Type() domain.GameType     { return domain.GameTypeTTT }
 
-// GetPlayerFigure returns the player symbol (X or O) for the given user ID.
-func (t TTT) GetPlayerFigure(userID user.ID) (domain.Player, error) {
+// Participants returns all participants in the game
+func (t TTT) Participants() []user.ID {
+	participants := make([]user.ID, 0, 2)
+	if !t.playerXID.IsZero() {
+		participants = append(participants, t.playerXID)
+	}
+	if !t.playerOID.IsZero() {
+		participants = append(participants, t.playerOID)
+	}
+	return participants
+}
+
+// PlayerCell returns the cell type for the given user ID.
+func (t TTT) PlayerCell(userID user.ID) Cell {
 	if t.playerXID == userID {
-		return PlayerX, nil
+		return CellX
 	}
 	if t.playerOID == userID {
-		return PlayerO, nil
+		return CellO
 	}
-	return domain.PlayerEmpty, domain.ErrPlayerNotInGame
+	return CellEmpty
 }
 
 // IsPlayerTurn checks if it's the turn of the player with given user ID.
 func (t TTT) IsPlayerTurn(userID user.ID) bool {
-	symbol, err := t.GetPlayerFigure(userID)
-	if err != nil {
-		return false
-	}
-	return symbol == t.turn
+	return t.turn == userID
 }
 
 // IsFinished returns true if the game has ended.
@@ -116,7 +133,7 @@ func (t TTT) GetCell(row, col int) (Cell, error) {
 // Reset resets the game to initial state.
 func (t TTT) Reset() TTT {
 	t.board = [3][3]Cell{}
-	t.turn = PlayerX
+	t.turn = t.playerXID
 	t.winnerID = user.ID{}
 	t.status = domain.GameStatusCreated
 	return t
@@ -124,10 +141,10 @@ func (t TTT) Reset() TTT {
 
 // switchTurn switches the current turn to the other player.
 func (t TTT) switchTurn() TTT {
-	if t.turn == PlayerX {
-		t.turn = PlayerO
+	if t.turn == t.playerXID {
+		t.turn = t.playerOID
 	} else {
-		t.turn = PlayerX
+		t.turn = t.playerXID
 	}
 	return t
 }
@@ -142,18 +159,6 @@ func (t TTT) checkWinner() user.ID {
 		return t.playerOID
 	}
 	return user.ID{}
-}
-
-// playerToCell converts Player to Cell.
-func playerToCell(p domain.Player) Cell {
-	switch p {
-	case PlayerX:
-		return CellX
-	case PlayerO:
-		return CellO
-	default:
-		return CellEmpty
-	}
 }
 
 // ValidateBoard checks if the board is in a valid state.
@@ -209,9 +214,10 @@ func (t TTT) checkWinners() (bool, bool) {
 
 	// Helper to update win status and check early return
 	checkCell := func(cell Cell) {
-		if cell == CellX {
+		switch cell {
+		case CellX:
 			hasX = true
-		} else if cell == CellO {
+		case CellO:
 			hasO = true
 		}
 	}
