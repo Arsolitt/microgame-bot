@@ -43,6 +43,7 @@ type TelegramConfig struct {
 type AppConfig struct {
 	MaxRequestsPerUser int    `env:"MAX_REQUESTS_PER_USER" env-default:"3" validate:"min=1"`
 	GormDialector      string `env:"GORM_DIALECTOR" env-default:"sqlite" validate:"oneof=sqlite postgres"`
+	MaxGameCount       int    `env:"MAX_GAME_COUNT" env-default:"10" validate:"min=1"`
 }
 
 type NatsConfig struct {

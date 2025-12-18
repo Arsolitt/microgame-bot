@@ -3,6 +3,8 @@ package handlers
 import (
 	"fmt"
 	"log/slog"
+
+	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/rps"
@@ -15,7 +17,7 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
-func RPSCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
+func RPSCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFunc {
 	const OPERATION_NAME = "handlers::rps_create"
 	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
@@ -31,11 +33,13 @@ func RPSCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 			return nil, fmt.Errorf("failed to get inline message ID from context in %s: %w", OPERATION_NAME, err)
 		}
 
+		gameCount := extractGameCount(query.Data, cfg.MaxGameCount)
+
 		session, err := domainSession.New(
 			domainSession.WithNewID(),
 			domainSession.WithGameType(domain.GameTypeRPS),
 			domainSession.WithInlineMessageID(inlineMessageID),
-			domainSession.WithGameCount(3),
+			domainSession.WithGameCount(gameCount),
 		)
 		if err != nil {
 			return nil, err

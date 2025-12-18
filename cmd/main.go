@@ -107,7 +107,7 @@ func startup() error {
 		mdw.UserProvider(userLocker, userRepo),
 	)
 
-	bh.HandleInlineQuery(handlers.WrapInlineQuery(handlers.GameSelector()), th.AnyInlineQuery())
+	bh.HandleInlineQuery(handlers.WrapInlineQuery(handlers.GameSelector(cfg.App)), th.AnyInlineQuery())
 
 	tttG := bh.Group(th.CallbackDataPrefix("g::ttt::"))
 	// tttG.Use(mdw.GameProvider(memoryLocker.New[ttt.ID](), tttRepo, gsRepo, "ttt"))
@@ -144,13 +144,13 @@ func startup() error {
 		uowGorm.WithSessionRepo(sessionRepo),
 		uowGorm.WithTTTRepo(tttRepo),
 	)
-	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(tttUow)), th.CallbackDataEqual("create::ttt"))
+	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(tttUow, cfg.App)), th.CallbackDataPrefix("create::ttt"))
 
 	rpsCreateUnit := uowGorm.New(db,
 		uowGorm.WithSessionRepo(sessionRepo),
 		uowGorm.WithRPSRepo(rpsRepo),
 	)
-	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSCreate(rpsCreateUnit)), th.CallbackDataEqual("create::rps"))
+	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSCreate(rpsCreateUnit, cfg.App)), th.CallbackDataPrefix("create::rps"))
 
 	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.Empty()), th.CallbackDataEqual("empty"))
 

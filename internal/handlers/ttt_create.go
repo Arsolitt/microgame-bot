@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"log/slog"
+
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
@@ -16,7 +17,7 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
-func TTTCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
+func TTTCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFunc {
 	const OPERATION_NAME = "handlers::ttt_create"
 	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
@@ -32,11 +33,13 @@ func TTTCreate(unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
 			return nil, core.ErrInvalidUpdate
 		}
 
+		gameCount := extractGameCount(query.Data, cfg.MaxGameCount)
+
 		session, err := domainSession.New(
 			domainSession.WithNewID(),
 			domainSession.WithGameType(domain.GameTypeTTT),
 			domainSession.WithInlineMessageIDFromString(query.InlineMessageID),
-			domainSession.WithGameCount(3),
+			domainSession.WithGameCount(gameCount),
 		)
 		if err != nil {
 			return nil, err
