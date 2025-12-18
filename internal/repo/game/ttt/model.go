@@ -41,6 +41,8 @@ func (_ Repository) FromDomain(gm gM.Game, dm tttD.TTT) (gM.Game, error) {
 	}
 	data, err := json.Marshal(tttData{
 		WinnerID: dm.WinnerID().UUID(),
+		Board:    dm.Board(),
+		Turn:     dm.Turn().UUID(),
 	})
 	if err != nil {
 		return gM.Game{}, fmt.Errorf("failed to marshal data in %s: %w", OPERATION_NAME, err)
