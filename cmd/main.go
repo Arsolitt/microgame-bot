@@ -124,6 +124,8 @@ func startup() error {
 	)
 	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTMove(userRepo, tttMoveUnit)), th.CallbackDataPrefix("g::ttt::move::"))
 
+	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTRebuild(userRepo, tttRepo)), th.CallbackDataPrefix("g::ttt::rebuild::"))
+
 	rpsG := bh.Group(th.CallbackDataPrefix("g::rps::"))
 	// rpsG.Use(mdw.GameProvider(memoryLocker.New[rps.ID](), rpsRepo, gsRepo, "rps"))
 

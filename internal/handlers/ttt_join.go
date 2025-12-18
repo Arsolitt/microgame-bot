@@ -190,6 +190,10 @@ func buildTTTGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO d
 				Text:         turnText,
 				CallbackData: "empty",
 			},
+			{
+				Text:         "🔄",
+				CallbackData: "g::ttt::rebuild::" + game.ID().String(),
+			},
 		})
 	}
 

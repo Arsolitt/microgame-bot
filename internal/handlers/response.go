@@ -72,6 +72,7 @@ type EditMessageReplyMarkupResponse struct {
 	ChatID          int64
 	MessageID       int
 	ReplyMarkup     *telego.InlineKeyboardMarkup
+	SkipError       bool
 }
 
 func (r *EditMessageReplyMarkupResponse) Handle(ctx *th.Context) error {
@@ -82,7 +83,10 @@ func (r *EditMessageReplyMarkupResponse) Handle(ctx *th.Context) error {
 		ReplyMarkup:     r.ReplyMarkup,
 	}
 	_, err := ctx.Bot().EditMessageReplyMarkup(ctx, params)
-	return err
+	if err != nil && !r.SkipError {
+		return err
+	}
+	return nil
 }
 
 type CallbackQueryResponse struct {
