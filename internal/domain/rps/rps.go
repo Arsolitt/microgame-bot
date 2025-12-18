@@ -145,16 +145,6 @@ func (r RPS) WinnerID() user.ID {
 	return user.ID{}
 }
 
-func (r RPS) PlayerIcon(pr domain.Player) string {
-	if pr == Player1 {
-		return r.choice1.Icon()
-	}
-	if pr == Player2 {
-		return r.choice2.Icon()
-	}
-	return ""
-}
-
 func (r RPS) tryWinnerID() user.ID {
 	if r.choice1 == ChoiceEmpty || r.choice2 == ChoiceEmpty {
 		return user.ID{}

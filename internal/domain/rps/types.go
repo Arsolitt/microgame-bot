@@ -1,14 +1,7 @@
 package rps
 
-import "microgame-bot/internal/domain"
-
 type (
 	Choice string
-)
-
-const (
-	Player1 domain.Player = "1"
-	Player2 domain.Player = "2"
 )
 
 const (
