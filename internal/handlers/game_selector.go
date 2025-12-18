@@ -22,8 +22,11 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 		rounds := 1
 		queryText := strings.TrimSpace(query.Query)
 		if queryText != "" {
-			if parsed, err := strconv.Atoi(queryText); err == nil && parsed > 0 {
-				rounds = parsed
+			fields := strings.Fields(queryText)
+			if len(fields) > 0 {
+				if parsed, err := strconv.Atoi(fields[0]); err == nil && parsed > 0 {
+					rounds = parsed
+				}
 			}
 		}
 		if rounds > cfg.MaxGameCount {
