@@ -5,6 +5,7 @@ import (
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/user"
+	"microgame-bot/internal/utils"
 	"time"
 
 	"github.com/google/uuid"
@@ -130,12 +131,12 @@ func (t TTT) GetCell(row, col int) (Cell, error) {
 	return t.board[row][col], nil
 }
 
-// Reset resets the game to initial state.
-func (t TTT) Reset() TTT {
-	t.board = [3][3]Cell{}
-	t.turn = t.playerXID
-	t.winnerID = user.ID{}
-	t.status = domain.GameStatusCreated
+// assignPlayersRandomly randomly assigns two players to X and O roles
+func (t TTT) AssignPlayersRandomly() TTT {
+	if utils.RandInt(2) == 0 {
+		return t
+	}
+	t.playerXID, t.playerOID = t.playerOID, t.playerXID
 	return t
 }
 
