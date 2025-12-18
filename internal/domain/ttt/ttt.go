@@ -47,8 +47,8 @@ func New(opts ...TTTOpt) (TTT, error) {
 		return TTT{}, domain.ErrCantBeFinishedWithoutTwoPlayers
 	}
 
-	// Set turn to X player by default if not set
-	if t.turn.IsZero() && !t.playerXID.IsZero() {
+	// Set turn to X player by default if not set and both players are present
+	if t.turn.IsZero() && !t.playerXID.IsZero() && !t.playerOID.IsZero() {
 		t.turn = t.playerXID
 	}
 
