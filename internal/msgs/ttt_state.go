@@ -25,9 +25,9 @@ func TTTGameState(game ttt.TTT, playerX domainUser.User, playerO domainUser.User
 	sb.WriteString(fmt.Sprintf("@%s ", creatorUser.Username()))
 	sb.WriteString("запустил игру <b>крестики-нолики</b>")
 	sb.WriteString("\n")
-	sb.WriteString(fmt.Sprintf("👤 <b>Игрок 1:</b> @%s %s", playerX.Username(), game.PlayerCell(game.PlayerXID()).Icon()))
+	sb.WriteString(fmt.Sprintf("👤 <b>Игрок X:</b> @%s %s", playerX.Username(), ttt.CellXIcon))
 	sb.WriteString("\n")
-	sb.WriteString(fmt.Sprintf("👤 <b>Игрок 2:</b> @%s %s", playerO.Username(), game.PlayerCell(game.PlayerOID()).Icon()))
+	sb.WriteString(fmt.Sprintf("👤 <b>Игрок O:</b> @%s %s", playerO.Username(), ttt.CellOIcon))
 	sb.WriteString("\n\n")
 
 	if !game.WinnerID().IsZero() {

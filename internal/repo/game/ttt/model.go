@@ -12,7 +12,6 @@ import (
 type tttPlayers []tttPlayer
 type tttPlayer struct {
 	ID       uuid.UUID `json:"id"`
-	Number   int       `json:"number"`
 	IsWinner bool      `json:"is_winner"`
 	Figure   tttD.Cell `json:"figure"`
 }

@@ -82,8 +82,18 @@ func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 			return nil, fmt.Errorf("failed to get creator by ID in %s: %w", OPERATION_NAME, err)
 		}
 
-		boardKeyboard := buildTTTGameBoardKeyboard(&game, creator, player2)
-		msg, err := msgs.TTTGameStarted(&game, creator, player2)
+		// Determine who is X and who is O based on actual game state
+		var playerX, playerO domainUser.User
+		if game.PlayerXID() == creator.ID() {
+			playerX = creator
+			playerO = player2
+		} else {
+			playerX = player2
+			playerO = creator
+		}
+
+		boardKeyboard := buildTTTGameBoardKeyboard(&game, playerX, playerO)
+		msg, err := msgs.TTTGameStarted(&game, playerX, playerO)
 		if err != nil {
 			return nil, err
 		}
@@ -103,6 +113,8 @@ func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 	}
 }
 
+// buildTTTGameBoardKeyboard creates inline keyboard with game board
+// playerX must be the actual X player, playerO must be the actual O player
 func buildTTTGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO domainUser.User) *telego.InlineKeyboardMarkup {
 	const OPERATION_NAME = "handlers::ttt_join::buildTTTGameBoardKeyboard"
 	rows := make([][]telego.InlineKeyboardButton, 0, 4)
