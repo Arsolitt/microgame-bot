@@ -134,9 +134,11 @@ func (t TTT) GetCell(row, col int) (Cell, error) {
 // assignPlayersRandomly randomly assigns two players to X and O roles
 func (t TTT) AssignPlayersRandomly() TTT {
 	if utils.RandInt(2) == 0 {
+		t.turn = t.playerXID
 		return t
 	}
 	t.playerXID, t.playerOID = t.playerOID, t.playerXID
+	t.turn = t.playerXID
 	return t
 }
 
