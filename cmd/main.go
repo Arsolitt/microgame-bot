@@ -24,6 +24,7 @@ import (
 	memoryLocker "microgame-bot/internal/locker/memory"
 	gormGameRepository "microgame-bot/internal/repo/game"
 	gormRPSRepository "microgame-bot/internal/repo/game/rps"
+	gormTTTRepository "microgame-bot/internal/repo/game/ttt"
 	gormSessionRepository "microgame-bot/internal/repo/session"
 	gormUserRepository "microgame-bot/internal/repo/user"
 	uowGorm "microgame-bot/internal/uow"
@@ -93,10 +94,8 @@ func startup() error {
 	}
 	defer bh.StopWithContext(ctx)
 
-	// userRepo := memoryUserRepository.New()
 	userRepo := gormUserRepository.New(db)
-	// gameRepo := memoryTTTRepository.New()
-	// _ = gormTTTRepository.New(db)
+	tttRepo := gormTTTRepository.New(db)
 	rpsRepo := gormRPSRepository.New(db)
 	sessionRepo := gormSessionRepository.New(db)
 
@@ -110,11 +109,20 @@ func startup() error {
 
 	bh.HandleInlineQuery(handlers.WrapInlineQuery(handlers.GameSelector()), th.AnyInlineQuery())
 
-	// tttG := bh.Group(th.CallbackDataPrefix("g::ttt::"))
+	tttG := bh.Group(th.CallbackDataPrefix("g::ttt::"))
 	// tttG.Use(mdw.GameProvider(memoryLocker.New[ttt.ID](), tttRepo, gsRepo, "ttt"))
 
-	// tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTJoin(tttRepo, userRepo)), th.CallbackDataPrefix("g::ttt::join::"))
-	// tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTMove(tttRepo, userRepo)), th.CallbackDataPrefix("g::ttt::move::"))
+	tttJoinUnit := uowGorm.New(db,
+		uowGorm.WithSessionRepo(sessionRepo),
+		uowGorm.WithTTTRepo(tttRepo),
+	)
+	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTJoin(userRepo, tttJoinUnit)), th.CallbackDataPrefix("g::ttt::join::"))
+
+	tttMoveUnit := uowGorm.New(db,
+		uowGorm.WithSessionRepo(sessionRepo),
+		uowGorm.WithTTTRepo(tttRepo),
+	)
+	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTMove(userRepo, tttMoveUnit)), th.CallbackDataPrefix("g::ttt::move::"))
 
 	rpsG := bh.Group(th.CallbackDataPrefix("g::rps::"))
 	// rpsG.Use(mdw.GameProvider(memoryLocker.New[rps.ID](), rpsRepo, gsRepo, "rps"))
@@ -130,11 +138,11 @@ func startup() error {
 	)
 	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSChoice(userRepo, rpsChoiceUnit)), th.CallbackDataPrefix("g::rps::choice::"))
 
-	// tttUow := uowGorm.New(db,
-	// 	uowGorm.WithGSRepo(gormGSRepository.New(db)),
-	// 	uowGorm.WithTTTRepo(gormTTTRepository.New(db)),
-	// )
-	// bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(tttUow)), th.CallbackDataEqual("create::ttt"))
+	tttUow := uowGorm.New(db,
+		uowGorm.WithSessionRepo(sessionRepo),
+		uowGorm.WithTTTRepo(tttRepo),
+	)
+	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(tttUow)), th.CallbackDataEqual("create::ttt"))
 
 	rpsCreateUnit := uowGorm.New(db,
 		uowGorm.WithSessionRepo(sessionRepo),

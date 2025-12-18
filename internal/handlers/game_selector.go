@@ -15,15 +15,15 @@ func GameSelector() InlineQueryHandlerFunc {
 		return &InlineQueryResponse{
 			QueryID: query.ID,
 			Results: []telego.InlineQueryResult{
-				// tu.ResultArticle(
-				// 	"game::ttt",
-				// 	"Крестики-Нолики",
-				// 	tu.TextMessage("🎮 <b>Крестики-Нолики</b>\n\nНажми кнопку, чтобы начать игру!").WithParseMode("HTML"),
-				// ).WithReplyMarkup(tu.InlineKeyboard(
-				// 	tu.InlineKeyboardRow(
-				// 		tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::ttt"),
-				// 	),
-				// )),
+				tu.ResultArticle(
+					"game::ttt",
+					"Крестики-Нолики",
+					tu.TextMessage("🎮 <b>Крестики-Нолики</b>\n\nНажми кнопку, чтобы начать игру!").WithParseMode("HTML"),
+				).WithReplyMarkup(tu.InlineKeyboard(
+					tu.InlineKeyboardRow(
+						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::ttt"),
+					),
+				)),
 				tu.ResultArticle(
 					"game::rps",
 					"Камень-Ножницы-Бумага",
