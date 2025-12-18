@@ -71,16 +71,15 @@ func TTTSeriesCompleted(
 		} else {
 			winner = playerO
 		}
-		winnerCell := games[0].PlayerCell(result.SeriesWinner)
-		sb.WriteString(fmt.Sprintf("🏆 <b>Победитель:</b> @%s %s (%d - %d)",
+		sb.WriteString(fmt.Sprintf("🏆 <b>Победитель:</b> @%s (%d - %d)",
 			winner.Username(),
-			winnerCell.Icon(),
 			result.Scores[playerX.ID()],
 			result.Scores[playerO.ID()]))
 	}
 
 	if result.Draws > 0 {
-		sb.WriteString(fmt.Sprintf("\nНичьих: %d", result.Draws))
+		sb.WriteString("\n")
+		sb.WriteString(fmt.Sprintf("<b>Ничьих:</b> %d", result.Draws))
 	}
 
 	return sb.String(), nil
@@ -104,17 +103,17 @@ func TTTRoundCompleted(
 	sb.WriteString(buildTTTRoundsHistory(games, playerX, playerO))
 	sb.WriteString("\n")
 	sb.WriteString("Текущий счёт:\n")
-	sb.WriteString(fmt.Sprintf("👤 Игрок X: @%s %s - %d\n",
+	sb.WriteString(fmt.Sprintf("👤 @%s - %d\n",
 		playerX.Username(),
-		ttt.CellXIcon,
 		result.Scores[playerX.ID()]))
-	sb.WriteString(fmt.Sprintf("👤 Игрок O: @%s %s - %d\n",
+	sb.WriteString(fmt.Sprintf("👤 @%s - %d\n",
 		playerO.Username(),
-		ttt.CellOIcon,
 		result.Scores[playerO.ID()]))
 	if result.Draws > 0 {
-		sb.WriteString(fmt.Sprintf("Ничьих: %d\n", result.Draws))
+		sb.WriteString(fmt.Sprintf("<b>Ничьих:</b>: %d", result.Draws))
+		sb.WriteString("\n")
 	}
+	sb.WriteString("\n")
 	sb.WriteString("🎮 Новый раунд начался!")
 
 	return sb.String(), nil

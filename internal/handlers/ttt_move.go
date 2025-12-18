@@ -8,6 +8,7 @@ import (
 	"microgame-bot/internal/domain"
 	domainSession "microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/ttt"
+	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
 	tttRepository "microgame-bot/internal/repo/game/ttt"
 	sRepository "microgame-bot/internal/repo/session"
@@ -175,17 +176,33 @@ func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Callba
 				if err != nil {
 					return fmt.Errorf("failed to get game repository in %s: %w", OPERATION_NAME, err)
 				}
+				newPlayerXID := game.PlayerXID()
+				newPlayerOID := game.PlayerOID()
+				if !game.IsDraw() {
+					newPlayerXID = game.WinnerID()
+					switch newPlayerXID {
+					case game.PlayerXID():
+						newPlayerOID = game.PlayerOID()
+					case game.PlayerOID():
+						newPlayerOID = game.PlayerXID()
+					default:
+						return fmt.Errorf("invalid winner ID in %s", OPERATION_NAME)
+					}
+				}
 				nextGame, err = ttt.New(
 					ttt.WithNewID(),
 					ttt.WithSessionID(session.ID()),
 					ttt.WithCreatorID(game.CreatorID()),
-					ttt.WithPlayerXID(game.PlayerXID()),
-					ttt.WithPlayerOID(game.PlayerOID()),
+					ttt.WithPlayerXID(newPlayerXID),
+					ttt.WithPlayerOID(newPlayerOID),
 					ttt.WithStatus(domain.GameStatusInProgress),
-					ttt.WithTurn(game.PlayerXID()),
+					ttt.WithTurn(newPlayerXID),
 				)
 				if err != nil {
 					return fmt.Errorf("failed to create new game in %s: %w", OPERATION_NAME, err)
+				}
+				if game.IsDraw() {
+					nextGame = nextGame.AssignPlayersRandomly()
 				}
 
 				nextGame, err = gameRepo.CreateGame(ctx, nextGame)
@@ -204,7 +221,20 @@ func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Callba
 				return nil, fmt.Errorf("failed to build round completed message in %s: %w", OPERATION_NAME, err)
 			}
 
-			boardKeyboard := buildTTTGameBoardKeyboard(&nextGame, playerX, playerO)
+			var nextPlayerX domainUser.User
+			var nextPlayerO domainUser.User
+			switch nextGame.PlayerXID() {
+			case playerX.ID():
+				nextPlayerX = playerX
+				nextPlayerO = playerO
+			case playerO.ID():
+				nextPlayerX = playerO
+				nextPlayerO = playerX
+			default:
+				return nil, fmt.Errorf("invalid player ID in %s", OPERATION_NAME)
+			}
+
+			boardKeyboard := buildTTTGameBoardKeyboard(&nextGame, nextPlayerX, nextPlayerO)
 
 			return ResponseChain{
 				&EditMessageTextResponse{
