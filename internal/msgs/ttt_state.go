@@ -2,40 +2,32 @@ package msgs
 
 import (
 	"fmt"
+	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/ttt"
 	domainUser "microgame-bot/internal/domain/user"
 	"strings"
 )
 
 func TTTGameState(game ttt.TTT, playerX domainUser.User, playerO domainUser.User) (string, error) {
+	const OPERATION_NAME = "msgs::ttt_state::TTTGameState"
 	var sb strings.Builder
 
-	creator, err := game.GetPlayerFigure(game.CreatorID())
-	if err != nil {
-		return "", fmt.Errorf("failed to get creator symbol: %w", err)
-	}
-	playerXFigure, err := game.GetPlayerFigure(game.PlayerXID())
-	if err != nil {
-		return "", fmt.Errorf("failed to get playerX figure: %w", err)
-	}
-	playerOFigure, err := game.GetPlayerFigure(game.PlayerOID())
-	if err != nil {
-		return "", fmt.Errorf("failed to get playerO figure: %w", err)
-	}
-
 	var creatorUser domainUser.User
-	if creator == ttt.PlayerX {
+	switch game.CreatorID() {
+	case game.PlayerXID():
 		creatorUser = playerX
-	} else {
+	case game.PlayerOID():
 		creatorUser = playerO
+	default:
+		return "", fmt.Errorf("failed to get creator user in %s: %w", OPERATION_NAME, domain.ErrPlayerNotInGame)
 	}
 
 	sb.WriteString(fmt.Sprintf("@%s ", creatorUser.Username()))
 	sb.WriteString("запустил игру <b>крестики-нолики</b>")
 	sb.WriteString("\n")
-	sb.WriteString(fmt.Sprintf("👤 <b>Игрок 1:</b> @%s %s", playerX.Username(), ttt.PlayerSymbol(playerXFigure)))
+	sb.WriteString(fmt.Sprintf("👤 <b>Игрок 1:</b> @%s %s", playerX.Username(), game.PlayerCell(game.PlayerXID()).Icon()))
 	sb.WriteString("\n")
-	sb.WriteString(fmt.Sprintf("👤 <b>Игрок 2:</b> @%s %s", playerO.Username(), ttt.PlayerSymbol(playerOFigure)))
+	sb.WriteString(fmt.Sprintf("👤 <b>Игрок 2:</b> @%s %s", playerO.Username(), game.PlayerCell(game.PlayerOID()).Icon()))
 	sb.WriteString("\n\n")
 
 	if !game.WinnerID().IsZero() {
@@ -45,11 +37,8 @@ func TTTGameState(game ttt.TTT, playerX domainUser.User, playerO domainUser.User
 		} else {
 			winner = playerO
 		}
-		winnerFigure, err := game.GetPlayerFigure(game.WinnerID())
-		if err != nil {
-			return "", fmt.Errorf("failed to get winner figure: %w", err)
-		}
-		sb.WriteString(fmt.Sprintf("🏆 <b>Победитель:</b> @%s %s", winner.Username(), ttt.PlayerSymbol(winnerFigure)))
+
+		sb.WriteString(fmt.Sprintf("🏆 <b>Победитель:</b> @%s %s", winner.Username(), game.PlayerCell(game.WinnerID()).Icon()))
 	} else if game.IsDraw() {
 		sb.WriteString("🤝 <b>Ничья!</b>")
 	}
