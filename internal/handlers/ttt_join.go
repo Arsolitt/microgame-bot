@@ -13,6 +13,7 @@ import (
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
+	tu "github.com/mymmrac/telego/telegoutil"
 )
 
 func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
@@ -32,6 +33,7 @@ func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 		}
 
 		var game ttt.TTT
+		var isFirstPlayer bool
 		err = unit.Do(ctx, func(uow uow.IUnitOfWork) error {
 			gameRepo, err := uow.TTTRepo()
 			if err != nil {
@@ -51,6 +53,9 @@ func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 				return fmt.Errorf("failed to get game session by ID with lock in %s: %w", OPERATION_NAME, err)
 			}
 
+			// Check if this is first or second player joining
+			isFirstPlayer = game.PlayerXID().IsZero() && game.PlayerOID().IsZero()
+
 			game, err = game.JoinGame(player2.ID())
 			if err != nil {
 				return err
@@ -61,14 +66,17 @@ func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 				return fmt.Errorf("failed to update game: %w", err)
 			}
 
-			session, err = session.ChangeStatus(domain.GameStatusInProgress)
-			if err != nil {
-				return err
-			}
+			// Only change session status when second player joins
+			if !isFirstPlayer {
+				session, err = session.ChangeStatus(domain.GameStatusInProgress)
+				if err != nil {
+					return err
+				}
 
-			session, err = sessionRepo.UpdateSession(ctx, session)
-			if err != nil {
-				return fmt.Errorf("failed to update session: %w", err)
+				session, err = sessionRepo.UpdateSession(ctx, session)
+				if err != nil {
+					return fmt.Errorf("failed to update session: %w", err)
+				}
 			}
 
 			return nil
@@ -82,18 +90,44 @@ func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 			return nil, fmt.Errorf("failed to get creator by ID in %s: %w", OPERATION_NAME, err)
 		}
 
-		// Determine who is X and who is O based on actual game state
-		var playerX, playerO domainUser.User
-		if game.PlayerXID() == creator.ID() {
-			playerX = creator
-			playerO = player2
-		} else {
-			playerX = player2
-			playerO = creator
+		// First player joined - show waiting message
+		if isFirstPlayer {
+			msg, err := msgs.TTTFirstPlayerJoined(creator, player2)
+			if err != nil {
+				return nil, err
+			}
+
+			return ResponseChain{
+				&EditMessageTextResponse{
+					InlineMessageID: query.InlineMessageID,
+					Text:            msg,
+					ParseMode:       "HTML",
+					ReplyMarkup: tu.InlineKeyboard(
+						tu.InlineKeyboardRow(
+							tu.InlineKeyboardButton("Присоединиться").WithCallbackData("g::ttt::join::" + game.ID().String()),
+						),
+					),
+				},
+				&CallbackQueryResponse{
+					CallbackQueryID: query.ID,
+					Text:            "Вы присоединились! Ждём второго игрока...",
+				},
+			}, nil
+		}
+
+		// Second player joined - start the game
+		playerX, err := userRepo.UserByID(ctx, game.PlayerXID())
+		if err != nil {
+			return nil, fmt.Errorf("failed to get playerX by ID in %s: %w", OPERATION_NAME, err)
+		}
+
+		playerO, err := userRepo.UserByID(ctx, game.PlayerOID())
+		if err != nil {
+			return nil, fmt.Errorf("failed to get playerO by ID in %s: %w", OPERATION_NAME, err)
 		}
 
 		boardKeyboard := buildTTTGameBoardKeyboard(&game, playerX, playerO)
-		msg, err := msgs.TTTGameStarted(&game, playerX, playerO)
+		msg, err := msgs.TTTGameStarted(creator, playerX, playerO)
 		if err != nil {
 			return nil, err
 		}
