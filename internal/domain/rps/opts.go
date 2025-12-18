@@ -60,11 +60,19 @@ func WithPlayer1ID(player1ID user.ID) RPSOpt {
 	}
 }
 
+func WithPlayer1IDFromUUID(player1ID uuid.UUID) RPSOpt {
+	return WithPlayer1ID(user.ID(player1ID))
+}
+
 func WithPlayer2ID(player2ID user.ID) RPSOpt {
 	return func(r *RPS) error {
 		r.player2ID = player2ID
 		return nil
 	}
+}
+
+func WithPlayer2IDFromUUID(player2ID uuid.UUID) RPSOpt {
+	return WithPlayer2ID(user.ID(player2ID))
 }
 
 func WithChoice1(choice Choice) RPSOpt {

@@ -31,7 +31,7 @@ type Game struct {
 	Status    domain.GameStatus `gorm:"not null"`
 	CreatorID user.ID           `gorm:"type:uuid;not null"`
 	Creator   uM.User           `gorm:"foreignKey:CreatorID;references:ID;constraint:OnDelete:RESTRICT"`
-	Players   []byte            `gorm:"type:jsonb"`
+	Players   []byte            `gorm:"type:jsonb;index:idx_games_players,type:gin,option:CONCURRENTLY"`
 	Data      []byte            `gorm:"type:jsonb"`
 	CreatedAt time.Time         `gorm:"not null"`
 	UpdatedAt time.Time         `gorm:"not null"`

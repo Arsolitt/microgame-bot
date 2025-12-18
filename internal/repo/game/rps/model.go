@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	rpsD "microgame-bot/internal/domain/rps"
-	"microgame-bot/internal/domain/user"
 	gM "microgame-bot/internal/repo/game"
 
 	"github.com/google/uuid"
@@ -12,7 +11,7 @@ import (
 
 type rpsPlayers []rpsPlayer
 type rpsPlayer struct {
-	ID       user.ID     `json:"id"`
+	ID       uuid.UUID   `json:"id"`
 	Number   int         `json:"number"`
 	IsWinner bool        `json:"is_winner"`
 	Choice   rpsD.Choice `json:"choice"`
@@ -25,13 +24,13 @@ type rpsData struct {
 func (_ Repository) FromDomain(gm gM.Game, dm rpsD.RPS) (gM.Game, error) {
 	players, err := json.Marshal(rpsPlayers{
 		{
-			ID:       dm.Player1ID(),
+			ID:       dm.Player1ID().UUID(),
 			Number:   1,
 			IsWinner: dm.WinnerID() == dm.Player1ID(),
 			Choice:   dm.Choice1(),
 		},
 		{
-			ID:       dm.Player2ID(),
+			ID:       dm.Player2ID().UUID(),
 			Number:   2,
 			IsWinner: dm.WinnerID() == dm.Player2ID(),
 			Choice:   dm.Choice2(),
@@ -66,8 +65,8 @@ func (_ Repository) ToDomain(gm gM.Game) (rpsD.RPS, error) {
 	return rpsD.New(
 		rpsD.WithIDFromUUID(gm.ID),
 		rpsD.WithCreatorID(gm.CreatorID),
-		rpsD.WithPlayer1ID(player1.ID),
-		rpsD.WithPlayer2ID(player2.ID),
+		rpsD.WithPlayer1IDFromUUID(player1.ID),
+		rpsD.WithPlayer2IDFromUUID(player2.ID),
 		rpsD.WithChoice1(player1.Choice),
 		rpsD.WithChoice2(player2.Choice),
 		rpsD.WithStatus(gm.Status),
