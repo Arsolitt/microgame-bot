@@ -22,6 +22,7 @@ type rpsData struct {
 }
 
 func (_ Repository) FromDomain(gm gM.Game, dm rpsD.RPS) (gM.Game, error) {
+	const OPERATION_NAME = "repo::game::rps::model::FromDomain"
 	players, err := json.Marshal(rpsPlayers{
 		{
 			ID:       dm.Player1ID().UUID(),
@@ -37,13 +38,13 @@ func (_ Repository) FromDomain(gm gM.Game, dm rpsD.RPS) (gM.Game, error) {
 		},
 	})
 	if err != nil {
-		return gM.Game{}, fmt.Errorf("failed to marshal players: %w", err)
+		return gM.Game{}, fmt.Errorf("failed to marshal players in %s: %w", OPERATION_NAME, err)
 	}
 	data, err := json.Marshal(rpsData{
 		WinnerID: dm.WinnerID().UUID(),
 	})
 	if err != nil {
-		return gM.Game{}, fmt.Errorf("failed to marshal data: %w", err)
+		return gM.Game{}, fmt.Errorf("failed to marshal data in %s: %w", OPERATION_NAME, err)
 	}
 	gm = gm.SetCommonFields(dm)
 	gm.Players = players
@@ -53,28 +54,35 @@ func (_ Repository) FromDomain(gm gM.Game, dm rpsD.RPS) (gM.Game, error) {
 }
 
 func (_ Repository) ToDomain(gm gM.Game) (rpsD.RPS, error) {
+	const OPERATION_NAME = "repo::game::rps::model::ToDomain"
 	var players rpsPlayers
 	var data rpsData
 	err := gm.DecodeBinaryFields(gm.Players, &players, gm.Data, &data)
 	if err != nil {
-		return rpsD.RPS{}, fmt.Errorf("failed to decode binary fields: %w", err)
+		return rpsD.RPS{}, fmt.Errorf("failed to decode binary fields in %s: %w", OPERATION_NAME, err)
 	}
 	player1 := rpsPlayerByNumber(players, 1)
 	player2 := rpsPlayerByNumber(players, 2)
 
-	return rpsD.New(
+	model, err := rpsD.New(
+		// common fields
 		rpsD.WithIDFromUUID(gm.ID),
 		rpsD.WithCreatorID(gm.CreatorID),
+		rpsD.WithStatus(gm.Status),
+		rpsD.WithSessionID(gm.SessionID),
+		rpsD.WithCreatedAt(gm.CreatedAt),
+		rpsD.WithUpdatedAt(gm.UpdatedAt),
+		// game-specific fields
+		rpsD.WithWinnerIDFromUUID(data.WinnerID),
 		rpsD.WithPlayer1IDFromUUID(player1.ID),
 		rpsD.WithPlayer2IDFromUUID(player2.ID),
 		rpsD.WithChoice1(player1.Choice),
 		rpsD.WithChoice2(player2.Choice),
-		rpsD.WithStatus(gm.Status),
-		rpsD.WithWinnerIDFromUUID(data.WinnerID),
-		rpsD.WithSessionID(gm.SessionID),
-		rpsD.WithCreatedAt(gm.CreatedAt),
-		rpsD.WithUpdatedAt(gm.UpdatedAt),
 	)
+	if err != nil {
+		return rpsD.RPS{}, fmt.Errorf("failed to create RPS in %s: %w", OPERATION_NAME, err)
+	}
+	return model, nil
 
 }
 
