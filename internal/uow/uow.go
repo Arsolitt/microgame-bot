@@ -38,9 +38,9 @@ func (u *UnitOfWork) Do(ctx context.Context, fn func(unit IUnitOfWork) error) er
 		if u.sessionRepo != nil {
 			opts = append(opts, WithSessionRepo(session.New(tx)))
 		}
-		// if u.tttRepo != nil {
-		// 	opts = append(opts, WithTTTRepo(gormTTTRepository.New(tx)))
-		// }
+		if u.tttRepo != nil {
+			opts = append(opts, WithTTTRepo(ttt.New(tx)))
+		}
 		if u.rpsRepo != nil {
 			opts = append(opts, WithRPSRepo(rps.New(tx)))
 		}
@@ -90,12 +90,12 @@ func WithUserRepo(userR user.IUserRepository) UnitOfWorkOpt {
 	}
 }
 
-// func WithTTTRepo(tttR tttRepo.ITTTRepository) UnitOfWorkOpt {
-// 	return func(u *UnitOfWork) error {
-// 		u.tttRepo = tttR
-// 		return nil
-// 	}
-// }
+func WithTTTRepo(tttR ttt.ITTTRepository) UnitOfWorkOpt {
+	return func(u *UnitOfWork) error {
+		u.tttRepo = tttR
+		return nil
+	}
+}
 
 func WithSessionRepo(gsR session.ISessionRepository) UnitOfWorkOpt {
 	return func(u *UnitOfWork) error {
