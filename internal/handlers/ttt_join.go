@@ -3,58 +3,86 @@ package handlers
 import (
 	"fmt"
 	"log/slog"
-	"microgame-bot/internal/core"
+	"microgame-bot/internal/core/logger"
+	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/ttt"
 	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
-	tttRepository "microgame-bot/internal/repo/game/ttt"
 	userRepository "microgame-bot/internal/repo/user"
+	"microgame-bot/internal/uow"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
-func TTTJoin(gameRepo tttRepository.ITTTRepository, userRepo userRepository.IUserRepository) CallbackQueryHandlerFunc {
+func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
+	const OPERATION_NAME = "handlers::ttt_join"
+	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
-		slog.DebugContext(ctx, "Join callback received")
+		l.DebugContext(ctx, "TTT Join callback received")
 
-		player2, ok := ctx.Value(core.ContextKeyUser).(domainUser.User)
-		if !ok {
-			slog.ErrorContext(ctx, "User not found")
-			return nil, core.ErrUserNotFoundInContext
-		}
-
-		game, ok := ctx.Value(core.ContextKeyGame).(ttt.TTT)
-		if !ok {
-			slog.ErrorContext(ctx, "Game not found")
-			return nil, core.ErrGameNotFoundInContext
-		}
-
-		game, err := game.JoinGame(player2.ID())
+		player2, err := userFromContext(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get user from context in %s: %w", OPERATION_NAME, err)
 		}
 
-		game, err = gameRepo.UpdateGame(ctx, game)
+		gameID, err := extractGameID[ttt.ID](query.Data)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to extract game ID from callback data in %s: %w", OPERATION_NAME, err)
+		}
+
+		var game ttt.TTT
+		err = unit.Do(ctx, func(uow uow.IUnitOfWork) error {
+			gameRepo, err := uow.TTTRepo()
+			if err != nil {
+				return fmt.Errorf("failed to get game repository in %s: %w", OPERATION_NAME, err)
+			}
+			sessionRepo, err := uow.SessionRepo()
+			if err != nil {
+				return fmt.Errorf("failed to get game session repository in %s: %w", OPERATION_NAME, err)
+			}
+			game, err = gameRepo.GameByIDLocked(ctx, gameID)
+			if err != nil {
+				return fmt.Errorf("failed to get game by ID with lock in %s: %w", OPERATION_NAME, err)
+			}
+
+			session, err := sessionRepo.SessionByIDLocked(ctx, game.SessionID())
+			if err != nil {
+				return fmt.Errorf("failed to get game session by ID with lock in %s: %w", OPERATION_NAME, err)
+			}
+
+			game, err = game.JoinGame(player2.ID())
+			if err != nil {
+				return err
+			}
+
+			game, err = gameRepo.UpdateGame(ctx, game)
+			if err != nil {
+				return fmt.Errorf("failed to update game: %w", err)
+			}
+
+			session, err = session.ChangeStatus(domain.GameStatusInProgress)
+			if err != nil {
+				return err
+			}
+
+			session, err = sessionRepo.UpdateSession(ctx, session)
+			if err != nil {
+				return fmt.Errorf("failed to update session: %w", err)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
 		}
 
 		creator, err := userRepo.UserByID(ctx, game.CreatorID())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get creator by ID in %s: %w", OPERATION_NAME, err)
 		}
 
-		var playerX, playerO domainUser.User
-		if game.PlayerXID() == creator.ID() {
-			playerX = creator
-			playerO = player2
-		} else {
-			playerX = player2
-			playerO = creator
-		}
-
-		boardKeyboard := buildTTTGameBoardKeyboard(&game, playerX, playerO)
+		boardKeyboard := buildTTTGameBoardKeyboard(&game, creator, player2)
 		msg, err := msgs.TTTGameStarted(&game, creator, player2)
 		if err != nil {
 			return nil, err
@@ -76,6 +104,7 @@ func TTTJoin(gameRepo tttRepository.ITTTRepository, userRepo userRepository.IUse
 }
 
 func buildTTTGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO domainUser.User) *telego.InlineKeyboardMarkup {
+	const OPERATION_NAME = "handlers::ttt_join::buildTTTGameBoardKeyboard"
 	rows := make([][]telego.InlineKeyboardButton, 0, 4)
 
 	for row := range 3 {
@@ -104,12 +133,12 @@ func buildTTTGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO d
 
 	if !game.IsFinished() {
 		var currentPlayer domainUser.User
-		if game.Turn() == ttt.PlayerX {
+		if game.Turn() == game.PlayerXID() {
 			currentPlayer = playerX
 		} else {
 			currentPlayer = playerO
 		}
-		turnText := fmt.Sprintf("🎯 Ход: @%s %s", currentPlayer.Username(), ttt.PlayerSymbol(game.Turn()))
+		turnText := fmt.Sprintf("🎯 Ход: @%s %s", currentPlayer.Username(), game.PlayerCell(game.Turn()).Icon())
 		rows = append(rows, []telego.InlineKeyboardButton{
 			{
 				Text:         turnText,
