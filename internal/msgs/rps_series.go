@@ -23,7 +23,7 @@ func buildRPSRoundsHistory(games []rps.RPS, player1 domainUser.User, player2 dom
 	for _, game := range games {
 		if game.IsFinished() {
 			sb.WriteString(fmt.Sprintf(
-				"Раунд %d:\n@%s %s\n@%s %s\n",
+				"<b>Раунд %d:</b> \n@%s %s\n@%s %s\n",
 				roundNum,
 				player1.Username(),
 				game.Choice1().Icon(),
@@ -49,12 +49,15 @@ func RPSSeriesCompleted(
 ) string {
 	var sb strings.Builder
 	creatorUsername := getCreatorUsername(games[0].CreatorID(), player1, player2)
-	sb.WriteString(fmt.Sprintf("@%s запустил игру <b>камень-ножницы-бумага</b>\n\n", creatorUsername))
+	sb.WriteString(fmt.Sprintf("@%s запустил игру <b>камень-ножницы-бумага</b>", creatorUsername))
+	sb.WriteString("\n")
+	sb.WriteString("\n")
 	sb.WriteString(buildRPSRoundsHistory(games, player1, player2))
 	sb.WriteString("\n")
 	sb.WriteString(fmt.Sprintf("🏆 <b>Победитель:</b> @%s (%d - %d)", winner.Username(), player1Score, player2Score))
 	if draws > 0 {
-		sb.WriteString(fmt.Sprintf("\nНичьих: %d", draws))
+		sb.WriteString("\n")
+		sb.WriteString(fmt.Sprintf("🏳️ <b>Ничьих:</b> %d", draws))
 	}
 
 	return sb.String()
@@ -76,12 +79,15 @@ func RPSSeriesDraw(
 ) string {
 	var sb strings.Builder
 	creatorUsername := getCreatorUsername(games[0].CreatorID(), player1, player2)
-	sb.WriteString(fmt.Sprintf("@%s запустил игру <b>камень-ножницы-бумага</b>\n\n", creatorUsername))
+	sb.WriteString(fmt.Sprintf("@%s запустил игру <b>камень-ножницы-бумага</b>", creatorUsername))
+	sb.WriteString("\n")
+	sb.WriteString("\n")
 	sb.WriteString(buildRPSRoundsHistory(games, player1, player2))
 	sb.WriteString("\n")
 	sb.WriteString(fmt.Sprintf("🤝 <b>Ничья!</b> (%d - %d)", player1Score, player2Score))
 	if draws > 0 {
-		sb.WriteString(fmt.Sprintf("\nНичьих: %d", draws))
+		sb.WriteString("\n")
+		sb.WriteString(fmt.Sprintf("🏳️ <b>Ничьих:</b> %d", draws))
 	}
 
 	return sb.String()
@@ -103,14 +109,19 @@ func RPSRoundCompleted(
 ) string {
 	var sb strings.Builder
 	creatorUsername := getCreatorUsername(games[0].CreatorID(), player1, player2)
-	sb.WriteString(fmt.Sprintf("@%s запустил игру <b>камень-ножницы-бумага</b>\n\n", creatorUsername))
+	sb.WriteString(fmt.Sprintf("@%s запустил игру <b>камень-ножницы-бумага</b>", creatorUsername))
+	sb.WriteString("\n")
+	sb.WriteString("\n")
 	sb.WriteString(buildRPSRoundsHistory(games, player1, player2))
 	sb.WriteString("\n")
 	sb.WriteString("Текущий счёт:\n")
-	sb.WriteString(fmt.Sprintf("👤 Игрок 1: @%s %s - %d\n", player1.Username(), rps.ChoiceHiddenIcon, player1Score))
-	sb.WriteString(fmt.Sprintf("👤 Игрок 2: @%s %s - %d\n", player2.Username(), rps.ChoiceHiddenIcon, player2Score))
+	sb.WriteString(fmt.Sprintf("👤 <b>Игрок 1:</b> @%s %s - %d", player1.Username(), rps.ChoiceHiddenIcon, player1Score))
+	sb.WriteString("\n")
+	sb.WriteString(fmt.Sprintf("👤 <b>Игрок 2:</b> @%s %s - %d", player2.Username(), rps.ChoiceHiddenIcon, player2Score))
+	sb.WriteString("\n")
 	if draws > 0 {
-		sb.WriteString(fmt.Sprintf("Ничьих: %d\n", draws))
+		sb.WriteString(fmt.Sprintf("🏳️ <b>Ничьих:</b> %d", draws))
+		sb.WriteString("\n")
 	}
 	sb.WriteString("🎲 Игроки делают выбор...")
 
@@ -132,10 +143,13 @@ func RPSRoundFinishedWithScore(
 	sb.WriteString(buildRPSRoundsHistory(games, player1, player2))
 	sb.WriteString("\n")
 	sb.WriteString("Текущий счёт:\n")
-	sb.WriteString(fmt.Sprintf("👤 Игрок 1: @%s %s - %d\n", player1.Username(), rps.ChoiceHiddenIcon, player1Score))
-	sb.WriteString(fmt.Sprintf("👤 Игрок 2: @%s %s - %d\n", player2.Username(), rps.ChoiceHiddenIcon, player2Score))
+	sb.WriteString(fmt.Sprintf("👤 Игрок 1: @%s %s - %d", player1.Username(), rps.ChoiceHiddenIcon, player1Score))
+	sb.WriteString("\n")
+	sb.WriteString(fmt.Sprintf("👤 Игрок 2: @%s %s - %d", player2.Username(), rps.ChoiceHiddenIcon, player2Score))
+	sb.WriteString("\n")
 	if draws > 0 {
-		sb.WriteString(fmt.Sprintf("Ничьих: %d\n", draws))
+		sb.WriteString(fmt.Sprintf("🏳️ <b>Ничьих:</b> %d", draws))
+		sb.WriteString("\n")
 	}
 	sb.WriteString("🎲 Игроки делают выбор...")
 

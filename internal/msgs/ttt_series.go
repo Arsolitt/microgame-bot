@@ -79,7 +79,7 @@ func TTTSeriesCompleted(
 
 	if result.Draws > 0 {
 		sb.WriteString("\n")
-		sb.WriteString(fmt.Sprintf("<b>Ничьих:</b> %d", result.Draws))
+		sb.WriteString(fmt.Sprintf("🏳️ <b>Ничьих:</b> %d", result.Draws))
 	}
 
 	return sb.String(), nil
@@ -110,7 +110,7 @@ func TTTRoundCompleted(
 		playerO.Username(),
 		result.Scores[playerO.ID()]))
 	if result.Draws > 0 {
-		sb.WriteString(fmt.Sprintf("<b>Ничьих:</b>: %d", result.Draws))
+		sb.WriteString(fmt.Sprintf("🏳️ <b>Ничьих:</b> %d", result.Draws))
 		sb.WriteString("\n")
 	}
 	sb.WriteString("\n")
