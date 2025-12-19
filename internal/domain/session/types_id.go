@@ -42,10 +42,10 @@ func (id ID) Value(ctx context.Context, field *schema.Field, dst reflect.Value, 
 	return id.String(), nil
 }
 
-func (u ID) String() string {
-	return utils.UUIDString(u)
+func (id ID) String() string {
+	return utils.UUIDString(id)
 }
 
-func (u ID) IsZero() bool {
-	return utils.UUIDIsZero(u)
+func (id ID) IsZero() bool {
+	return utils.UUIDIsZero(id)
 }
