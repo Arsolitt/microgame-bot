@@ -49,6 +49,7 @@ func TTTCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 			ttt.WithCreatorID(user.ID()),
 			ttt.WithStatus(domain.GameStatusWaitingForPlayers),
 			ttt.WithSessionID(session.ID()),
+			ttt.WithPlayerXID(user.ID()),
 		)
 		if err != nil {
 			return nil, err
@@ -76,7 +77,7 @@ func TTTCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 			return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
 		}
 
-		msg, err := msgs.TTTStart(user)
+		msg, err := msgs.TTTFirstPlayerJoined(user, user)
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +95,7 @@ func TTTCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 			},
 			&CallbackQueryResponse{
 				CallbackQueryID: query.ID,
-				Text:            "Игра создана! Ждём игроков...",
+				Text:            "Игра создана! Ждём второго игрока...",
 			},
 		}, nil
 	}
