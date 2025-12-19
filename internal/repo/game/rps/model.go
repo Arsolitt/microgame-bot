@@ -21,7 +21,7 @@ type rpsData struct {
 	WinnerID uuid.UUID `json:"winner"`
 }
 
-func (_ Repository) FromDomain(gm gM.Game, dm rpsD.RPS) (gM.Game, error) {
+func (Repository) FromDomain(gm gM.Game, dm rpsD.RPS) (gM.Game, error) {
 	const operationName = "repo::game::rps::model::FromDomain"
 	players, err := json.Marshal(rpsPlayers{
 		{
@@ -53,7 +53,7 @@ func (_ Repository) FromDomain(gm gM.Game, dm rpsD.RPS) (gM.Game, error) {
 	return gm, nil
 }
 
-func (_ Repository) ToDomain(gm gM.Game) (rpsD.RPS, error) {
+func (Repository) ToDomain(gm gM.Game) (rpsD.RPS, error) {
 	const operationName = "repo::game::rps::model::ToDomain"
 	var players rpsPlayers
 	var data rpsData

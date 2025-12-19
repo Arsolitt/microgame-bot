@@ -32,7 +32,7 @@ func (m Session) ToDomain() (se.Session, error) {
 }
 
 // TODO: add tests
-func (m Session) FromDomain(u se.Session) Session {
+func (Session) FromDomain(u se.Session) Session {
 	return Session{
 		ID:              u.ID(),
 		GameType:        domain.GameType(u.GameType()),

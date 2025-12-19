@@ -22,7 +22,7 @@ type tttData struct {
 	Turn     uuid.UUID  `json:"turn"`
 }
 
-func (_ Repository) FromDomain(gm gM.Game, dm tttD.TTT) (gM.Game, error) {
+func (Repository) FromDomain(gm gM.Game, dm tttD.TTT) (gM.Game, error) {
 	const operationName = "repo::game::ttt::model::FromDomain"
 	players, err := json.Marshal(tttPlayers{
 		{
@@ -55,7 +55,7 @@ func (_ Repository) FromDomain(gm gM.Game, dm tttD.TTT) (gM.Game, error) {
 	return gm, nil
 }
 
-func (_ Repository) ToDomain(gm gM.Game) (tttD.TTT, error) {
+func (Repository) ToDomain(gm gM.Game) (tttD.TTT, error) {
 	const operationName = "repo::game::ttt::model::ToDomain"
 	var players tttPlayers
 	var data tttData
