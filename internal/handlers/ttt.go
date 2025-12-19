@@ -17,7 +17,7 @@ func buildTTTGameBoardKeyboard(
 	playerX domainUser.User,
 	playerO domainUser.User,
 ) *telego.InlineKeyboardMarkup {
-	const OPERATION_NAME = "handlers::ttt_join::buildTTTGameBoardKeyboard"
+	const operationName = "handlers::ttt_join::buildTTTGameBoardKeyboard"
 	rows := make([][]telego.InlineKeyboardButton, 0, 4)
 
 	for row := range 3 {

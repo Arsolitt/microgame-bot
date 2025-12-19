@@ -18,7 +18,7 @@ func UserProvider(
 	locker locker.ILocker[domainUser.ID],
 	userRepo repository.IUserRepository,
 ) func(ctx *th.Context, update telego.Update) error {
-	const OPERATION_NAME = "middleware::user_provider"
+	const operationName = "middleware::user_provider"
 	return func(ctx *th.Context, update telego.Update) error {
 		var userTelegramID int64
 		var firstName string
@@ -64,7 +64,7 @@ func UserProvider(
 			return core.ErrInvalidUpdate
 		}
 
-		l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+		l := slog.With(slog.String(logger.OperationField, operationName))
 
 		rawCtx := ctx.Context()
 		rawCtx = logger.WithLogValue(rawCtx, logger.UserTelegramIDField, userTelegramID)

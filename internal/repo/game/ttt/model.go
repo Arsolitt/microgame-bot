@@ -23,7 +23,7 @@ type tttData struct {
 }
 
 func (_ Repository) FromDomain(gm gM.Game, dm tttD.TTT) (gM.Game, error) {
-	const OPERATION_NAME = "repo::game::ttt::model::FromDomain"
+	const operationName = "repo::game::ttt::model::FromDomain"
 	players, err := json.Marshal(tttPlayers{
 		{
 			ID:       dm.PlayerXID().UUID(),
@@ -37,7 +37,7 @@ func (_ Repository) FromDomain(gm gM.Game, dm tttD.TTT) (gM.Game, error) {
 		},
 	})
 	if err != nil {
-		return gM.Game{}, fmt.Errorf("failed to marshal players in %s: %w", OPERATION_NAME, err)
+		return gM.Game{}, fmt.Errorf("failed to marshal players in %s: %w", operationName, err)
 	}
 	data, err := json.Marshal(tttData{
 		WinnerID: dm.WinnerID().UUID(),
@@ -45,7 +45,7 @@ func (_ Repository) FromDomain(gm gM.Game, dm tttD.TTT) (gM.Game, error) {
 		Turn:     dm.Turn().UUID(),
 	})
 	if err != nil {
-		return gM.Game{}, fmt.Errorf("failed to marshal data in %s: %w", OPERATION_NAME, err)
+		return gM.Game{}, fmt.Errorf("failed to marshal data in %s: %w", operationName, err)
 	}
 
 	gm = gm.SetCommonFields(dm)
@@ -56,12 +56,12 @@ func (_ Repository) FromDomain(gm gM.Game, dm tttD.TTT) (gM.Game, error) {
 }
 
 func (_ Repository) ToDomain(gm gM.Game) (tttD.TTT, error) {
-	const OPERATION_NAME = "repo::game::ttt::model::ToDomain"
+	const operationName = "repo::game::ttt::model::ToDomain"
 	var players tttPlayers
 	var data tttData
 	err := gm.DecodeBinaryFields(gm.Players, &players, gm.Data, &data)
 	if err != nil {
-		return tttD.TTT{}, fmt.Errorf("failed to decode binary fields in %s: %w", OPERATION_NAME, err)
+		return tttD.TTT{}, fmt.Errorf("failed to decode binary fields in %s: %w", operationName, err)
 	}
 	playerX := tttPlayerBySymbol(players, tttD.CellX)
 	playerO := tttPlayerBySymbol(players, tttD.CellO)
@@ -82,7 +82,7 @@ func (_ Repository) ToDomain(gm gM.Game) (tttD.TTT, error) {
 		tttD.WithWinnerIDFromUUID(data.WinnerID),
 	)
 	if err != nil {
-		return tttD.TTT{}, fmt.Errorf("failed to create TTT in %s: %w", OPERATION_NAME, err)
+		return tttD.TTT{}, fmt.Errorf("failed to create TTT in %s: %w", operationName, err)
 	}
 	return model, nil
 }

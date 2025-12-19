@@ -13,28 +13,28 @@ import (
 )
 
 func TTTRebuild(userGetter userRepository.IUserGetter, gameGetter tttRepository.ITTTGetter) CallbackQueryHandlerFunc {
-	const OPERATION_NAME = "handler::ttt_rebuild"
+	const operationName = "handler::ttt_rebuild"
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
-		slog.DebugContext(ctx, "TTT Rebuild callback received", logger.OperationField, OPERATION_NAME)
+		slog.DebugContext(ctx, "TTT Rebuild callback received", logger.OperationField, operationName)
 
 		gameID, err := extractGameID[ttt.ID](query.Data)
 		if err != nil {
-			return nil, fmt.Errorf("failed to extract game ID from callback data in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to extract game ID from callback data in %s: %w", operationName, err)
 		}
 
 		game, err := gameGetter.GameByID(ctx, gameID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get game by ID in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get game by ID in %s: %w", operationName, err)
 		}
 
 		playerX, err := userGetter.UserByID(ctx, game.PlayerXID())
 		if err != nil {
-			return nil, fmt.Errorf("failed to get playerX by ID in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get playerX by ID in %s: %w", operationName, err)
 		}
 
 		playerO, err := userGetter.UserByID(ctx, game.PlayerOID())
 		if err != nil {
-			return nil, fmt.Errorf("failed to get playerO by ID in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get playerO by ID in %s: %w", operationName, err)
 		}
 
 		boardKeyboard := buildTTTGameBoardKeyboard(&game, playerX, playerO)

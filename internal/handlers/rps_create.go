@@ -18,19 +18,19 @@ import (
 )
 
 func RPSCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFunc {
-	const OPERATION_NAME = "handlers::rps_create"
-	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+	const operationName = "handlers::rps_create"
+	l := slog.With(slog.String(logger.OperationField, operationName))
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		l.DebugContext(ctx, "Create RPS game callback received")
 
 		user, err := userFromContext(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get user from context in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get user from context in %s: %w", operationName, err)
 		}
 
 		inlineMessageID, err := inlineMessageIDFromContext(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get inline message ID from context in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get inline message ID from context in %s: %w", operationName, err)
 		}
 
 		gameCount := extractGameCount(query.Data, cfg.MaxGameCount)
@@ -76,7 +76,7 @@ func RPSCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 
 		msg, err := msgs.RPSStart(user, game)
 		if err != nil {
-			return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
+			return nil, uow.ErrFailedToDoTransaction(operationName, err)
 		}
 
 		return ResponseChain{

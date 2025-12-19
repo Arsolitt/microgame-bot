@@ -14,7 +14,7 @@ import (
 func InlineMsgProvider(
 	locker locker.ILocker[domain.InlineMessageID],
 ) func(ctx *th.Context, update telego.Update) error {
-	const OPERATION_NAME = "middleware::inline_msg_provider"
+	const operationName = "middleware::inline_msg_provider"
 	return func(ctx *th.Context, update telego.Update) error {
 		var inlineMessageID domain.InlineMessageID
 		if update.CallbackQuery != nil {
@@ -27,7 +27,7 @@ func InlineMsgProvider(
 			return ctx.Next(update)
 		}
 
-		l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+		l := slog.With(slog.String(logger.OperationField, operationName))
 
 		rawCtx := ctx.Context()
 		rawCtx = logger.WithLogValue(rawCtx, logger.InlineMessageIDField, inlineMessageID)

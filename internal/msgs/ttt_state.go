@@ -9,7 +9,7 @@ import (
 )
 
 func TTTGameState(game ttt.TTT, playerX domainUser.User, playerO domainUser.User) (string, error) {
-	const OPERATION_NAME = "msgs::ttt_state::TTTGameState"
+	const operationName = "msgs::ttt_state::TTTGameState"
 	var sb strings.Builder
 
 	var creatorUser domainUser.User
@@ -19,7 +19,7 @@ func TTTGameState(game ttt.TTT, playerX domainUser.User, playerO domainUser.User
 	case game.PlayerOID():
 		creatorUser = playerO
 	default:
-		return "", fmt.Errorf("failed to get creator user in %s: %w", OPERATION_NAME, domain.ErrPlayerNotInGame)
+		return "", fmt.Errorf("failed to get creator user in %s: %w", operationName, domain.ErrPlayerNotInGame)
 	}
 
 	sb.WriteString(fmt.Sprintf("@%s ", creatorUser.Username()))

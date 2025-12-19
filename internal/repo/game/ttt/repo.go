@@ -102,15 +102,15 @@ func (r *Repository) UpdateGame(ctx context.Context, game ttt.TTT) (ttt.TTT, err
 }
 
 func (r *Repository) gameByID(ctx context.Context, id ttt.ID, opts ...clause.Expression) (ttt.TTT, error) {
-	const OPERATION_NAME = "repo::ttt::gorm::gameByID"
+	const operationName = "repo::ttt::gorm::gameByID"
 	model, err := gorm.G[gM.Game](r.db, opts...).
 		Where("id = ?", id.String()).
 		First(ctx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ttt.TTT{}, fmt.Errorf("game not found by ID in %s: %w", OPERATION_NAME, domain.ErrGameNotFound)
+			return ttt.TTT{}, fmt.Errorf("game not found by ID in %s: %w", operationName, domain.ErrGameNotFound)
 		}
-		return ttt.TTT{}, fmt.Errorf("failed to get game by ID from gorm database in %s: %w", OPERATION_NAME, err)
+		return ttt.TTT{}, fmt.Errorf("failed to get game by ID from gorm database in %s: %w", operationName, err)
 	}
 	return r.ToDomain(model)
 }

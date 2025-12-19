@@ -20,23 +20,23 @@ import (
 )
 
 func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
-	const OPERATION_NAME = "handler::rps_choice"
+	const operationName = "handler::rps_choice"
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
-		slog.DebugContext(ctx, "RPS Choice callback received", logger.OperationField, OPERATION_NAME)
+		slog.DebugContext(ctx, "RPS Choice callback received", logger.OperationField, operationName)
 
 		player, err := userFromContext(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get user from context in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get user from context in %s: %w", operationName, err)
 		}
 
 		choice, err := extractRPSChoice(query.Data)
 		if err != nil {
-			return nil, fmt.Errorf("failed to extract choice in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to extract choice in %s: %w", operationName, err)
 		}
 
 		gameID, err := extractGameID[rps.ID](query.Data)
 		if err != nil {
-			return nil, fmt.Errorf("failed to extract game ID from callback data in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to extract game ID from callback data in %s: %w", operationName, err)
 		}
 
 		rawCtx := ctx.Context()
@@ -47,27 +47,27 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 		err = unit.Do(ctx, func(uow uow.IUnitOfWork) error {
 			gameRepo, err := uow.RPSRepo()
 			if err != nil {
-				return fmt.Errorf("failed to get game repository in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get game repository in %s: %w", operationName, err)
 			}
 			game, err = gameRepo.GameByIDLocked(ctx, gameID)
 			if err != nil {
-				return fmt.Errorf("failed to get game by ID with lock in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get game by ID with lock in %s: %w", operationName, err)
 			}
 
 			game, err = game.MakeChoice(player.ID(), choice)
 			if err != nil {
-				return fmt.Errorf("failed to make choice in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to make choice in %s: %w", operationName, err)
 			}
 
 			game, err = gameRepo.UpdateGame(ctx, game)
 			if err != nil {
-				return fmt.Errorf("failed to update game in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to update game in %s: %w", operationName, err)
 			}
 
 			return nil
 		})
 		if err != nil {
-			return nil, fmt.Errorf("failed do transaction in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed do transaction in %s: %w", operationName, err)
 		}
 
 		if !game.IsFinished() {
@@ -82,18 +82,18 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 		var gsGetter sRepository.ISessionGetter
 		gsGetter, err = unit.SessionRepo()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get game session repository in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get game session repository in %s: %w", operationName, err)
 		}
 
 		session, err := gsGetter.SessionByID(ctx, game.SessionID())
 		if err != nil {
-			return nil, fmt.Errorf("failed to get game session by ID in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get game session by ID in %s: %w", operationName, err)
 		}
 
 		var gameGetter rpsRepository.IRPSGetter
 		gameGetter, err = unit.RPSRepo()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get game repository in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get game repository in %s: %w", operationName, err)
 		}
 
 		allGames, err := gameGetter.GamesBySessionID(ctx, session.ID())
@@ -123,7 +123,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 			err = unit.Do(ctx, func(uow uow.IUnitOfWork) error {
 				gsRepo, err := uow.SessionRepo()
 				if err != nil {
-					return fmt.Errorf("failed to get game session repository in %s: %w", OPERATION_NAME, err)
+					return fmt.Errorf("failed to get game session repository in %s: %w", operationName, err)
 				}
 				session, err = session.ChangeStatus(domain.GameStatusFinished)
 				if err != nil {
@@ -137,7 +137,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 				return nil
 			})
 			if err != nil {
-				return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
+				return nil, uow.ErrFailedToDoTransaction(operationName, err)
 			}
 
 			if result.IsDraw {
@@ -196,7 +196,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 			err = unit.Do(ctx, func(uow uow.IUnitOfWork) error {
 				gameRepo, err := uow.RPSRepo()
 				if err != nil {
-					return fmt.Errorf("failed to get game repository in %s: %w", OPERATION_NAME, err)
+					return fmt.Errorf("failed to get game repository in %s: %w", operationName, err)
 				}
 				nextGame, err = rps.New(
 					rps.WithNewID(),
@@ -207,18 +207,18 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 					rps.WithStatus(domain.GameStatusInProgress),
 				)
 				if err != nil {
-					return fmt.Errorf("failed to create new game in %s: %w", OPERATION_NAME, err)
+					return fmt.Errorf("failed to create new game in %s: %w", operationName, err)
 				}
 
 				nextGame, err = gameRepo.CreateGame(ctx, nextGame)
 				if err != nil {
-					return fmt.Errorf("failed to store new game in %s: %w", OPERATION_NAME, err)
+					return fmt.Errorf("failed to store new game in %s: %w", operationName, err)
 				}
 
 				return nil
 			})
 			if err != nil {
-				return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
+				return nil, uow.ErrFailedToDoTransaction(operationName, err)
 			}
 
 			msg := msgs.RPSRoundCompleted(

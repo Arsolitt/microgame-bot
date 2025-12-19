@@ -10,7 +10,7 @@ import (
 )
 
 func CorrelationIDProvider() func(ctx *th.Context, update telego.Update) error {
-	const OPERATION_NAME = "middleware::correlation_id_provider"
+	const operationName = "middleware::correlation_id_provider"
 	return func(ctx *th.Context, update telego.Update) error {
 		var correlationID uuid.UUID
 		correlationID, err := uuid.NewV7()

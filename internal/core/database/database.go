@@ -16,7 +16,7 @@ import (
 )
 
 func MustInit(cfg core.Config) (*gorm.DB, error) {
-	const OPERATION_NAME = "core::database::DBMustInit"
+	const operationName = "core::database::DBMustInit"
 	gormConfig := &gorm.Config{
 		Logger: gormLogger.Default.LogMode(gormLogger.Silent),
 	}
@@ -30,20 +30,20 @@ func MustInit(cfg core.Config) (*gorm.DB, error) {
 
 	db, err := gorm.Open(dialector, gormConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database in %s: %w", OPERATION_NAME, err)
+		return nil, fmt.Errorf("failed to open database in %s: %w", operationName, err)
 	}
 
 	err = db.AutoMigrate(&gormUserRepository.User{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to migrate user table in %s: %w", OPERATION_NAME, err)
+		return nil, fmt.Errorf("failed to migrate user table in %s: %w", operationName, err)
 	}
 	err = db.AutoMigrate(&gormSessionRepository.Session{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to migrate game session table in %s: %w", OPERATION_NAME, err)
+		return nil, fmt.Errorf("failed to migrate game session table in %s: %w", operationName, err)
 	}
 	err = db.AutoMigrate(&gormGameRepository.Game{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to migrate game table in %s: %w", OPERATION_NAME, err)
+		return nil, fmt.Errorf("failed to migrate game table in %s: %w", operationName, err)
 	}
 	return db, nil
 }

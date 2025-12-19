@@ -15,39 +15,39 @@ import (
 )
 
 func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
-	const OPERATION_NAME = "handlers::ttt_join"
-	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+	const operationName = "handlers::ttt_join"
+	l := slog.With(slog.String(logger.OperationField, operationName))
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		l.DebugContext(ctx, "TTT Join callback received")
 
 		player2, err := userFromContext(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get user from context in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get user from context in %s: %w", operationName, err)
 		}
 
 		gameID, err := extractGameID[ttt.ID](query.Data)
 		if err != nil {
-			return nil, fmt.Errorf("failed to extract game ID from callback data in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to extract game ID from callback data in %s: %w", operationName, err)
 		}
 
 		var game ttt.TTT
 		err = unit.Do(ctx, func(uow uow.IUnitOfWork) error {
 			gameRepo, err := uow.TTTRepo()
 			if err != nil {
-				return fmt.Errorf("failed to get game repository in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get game repository in %s: %w", operationName, err)
 			}
 			sessionRepo, err := uow.SessionRepo()
 			if err != nil {
-				return fmt.Errorf("failed to get game session repository in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get game session repository in %s: %w", operationName, err)
 			}
 			game, err = gameRepo.GameByIDLocked(ctx, gameID)
 			if err != nil {
-				return fmt.Errorf("failed to get game by ID with lock in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get game by ID with lock in %s: %w", operationName, err)
 			}
 
 			session, err := sessionRepo.SessionByIDLocked(ctx, game.SessionID())
 			if err != nil {
-				return fmt.Errorf("failed to get game session by ID with lock in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get game session by ID with lock in %s: %w", operationName, err)
 			}
 
 			game, err = game.JoinGame(player2.ID())
@@ -73,23 +73,23 @@ func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 			return nil
 		})
 		if err != nil {
-			return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
+			return nil, uow.ErrFailedToDoTransaction(operationName, err)
 		}
 
 		creator, err := userRepo.UserByID(ctx, game.CreatorID())
 		if err != nil {
-			return nil, fmt.Errorf("failed to get creator by ID in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get creator by ID in %s: %w", operationName, err)
 		}
 
 		// Second player joined - start the game
 		playerX, err := userRepo.UserByID(ctx, game.PlayerXID())
 		if err != nil {
-			return nil, fmt.Errorf("failed to get playerX by ID in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get playerX by ID in %s: %w", operationName, err)
 		}
 
 		playerO, err := userRepo.UserByID(ctx, game.PlayerOID())
 		if err != nil {
-			return nil, fmt.Errorf("failed to get playerO by ID in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get playerO by ID in %s: %w", operationName, err)
 		}
 
 		boardKeyboard := buildTTTGameBoardKeyboard(&game, playerX, playerO)

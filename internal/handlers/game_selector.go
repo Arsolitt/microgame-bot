@@ -14,8 +14,8 @@ import (
 )
 
 func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
-	const OPERATION_NAME = "handlers::game_selector"
-	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+	const operationName = "handlers::game_selector"
+	l := slog.With(slog.String(logger.OperationField, operationName))
 	return func(ctx *th.Context, query telego.InlineQuery) (IResponse, error) {
 		l.DebugContext(ctx, "Inline query received")
 

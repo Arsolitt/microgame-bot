@@ -18,8 +18,8 @@ import (
 )
 
 func TTTCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFunc {
-	const OPERATION_NAME = "handlers::ttt_create"
-	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+	const operationName = "handlers::ttt_create"
+	l := slog.With(slog.String(logger.OperationField, operationName))
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		l.DebugContext(ctx, "Create TTT game callback received")
 
@@ -74,7 +74,7 @@ func TTTCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 			return nil
 		})
 		if err != nil {
-			return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
+			return nil, uow.ErrFailedToDoTransaction(operationName, err)
 		}
 
 		msg, err := msgs.TTTFirstPlayerJoined(user, user)

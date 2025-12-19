@@ -15,39 +15,39 @@ import (
 )
 
 func RPSJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
-	const OPERATION_NAME = "handlers::rps_join"
-	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+	const operationName = "handlers::rps_join"
+	l := slog.With(slog.String(logger.OperationField, operationName))
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		l.DebugContext(ctx, "RPS Join callback received")
 
 		player2, err := userFromContext(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get user from context in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get user from context in %s: %w", operationName, err)
 		}
 
 		gameID, err := extractGameID[rps.ID](query.Data)
 		if err != nil {
-			return nil, fmt.Errorf("failed to extract game ID from callback data in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to extract game ID from callback data in %s: %w", operationName, err)
 		}
 
 		var game rps.RPS
 		err = unit.Do(ctx, func(uow uow.IUnitOfWork) error {
 			gameRepo, err := uow.RPSRepo()
 			if err != nil {
-				return fmt.Errorf("failed to get game repository in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get game repository in %s: %w", operationName, err)
 			}
 			sessionRepo, err := uow.SessionRepo()
 			if err != nil {
-				return fmt.Errorf("failed to get game session repository in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get game session repository in %s: %w", operationName, err)
 			}
 			game, err = gameRepo.GameByIDLocked(ctx, gameID)
 			if err != nil {
-				return fmt.Errorf("failed to get game by ID with lock in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get game by ID with lock in %s: %w", operationName, err)
 			}
 
 			session, err := sessionRepo.SessionByIDLocked(ctx, game.SessionID())
 			if err != nil {
-				return fmt.Errorf("failed to get game session by ID with lock in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get game session by ID with lock in %s: %w", operationName, err)
 			}
 
 			game, err = game.JoinGame(player2.ID())
@@ -73,12 +73,12 @@ func RPSJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 			return nil
 		})
 		if err != nil {
-			return nil, uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
+			return nil, uow.ErrFailedToDoTransaction(operationName, err)
 		}
 
 		creator, err := userRepo.UserByID(ctx, game.CreatorID())
 		if err != nil {
-			return nil, fmt.Errorf("failed to get creator by ID in %s: %w", OPERATION_NAME, err)
+			return nil, fmt.Errorf("failed to get creator by ID in %s: %w", operationName, err)
 		}
 
 		boardKeyboard := buildRPSGameBoardKeyboard(&game)

@@ -49,14 +49,14 @@ func (g Game) SetCommonFields(dm iCommonGame) Game {
 }
 
 func (g Game) DecodeBinaryFields(pBytes []byte, pTarget any, dataBytes []byte, dataTarget any) error {
-	const OPERATION_NAME = "repo::game::model::DecodeBinaryFields"
+	const operationName = "repo::game::model::DecodeBinaryFields"
 	err := json.Unmarshal(pBytes, pTarget)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal players in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to unmarshal players in %s: %w", operationName, err)
 	}
 	err = json.Unmarshal(dataBytes, dataTarget)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal data in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to unmarshal data in %s: %w", operationName, err)
 	}
 	return nil
 }

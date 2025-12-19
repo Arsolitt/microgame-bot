@@ -60,7 +60,7 @@ func (r *Repository) SessionByIDLocked(ctx context.Context, id se.ID) (se.Sessio
 }
 
 func (r *Repository) sessionByID(ctx context.Context, id se.ID, opts ...clause.Expression) (se.Session, error) {
-	const OPERATION_NAME = "repo::gs::gorm::sessionByID"
+	const operationName = "repo::gs::gorm::sessionByID"
 	model, err := gorm.G[Session](r.db, opts...).
 		Where("id = ?", id.String()).
 		First(ctx)
@@ -68,13 +68,13 @@ func (r *Repository) sessionByID(ctx context.Context, id se.ID, opts ...clause.E
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return se.Session{}, fmt.Errorf(
 				"game session not found by ID in %s: %w",
-				OPERATION_NAME,
+				operationName,
 				domain.ErrGameNotFound,
 			)
 		}
 		return se.Session{}, fmt.Errorf(
 			"failed to get game session by ID from gorm database in %s: %w",
-			OPERATION_NAME,
+			operationName,
 			err,
 		)
 	}

@@ -22,7 +22,7 @@ type rpsData struct {
 }
 
 func (_ Repository) FromDomain(gm gM.Game, dm rpsD.RPS) (gM.Game, error) {
-	const OPERATION_NAME = "repo::game::rps::model::FromDomain"
+	const operationName = "repo::game::rps::model::FromDomain"
 	players, err := json.Marshal(rpsPlayers{
 		{
 			ID:       dm.Player1ID().UUID(),
@@ -38,13 +38,13 @@ func (_ Repository) FromDomain(gm gM.Game, dm rpsD.RPS) (gM.Game, error) {
 		},
 	})
 	if err != nil {
-		return gM.Game{}, fmt.Errorf("failed to marshal players in %s: %w", OPERATION_NAME, err)
+		return gM.Game{}, fmt.Errorf("failed to marshal players in %s: %w", operationName, err)
 	}
 	data, err := json.Marshal(rpsData{
 		WinnerID: dm.WinnerID().UUID(),
 	})
 	if err != nil {
-		return gM.Game{}, fmt.Errorf("failed to marshal data in %s: %w", OPERATION_NAME, err)
+		return gM.Game{}, fmt.Errorf("failed to marshal data in %s: %w", operationName, err)
 	}
 	gm = gm.SetCommonFields(dm)
 	gm.Players = players
@@ -54,12 +54,12 @@ func (_ Repository) FromDomain(gm gM.Game, dm rpsD.RPS) (gM.Game, error) {
 }
 
 func (_ Repository) ToDomain(gm gM.Game) (rpsD.RPS, error) {
-	const OPERATION_NAME = "repo::game::rps::model::ToDomain"
+	const operationName = "repo::game::rps::model::ToDomain"
 	var players rpsPlayers
 	var data rpsData
 	err := gm.DecodeBinaryFields(gm.Players, &players, gm.Data, &data)
 	if err != nil {
-		return rpsD.RPS{}, fmt.Errorf("failed to decode binary fields in %s: %w", OPERATION_NAME, err)
+		return rpsD.RPS{}, fmt.Errorf("failed to decode binary fields in %s: %w", operationName, err)
 	}
 	player1 := rpsPlayerByNumber(players, 1)
 	player2 := rpsPlayerByNumber(players, 2)
@@ -80,7 +80,7 @@ func (_ Repository) ToDomain(gm gM.Game) (rpsD.RPS, error) {
 		rpsD.WithChoice2(player2.Choice),
 	)
 	if err != nil {
-		return rpsD.RPS{}, fmt.Errorf("failed to create RPS in %s: %w", OPERATION_NAME, err)
+		return rpsD.RPS{}, fmt.Errorf("failed to create RPS in %s: %w", operationName, err)
 	}
 	return model, nil
 }
