@@ -65,7 +65,7 @@ func RPSJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 				return err
 			}
 
-			session, err = sessionRepo.UpdateSession(ctx, session)
+			_, err = sessionRepo.UpdateSession(ctx, session)
 			if err != nil {
 				return fmt.Errorf("failed to update session: %w", err)
 			}
@@ -82,7 +82,7 @@ func RPSJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 		}
 
 		boardKeyboard := buildRPSGameBoardKeyboard(&game)
-		msg, err := msgs.RPSGameStarted(&game, creator, player2)
+		msg, err := msgs.RPSGameStarted(creator, player2)
 		if err != nil {
 			return nil, err
 		}

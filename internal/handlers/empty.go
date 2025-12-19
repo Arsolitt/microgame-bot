@@ -6,7 +6,7 @@ import (
 )
 
 func Empty() CallbackQueryHandlerFunc {
-	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
+	return func(_ *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		return &CallbackQueryResponse{
 			CallbackQueryID: query.ID,
 			Text:            "",

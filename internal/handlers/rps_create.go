@@ -74,7 +74,7 @@ func RPSCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 			return nil, err
 		}
 
-		msg, err := msgs.RPSStart(user, game)
+		msg, err := msgs.RPSStart(user)
 		if err != nil {
 			return nil, uow.ErrFailedToDoTransaction(operationName, err)
 		}

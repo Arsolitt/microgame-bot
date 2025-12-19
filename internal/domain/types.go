@@ -71,7 +71,7 @@ func (g GameType) String() string {
 }
 
 // Scan implements gorm.Serializer interface for reading from database.
-func (id *InlineMessageID) Scan(ctx context.Context, field *schema.Field, dst reflect.Value, dbValue any) error {
+func (id *InlineMessageID) Scan(_ context.Context, _ *schema.Field, _ reflect.Value, dbValue any) error {
 	switch value := dbValue.(type) {
 	case []byte:
 		*id = InlineMessageID(string(value))
@@ -85,11 +85,6 @@ func (id *InlineMessageID) Scan(ctx context.Context, field *schema.Field, dst re
 	return nil
 }
 
-func (i InlineMessageID) Value(
-	ctx context.Context,
-	field *schema.Field,
-	dst reflect.Value,
-	fieldValue any,
-) (any, error) {
-	return i.String(), nil
+func (id InlineMessageID) Value(_ context.Context, _ *schema.Field, _ reflect.Value, _ any) (any, error) {
+	return id.String(), nil
 }

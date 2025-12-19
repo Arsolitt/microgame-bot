@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func RPSStart(user domainUser.User, game rps.RPS) (string, error) {
+func RPSStart(user domainUser.User) (string, error) {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("@%s ", user.Username()))
 	sb.WriteString("запустил игру <b>камень-ножницы-бумага</b>")
@@ -20,7 +20,7 @@ func RPSStart(user domainUser.User, game rps.RPS) (string, error) {
 	return sb.String(), nil
 }
 
-func RPSGameStarted(game *rps.RPS, player1 domainUser.User, player2 domainUser.User) (string, error) {
+func RPSGameStarted(player1 domainUser.User, player2 domainUser.User) (string, error) {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("@%s ", player1.Username()))
 	sb.WriteString("запустил игру <b>камень-ножницы-бумага</b>")
