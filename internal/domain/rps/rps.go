@@ -23,7 +23,7 @@ type RPS struct {
 	creatorID user.ID
 }
 
-func New(opts ...RPSOpt) (RPS, error) {
+func New(opts ...Opt) (RPS, error) {
 	r := &RPS{
 		status:  domain.GameStatusCreated,
 		choice1: ChoiceEmpty,

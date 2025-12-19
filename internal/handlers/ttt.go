@@ -17,7 +17,6 @@ func buildTTTGameBoardKeyboard(
 	playerX domainUser.User,
 	playerO domainUser.User,
 ) *telego.InlineKeyboardMarkup {
-	const operationName = "handlers::ttt_join::buildTTTGameBoardKeyboard"
 	rows := make([][]telego.InlineKeyboardButton, 0, 4)
 
 	for row := range 3 {
@@ -84,6 +83,6 @@ func tttExtractCellNumber(callbackData string) (int, error) {
 	return cellNumber, nil
 }
 
-func tttCellNumberToCoords(cellNumber int) (row, col int) {
+func tttCellNumberToCoords(cellNumber int) (int, int) {
 	return cellNumber / 3, cellNumber % 3
 }

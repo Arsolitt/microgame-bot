@@ -102,12 +102,12 @@ package ttt
 
 // 	tests := []struct {
 // 		name          string
-// 		opts          []TTTOpt
+// 		opts          []Opt
 // 		expectedError error
 // 	}{
 // 		{
 // 			name: "ID is zero",
-// 			opts: []TTTOpt{
+// 			opts: []Opt{
 // 				WithID(ID(uuid.Nil)),
 // 				WithInlineMessageID(inlineMessageID),
 // 				WithCreatorID(creatorID),
@@ -116,7 +116,7 @@ package ttt
 // 		},
 // 		{
 // 			name: "ID is invalid",
-// 			opts: []TTTOpt{
+// 			opts: []Opt{
 // 				WithIDFromString("invalid"),
 // 				WithInlineMessageID(inlineMessageID),
 // 				WithCreatorID(creatorID),
@@ -125,7 +125,7 @@ package ttt
 // 		},
 // 		{
 // 			name: "InlineMessageID is empty",
-// 			opts: []TTTOpt{
+// 			opts: []Opt{
 // 				WithID(id),
 // 				WithInlineMessageID(domain.InlineMessageID("")),
 // 				WithCreatorID(creatorID),
@@ -134,7 +134,7 @@ package ttt
 // 		},
 // 		{
 // 			name: "CreatorID is zero",
-// 			opts: []TTTOpt{
+// 			opts: []Opt{
 // 				WithID(id),
 // 				WithInlineMessageID(inlineMessageID),
 // 				WithCreatorID(user.ID(uuid.Nil)),
@@ -143,12 +143,12 @@ package ttt
 // 		},
 // 		{
 // 			name:          "No options",
-// 			opts:          []TTTOpt{},
+// 			opts:          []Opt{},
 // 			expectedError: domain.ErrIDRequired,
 // 		},
 // 		{
 // 			name: "Missing ID",
-// 			opts: []TTTOpt{
+// 			opts: []Opt{
 // 				WithInlineMessageID(inlineMessageID),
 // 				WithCreatorID(creatorID),
 // 			},
@@ -156,7 +156,7 @@ package ttt
 // 		},
 // 		{
 // 			name: "Missing InlineMessageID",
-// 			opts: []TTTOpt{
+// 			opts: []Opt{
 // 				WithID(id),
 // 				WithCreatorID(creatorID),
 // 			},
@@ -164,7 +164,7 @@ package ttt
 // 		},
 // 		{
 // 			name: "Missing CreatorID",
-// 			opts: []TTTOpt{
+// 			opts: []Opt{
 // 				WithID(id),
 // 				WithInlineMessageID(inlineMessageID),
 // 			},

@@ -12,9 +12,9 @@ import (
 	"github.com/google/uuid"
 )
 
-type TTTOpt func(*TTT) error
+type Opt func(*TTT) error
 
-func WithID(id ID) TTTOpt {
+func WithID(id ID) Opt {
 	return func(t *TTT) error {
 		if id.IsZero() {
 			return domain.ErrIDRequired
@@ -24,11 +24,11 @@ func WithID(id ID) TTTOpt {
 	}
 }
 
-func WithNewID() TTTOpt {
+func WithNewID() Opt {
 	return WithID(ID(utils.NewUniqueID()))
 }
 
-func WithIDFromString(id string) TTTOpt {
+func WithIDFromString(id string) Opt {
 	return func(t *TTT) error {
 		idUUID, err := utils.UUIDFromString[ID](id)
 		if err != nil {
@@ -39,11 +39,11 @@ func WithIDFromString(id string) TTTOpt {
 	}
 }
 
-func WithIDFromUUID(id uuid.UUID) TTTOpt {
+func WithIDFromUUID(id uuid.UUID) Opt {
 	return WithID(ID(id))
 }
 
-func WithCreatorID(creatorID user.ID) TTTOpt {
+func WithCreatorID(creatorID user.ID) Opt {
 	return func(t *TTT) error {
 		if creatorID.IsZero() {
 			return domain.ErrCreatorIDRequired
@@ -53,51 +53,51 @@ func WithCreatorID(creatorID user.ID) TTTOpt {
 	}
 }
 
-func WithPlayerXID(playerXID user.ID) TTTOpt {
+func WithPlayerXID(playerXID user.ID) Opt {
 	return func(t *TTT) error {
 		t.playerXID = playerXID
 		return nil
 	}
 }
 
-func WithPlayerXIDFromUUID(playerXID uuid.UUID) TTTOpt {
+func WithPlayerXIDFromUUID(playerXID uuid.UUID) Opt {
 	return WithPlayerXID(user.ID(playerXID))
 }
 
-func WithPlayerOID(playerOID user.ID) TTTOpt {
+func WithPlayerOID(playerOID user.ID) Opt {
 	return func(t *TTT) error {
 		t.playerOID = playerOID
 		return nil
 	}
 }
 
-func WithPlayerOIDFromUUID(playerOID uuid.UUID) TTTOpt {
+func WithPlayerOIDFromUUID(playerOID uuid.UUID) Opt {
 	return WithPlayerOID(user.ID(playerOID))
 }
 
-func WithTurn(turn user.ID) TTTOpt {
+func WithTurn(turn user.ID) Opt {
 	return func(t *TTT) error {
 		t.turn = turn
 		return nil
 	}
 }
 
-func WithTurnFromUUID(turn uuid.UUID) TTTOpt {
+func WithTurnFromUUID(turn uuid.UUID) Opt {
 	return WithTurn(user.ID(turn))
 }
 
-func WithWinnerID(winnerID user.ID) TTTOpt {
+func WithWinnerID(winnerID user.ID) Opt {
 	return func(t *TTT) error {
 		t.winnerID = winnerID
 		return nil
 	}
 }
 
-func WithWinnerIDFromUUID(winnerID uuid.UUID) TTTOpt {
+func WithWinnerIDFromUUID(winnerID uuid.UUID) Opt {
 	return WithWinnerID(user.ID(winnerID))
 }
 
-func WithBoard(board [3][3]Cell) TTTOpt {
+func WithBoard(board [3][3]Cell) Opt {
 	return func(t *TTT) error {
 		t.board = board
 		return nil
@@ -105,7 +105,7 @@ func WithBoard(board [3][3]Cell) TTTOpt {
 }
 
 // WithRandomFirstPlayer randomly assigns creator to X or O.
-func WithRandomFirstPlayer() TTTOpt {
+func WithRandomFirstPlayer() Opt {
 	return func(t *TTT) error {
 		if t.creatorID.IsZero() {
 			return domain.ErrCreatorIDRequired
@@ -121,7 +121,7 @@ func WithRandomFirstPlayer() TTTOpt {
 }
 
 // WithCreatorAsX assigns creator to player X.
-func WithCreatorAsX() TTTOpt {
+func WithCreatorAsX() Opt {
 	return func(t *TTT) error {
 		if t.creatorID.IsZero() {
 			return domain.ErrCreatorIDRequired
@@ -132,7 +132,7 @@ func WithCreatorAsX() TTTOpt {
 }
 
 // WithCreatorAsO assigns creator to player O.
-func WithCreatorAsO() TTTOpt {
+func WithCreatorAsO() Opt {
 	return func(t *TTT) error {
 		if t.creatorID.IsZero() {
 			return domain.ErrCreatorIDRequired
@@ -142,7 +142,7 @@ func WithCreatorAsO() TTTOpt {
 	}
 }
 
-func WithCreatedAt(createdAt time.Time) TTTOpt {
+func WithCreatedAt(createdAt time.Time) Opt {
 	return func(t *TTT) error {
 		if createdAt.IsZero() {
 			return domain.ErrCreatedAtRequired
@@ -152,7 +152,7 @@ func WithCreatedAt(createdAt time.Time) TTTOpt {
 	}
 }
 
-func WithUpdatedAt(updatedAt time.Time) TTTOpt {
+func WithUpdatedAt(updatedAt time.Time) Opt {
 	return func(t *TTT) error {
 		if updatedAt.IsZero() {
 			return domain.ErrUpdatedAtRequired
@@ -162,7 +162,7 @@ func WithUpdatedAt(updatedAt time.Time) TTTOpt {
 	}
 }
 
-func WithStatus(status domain.GameStatus) TTTOpt {
+func WithStatus(status domain.GameStatus) Opt {
 	return func(t *TTT) error {
 		if status.IsZero() {
 			return domain.ErrGameStatusRequired
@@ -175,7 +175,7 @@ func WithStatus(status domain.GameStatus) TTTOpt {
 	}
 }
 
-func WithSessionID(sessionID session.ID) TTTOpt {
+func WithSessionID(sessionID session.ID) Opt {
 	return func(t *TTT) error {
 		t.sessionID = sessionID
 		return nil

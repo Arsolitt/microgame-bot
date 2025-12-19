@@ -32,12 +32,12 @@ const (
 	PlayerEmpty Player = ""
 )
 
-func (i InlineMessageID) String() string {
-	return string(i)
+func (id InlineMessageID) String() string {
+	return string(id)
 }
 
-func (i InlineMessageID) IsZero() bool {
-	return string(i) == ""
+func (id InlineMessageID) IsZero() bool {
+	return string(id) == ""
 }
 
 type IGame[ID comparable, GSID comparable] interface {

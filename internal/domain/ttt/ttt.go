@@ -26,7 +26,7 @@ type TTT struct {
 }
 
 // New creates a new TTT instance with the given options.
-func New(opts ...TTTOpt) (TTT, error) {
+func New(opts ...Opt) (TTT, error) {
 	t := &TTT{
 		board: [3][3]Cell{},
 	}
@@ -195,7 +195,8 @@ func (t TTT) validateBoard() error {
 }
 
 // countPieces counts X and O pieces on the board.
-func (t TTT) countPieces() (countX, countO int) {
+func (t TTT) countPieces() (int, int) {
+	var countX, countO int
 	for i := range 3 {
 		for j := range 3 {
 			switch t.board[i][j] {

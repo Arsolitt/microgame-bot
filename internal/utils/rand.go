@@ -9,17 +9,17 @@ import (
 
 // RandInt generates a cryptographically secure random integer in range [0, max).
 // Falls back to non-crypto random if crypto/rand fails (extremely rare).
-func RandInt(max int) int {
-	if max <= 0 {
+func RandInt(maxValue int) int {
+	if maxValue <= 0 {
 		return 0
 	}
 
 	var b [8]byte
 	if _, err := rand.Read(b[:]); err != nil {
 		rng := mathRand.New(mathRand.NewSource(time.Now().UnixNano()))
-		return rng.Intn(max)
+		return rng.Intn(maxValue)
 	}
 
 	n := binary.BigEndian.Uint64(b[:])
-	return int(n % uint64(max))
+	return int(n % uint64(maxValue))
 }

@@ -25,7 +25,7 @@ func MustInit(ctx context.Context, cfg core.Config) (*th.BotHandler, error) {
 	bh, err := th.NewBotHandler(
 		bot,
 		updates,
-		th.WithErrorHandler(func(ctx *th.Context, update telego.Update, err error) {
+		th.WithErrorHandler(func(ctx *th.Context, _ telego.Update, err error) {
 			slog.ErrorContext(ctx, "Handler error occurred", logger.ErrorField, err.Error())
 		}),
 	)
