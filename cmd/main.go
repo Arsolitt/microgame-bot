@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"microgame-bot/internal/core"
+	"microgame-bot/internal/core/bot"
 	"microgame-bot/internal/core/database"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
@@ -12,10 +13,8 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 
-	memoryFSM "microgame-bot/internal/fsm/memory"
 	"microgame-bot/internal/handlers"
 	memoryLocker "microgame-bot/internal/locker/memory"
 	gormRPSRepository "microgame-bot/internal/repo/game/rps"
@@ -43,25 +42,8 @@ func startup() error {
 	}
 
 	userLocker := memoryLocker.New[user.ID]()
-	_ = memoryFSM.New()
 
-	bot, err := telego.NewBot(string(cfg.Telegram.Token), telego.WithDiscardLogger())
-	if err != nil {
-		return err
-	}
-
-	updates, err := bot.UpdatesViaLongPolling(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	bh, err := th.NewBotHandler(
-		bot,
-		updates,
-		th.WithErrorHandler(func(ctx *th.Context, update telego.Update, err error) {
-			slog.ErrorContext(ctx, "Handler error occurred", logger.ErrorField, err.Error())
-		}),
-	)
+	bh, err := bot.MustInit(ctx, cfg)
 	if err != nil {
 		return err
 	}
@@ -80,10 +62,49 @@ func startup() error {
 		mdw.UserProvider(userLocker, userRepo),
 	)
 
+	// Game selector
 	bh.HandleInlineQuery(handlers.WrapInlineQuery(handlers.GameSelector(cfg.App)), th.AnyInlineQuery())
 
+	// RPS GAME HANDLERS
+	rpsCreateUnit := uowGorm.New(db,
+		uowGorm.WithSessionRepo(sessionRepo),
+		uowGorm.WithRPSRepo(rpsRepo),
+	)
+	bh.HandleCallbackQuery(
+		handlers.WrapCallbackQuery(handlers.RPSCreate(rpsCreateUnit, cfg.App)),
+		th.CallbackDataPrefix("create::rps"),
+	)
+
+	rpsG := bh.Group(th.CallbackDataPrefix("g::rps::"))
+
+	rpsJoinUnit := uowGorm.New(db,
+		uowGorm.WithSessionRepo(sessionRepo),
+		uowGorm.WithRPSRepo(rpsRepo),
+	)
+	rpsG.HandleCallbackQuery(
+		handlers.WrapCallbackQuery(handlers.RPSJoin(userRepo, rpsJoinUnit)),
+		th.CallbackDataPrefix("g::rps::join::"),
+	)
+	rpsChoiceUnit := uowGorm.New(db,
+		uowGorm.WithSessionRepo(sessionRepo),
+		uowGorm.WithRPSRepo(rpsRepo),
+	)
+	rpsG.HandleCallbackQuery(
+		handlers.WrapCallbackQuery(handlers.RPSChoice(userRepo, rpsChoiceUnit)),
+		th.CallbackDataPrefix("g::rps::choice::"),
+	)
+
+	// TTT GAME HANDLERS
+	tttCreateUnit := uowGorm.New(db,
+		uowGorm.WithSessionRepo(sessionRepo),
+		uowGorm.WithTTTRepo(tttRepo),
+	)
+	bh.HandleCallbackQuery(
+		handlers.WrapCallbackQuery(handlers.TTTCreate(tttCreateUnit, cfg.App)),
+		th.CallbackDataPrefix("create::ttt"),
+	)
+
 	tttG := bh.Group(th.CallbackDataPrefix("g::ttt::"))
-	// tttG.Use(mdw.GameProvider(memoryLocker.New[ttt.ID](), tttRepo, gsRepo, "ttt"))
 
 	tttJoinUnit := uowGorm.New(db,
 		uowGorm.WithSessionRepo(sessionRepo),
@@ -108,44 +129,7 @@ func startup() error {
 		th.CallbackDataPrefix("g::ttt::rebuild::"),
 	)
 
-	rpsG := bh.Group(th.CallbackDataPrefix("g::rps::"))
-	// rpsG.Use(mdw.GameProvider(memoryLocker.New[rps.ID](), rpsRepo, gsRepo, "rps"))
-
-	rpsJoinUnit := uowGorm.New(db,
-		uowGorm.WithSessionRepo(sessionRepo),
-		uowGorm.WithRPSRepo(rpsRepo),
-	)
-	rpsG.HandleCallbackQuery(
-		handlers.WrapCallbackQuery(handlers.RPSJoin(userRepo, rpsJoinUnit)),
-		th.CallbackDataPrefix("g::rps::join::"),
-	)
-	rpsChoiceUnit := uowGorm.New(db,
-		uowGorm.WithSessionRepo(sessionRepo),
-		uowGorm.WithRPSRepo(rpsRepo),
-	)
-	rpsG.HandleCallbackQuery(
-		handlers.WrapCallbackQuery(handlers.RPSChoice(userRepo, rpsChoiceUnit)),
-		th.CallbackDataPrefix("g::rps::choice::"),
-	)
-
-	tttUow := uowGorm.New(db,
-		uowGorm.WithSessionRepo(sessionRepo),
-		uowGorm.WithTTTRepo(tttRepo),
-	)
-	bh.HandleCallbackQuery(
-		handlers.WrapCallbackQuery(handlers.TTTCreate(tttUow, cfg.App)),
-		th.CallbackDataPrefix("create::ttt"),
-	)
-
-	rpsCreateUnit := uowGorm.New(db,
-		uowGorm.WithSessionRepo(sessionRepo),
-		uowGorm.WithRPSRepo(rpsRepo),
-	)
-	bh.HandleCallbackQuery(
-		handlers.WrapCallbackQuery(handlers.RPSCreate(rpsCreateUnit, cfg.App)),
-		th.CallbackDataPrefix("create::rps"),
-	)
-
+	// Empty callback handler
 	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.Empty()), th.CallbackDataEqual("empty"))
 
 	// Start handling updates
