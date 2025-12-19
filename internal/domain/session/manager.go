@@ -5,9 +5,9 @@ import (
 )
 
 type SessionResult struct {
-	Session       Session
 	Scores        map[user.ID]int
 	Participants  []user.ID
+	Session       Session
 	Draws         int
 	SeriesWinner  user.ID
 	IsCompleted   bool
@@ -23,8 +23,8 @@ type IGame interface {
 }
 
 type SessionManager struct {
-	session Session
 	games   []IGame
+	session Session
 }
 
 func NewSessionManager(session Session, games []IGame) *SessionManager {
