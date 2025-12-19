@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 	"microgame-bot/internal/core/logger"
@@ -15,7 +14,6 @@ import (
 	userRepository "microgame-bot/internal/repo/user"
 	"microgame-bot/internal/uow"
 	"microgame-bot/internal/utils"
-	"strings"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -31,7 +29,7 @@ func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Callba
 			return nil, fmt.Errorf("failed to get user from context in %s: %w", OPERATION_NAME, err)
 		}
 
-		cellNumber, err := extractCellNumber(query.Data)
+		cellNumber, err := tttExtractCellNumber(query.Data)
 		if err != nil {
 			return nil, fmt.Errorf("failed to extract cell number in %s: %w", OPERATION_NAME, err)
 		}
@@ -45,7 +43,7 @@ func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Callba
 		rawCtx = logger.WithLogValue(rawCtx, logger.GameIDField, utils.UUIDString(gameID))
 		ctx = ctx.WithContext(rawCtx)
 
-		row, col := cellNumberToCoords(cellNumber)
+		row, col := tttCellNumberToCoords(cellNumber)
 
 		var game ttt.TTT
 		err = unit.Do(ctx, func(uow uow.IUnitOfWork) error {
@@ -269,23 +267,4 @@ func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Callba
 			},
 		}, nil
 	}
-}
-
-func extractCellNumber(callbackData string) (int, error) {
-	parts := strings.Split(callbackData, "::")
-	if len(parts) < 5 {
-		return 0, errors.New("invalid callback data")
-	}
-
-	var cellNumber int
-	_, err := fmt.Sscanf(parts[4], "%d", &cellNumber)
-	if err != nil {
-		return 0, err
-	}
-
-	return cellNumber, nil
-}
-
-func cellNumberToCoords(cellNumber int) (row, col int) {
-	return cellNumber / 3, cellNumber % 3
 }
