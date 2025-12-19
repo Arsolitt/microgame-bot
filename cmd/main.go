@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"microgame-bot/internal/core"
+	"microgame-bot/internal/core/database"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/user"
@@ -12,24 +12,17 @@ import (
 	"os"
 	"os/signal"
 
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 
 	memoryFSM "microgame-bot/internal/fsm/memory"
 	"microgame-bot/internal/handlers"
 	memoryLocker "microgame-bot/internal/locker/memory"
-	gormGameRepository "microgame-bot/internal/repo/game"
 	gormRPSRepository "microgame-bot/internal/repo/game/rps"
 	gormTTTRepository "microgame-bot/internal/repo/game/ttt"
 	gormSessionRepository "microgame-bot/internal/repo/session"
 	gormUserRepository "microgame-bot/internal/repo/user"
 	uowGorm "microgame-bot/internal/uow"
-
-	gormLogger "gorm.io/gorm/logger"
 )
 
 func startup() error {
@@ -44,33 +37,9 @@ func startup() error {
 	logger.InitLogger(cfg.Logs)
 	slog.Info("Logger initialized successfully")
 
-	gormConfig := &gorm.Config{
-		Logger: gormLogger.Default.LogMode(gormLogger.Silent),
-	}
-	var dialector gorm.Dialector
-	switch cfg.App.GormDialector {
-	case "sqlite":
-		dialector = sqlite.Open(cfg.Sqlite.URL)
-	case "postgres":
-		dialector = postgres.Open(cfg.Postgres.URL)
-	}
-
-	db, err := gorm.Open(dialector, gormConfig)
+	db, err := database.MustInit(cfg)
 	if err != nil {
 		return err
-	}
-
-	err = db.AutoMigrate(&gormUserRepository.User{})
-	if err != nil {
-		return fmt.Errorf("failed to migrate user table: %w", err)
-	}
-	err = db.AutoMigrate(&gormSessionRepository.Session{})
-	if err != nil {
-		return fmt.Errorf("failed to migrate game session table: %w", err)
-	}
-	err = db.AutoMigrate(&gormGameRepository.Game{})
-	if err != nil {
-		return fmt.Errorf("failed to migrate game table: %w", err)
 	}
 
 	userLocker := memoryLocker.New[user.ID]()
