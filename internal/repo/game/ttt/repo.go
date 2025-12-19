@@ -94,9 +94,8 @@ func (r *Repository) UpdateGame(ctx context.Context, game ttt.TTT) (ttt.TTT, err
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ttt.TTT{}, fmt.Errorf("game not found while updating gorm database: %w", domain.ErrGameNotFound)
-		} else {
-			return ttt.TTT{}, fmt.Errorf("failed to get game by ID from gorm database: %w", err)
 		}
+		return ttt.TTT{}, fmt.Errorf("failed to get game by ID from gorm database: %w", err)
 	}
 	return r.ToDomain(model)
 }
