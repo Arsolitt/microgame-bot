@@ -112,7 +112,7 @@ func UserProvider(
 		if err != nil {
 			return err
 		}
-		defer locker.Unlock(user.ID())
+		defer func() { _ = locker.Unlock(user.ID()) }()
 
 		l.DebugContext(ctx, "UserProvider middleware finished")
 

@@ -16,7 +16,7 @@ type User struct {
 	id         ID
 }
 
-func New(opts ...UserOpt) (User, error) {
+func New(opts ...Opt) (User, error) {
 	u := &User{}
 
 	for _, opt := range opts {

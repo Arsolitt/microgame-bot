@@ -4,7 +4,7 @@ import (
 	"microgame-bot/internal/domain/user"
 )
 
-type SessionResult struct {
+type Result struct {
 	Scores        map[user.ID]int
 	Participants  []user.ID
 	Session       Session
@@ -22,20 +22,20 @@ type IGame interface {
 	IsDraw() bool
 }
 
-type SessionManager struct {
+type Manager struct {
 	games   []IGame
 	session Session
 }
 
-func NewSessionManager(session Session, games []IGame) *SessionManager {
-	return &SessionManager{
+func NewManager(session Session, games []IGame) *Manager {
+	return &Manager{
 		session: session,
 		games:   games,
 	}
 }
 
-func (sm *SessionManager) CalculateResult() SessionResult {
-	result := SessionResult{
+func (sm *Manager) CalculateResult() Result {
+	result := Result{
 		Session:      sm.session,
 		Scores:       make(map[user.ID]int),
 		Participants: sm.collectParticipants(),
@@ -106,7 +106,7 @@ func (sm *SessionManager) CalculateResult() SessionResult {
 	return result
 }
 
-func (sm *SessionManager) hasActiveGame() bool {
+func (sm *Manager) hasActiveGame() bool {
 	for _, game := range sm.games {
 		if !game.IsFinished() {
 			return true
@@ -115,7 +115,7 @@ func (sm *SessionManager) hasActiveGame() bool {
 	return false
 }
 
-func (sm *SessionManager) countFinishedGames() int {
+func (sm *Manager) countFinishedGames() int {
 	count := 0
 	for _, game := range sm.games {
 		if game.IsFinished() {
@@ -125,7 +125,7 @@ func (sm *SessionManager) countFinishedGames() int {
 	return count
 }
 
-func (sm *SessionManager) collectParticipants() []user.ID {
+func (sm *Manager) collectParticipants() []user.ID {
 	participantsMap := make(map[user.ID]bool)
 
 	for _, game := range sm.games {

@@ -54,20 +54,20 @@ func extractGameID[ID utils.UUIDBasedID](callbackData string) (ID, error) {
 
 // Extracts the game count from the callback data. If the callback data is invalid, returns the default value.
 func extractGameCount(callbackData string, maxGameCount int) int {
-	const DEFAULT_GAME_COUNT = 1
+	const defaultGameCount = 1
 	parts := strings.Split(callbackData, "::")
 	if len(parts) < 3 {
-		return DEFAULT_GAME_COUNT
+		return defaultGameCount
 	}
 
 	var gameCount int
 	_, err := fmt.Sscanf(parts[2], "%d", &gameCount)
 	if err != nil {
-		return DEFAULT_GAME_COUNT
+		return defaultGameCount
 	}
 
 	if gameCount < 1 {
-		return DEFAULT_GAME_COUNT
+		return defaultGameCount
 	}
 	if gameCount > maxGameCount {
 		return maxGameCount

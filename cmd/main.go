@@ -47,7 +47,7 @@ func startup() error {
 	if err != nil {
 		return err
 	}
-	defer bh.StopWithContext(ctx)
+	defer func() { _ = bh.StopWithContext(ctx) }()
 
 	userRepo := gormUserRepository.New(db)
 	tttRepo := gormTTTRepository.New(db)

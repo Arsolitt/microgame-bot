@@ -22,7 +22,7 @@ const (
 	CellEmptyIcon = "⬜"
 )
 
-func (c *Cell) Scan(ctx context.Context, field *schema.Field, dst reflect.Value, dbValue any) error {
+func (c *Cell) Scan(_ context.Context, _ *schema.Field, _ reflect.Value, dbValue any) error {
 	switch value := dbValue.(type) {
 	case []byte:
 		*c = Cell(value)
@@ -36,7 +36,7 @@ func (c *Cell) Scan(ctx context.Context, field *schema.Field, dst reflect.Value,
 	return nil
 }
 
-func (c Cell) Value(ctx context.Context, field *schema.Field, dst reflect.Value, fieldValue any) (any, error) {
+func (c Cell) Value(_ context.Context, _ *schema.Field, _ reflect.Value, _ any) (any, error) {
 	return string(c), nil
 }
 

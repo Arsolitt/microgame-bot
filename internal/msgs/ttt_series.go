@@ -48,7 +48,7 @@ func TTTSeriesCompleted(
 	games []ttt.TTT,
 	playerX domainUser.User,
 	playerO domainUser.User,
-	result session.SessionResult,
+	result session.Result,
 ) (string, error) {
 	var sb strings.Builder
 
@@ -91,7 +91,7 @@ func TTTRoundCompleted(
 	games []ttt.TTT,
 	playerX domainUser.User,
 	playerO domainUser.User,
-	result session.SessionResult,
+	result session.Result,
 ) (string, error) {
 	var sb strings.Builder
 

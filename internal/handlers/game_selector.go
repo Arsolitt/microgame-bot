@@ -35,11 +35,12 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 
 		roundsStr := strconv.Itoa(rounds)
 		roundsLabel := fmt.Sprintf("(%d раунд", rounds)
-		if rounds == 1 {
+		switch rounds {
+		case 1:
 			roundsLabel += ")"
-		} else if rounds >= 2 && rounds <= 4 {
+		case 2, 3, 4:
 			roundsLabel += "а)"
-		} else {
+		default:
 			roundsLabel += "ов)"
 		}
 

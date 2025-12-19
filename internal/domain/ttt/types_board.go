@@ -11,7 +11,7 @@ import (
 
 type Board [3][3]Cell
 
-func (b *Board) Scan(ctx context.Context, field *schema.Field, dst reflect.Value, dbValue any) error {
+func (b *Board) Scan(_ context.Context, _ *schema.Field, _ reflect.Value, dbValue any) error {
 	var data []byte
 	switch value := dbValue.(type) {
 	case []byte:
@@ -32,7 +32,7 @@ func (b *Board) Scan(ctx context.Context, field *schema.Field, dst reflect.Value
 }
 
 // Value implements gorm.Serializer interface for writing to database.
-func (b Board) Value(ctx context.Context, field *schema.Field, dst reflect.Value, fieldValue any) (any, error) {
+func (b Board) Value(_ context.Context, _ *schema.Field, _ reflect.Value, _ any) (any, error) {
 	data, err := json.Marshal(b)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal Board: %w", err)

@@ -16,7 +16,7 @@ type Session struct {
 	id              ID
 }
 
-func New(opts ...SessionOpt) (Session, error) {
+func New(opts ...Opt) (Session, error) {
 	gs := &Session{
 		status:    domain.GameStatusCreated,
 		gameCount: 1,

@@ -131,7 +131,7 @@ func (t TTT) GetCell(row, col int) (Cell, error) {
 	return t.board[row][col], nil
 }
 
-// assignPlayersRandomly randomly assigns two players to X and O roles.
+// AssignPlayersRandomly randomly assigns two players to X and O roles.
 func (t TTT) AssignPlayersRandomly() TTT {
 	if utils.RandInt(2) == 0 {
 		t.turn = t.playerXID

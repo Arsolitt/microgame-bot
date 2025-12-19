@@ -71,13 +71,13 @@ func TestNew_ValidationError(t *testing.T) {
 	now := time.Now()
 	tests := []struct {
 		expectedError error
-		opts          func() []UserOpt
+		opts          func() []Opt
 		name          string
 	}{
 		{
 			name: "ID is zero",
-			opts: func() []UserOpt {
-				return []UserOpt{
+			opts: func() []Opt {
+				return []Opt{
 					WithID(ID(uuid.Nil)),
 					WithTelegramID(telegramID),
 					WithChatID(&chatID),
@@ -92,8 +92,8 @@ func TestNew_ValidationError(t *testing.T) {
 		},
 		{
 			name: "ID is invalid",
-			opts: func() []UserOpt {
-				return []UserOpt{
+			opts: func() []Opt {
+				return []Opt{
 					WithIDFromString("invalid"),
 					WithTelegramID(telegramID),
 					WithChatID(&chatID),
@@ -108,8 +108,8 @@ func TestNew_ValidationError(t *testing.T) {
 		},
 		{
 			name: "Telegram ID negative",
-			opts: func() []UserOpt {
-				return []UserOpt{
+			opts: func() []Opt {
+				return []Opt{
 					WithID(id),
 					WithTelegramID(TelegramID(-1)),
 					WithChatID(&chatID),
@@ -124,8 +124,8 @@ func TestNew_ValidationError(t *testing.T) {
 		},
 		{
 			name: "Telegram ID zero",
-			opts: func() []UserOpt {
-				return []UserOpt{
+			opts: func() []Opt {
+				return []Opt{
 					WithID(id),
 					WithTelegramID(TelegramID(0)),
 					WithChatID(&chatID),
@@ -140,8 +140,8 @@ func TestNew_ValidationError(t *testing.T) {
 		},
 		{
 			name: "Username required",
-			opts: func() []UserOpt {
-				return []UserOpt{
+			opts: func() []Opt {
+				return []Opt{
 					WithID(id),
 					WithTelegramID(telegramID),
 					WithChatID(&chatID),
@@ -156,8 +156,8 @@ func TestNew_ValidationError(t *testing.T) {
 		},
 		{
 			name: "Missing ID",
-			opts: func() []UserOpt {
-				return []UserOpt{
+			opts: func() []Opt {
+				return []Opt{
 					WithTelegramID(telegramID),
 					WithUsername(username),
 				}
@@ -166,8 +166,8 @@ func TestNew_ValidationError(t *testing.T) {
 		},
 		{
 			name: "Missing TelegramID",
-			opts: func() []UserOpt {
-				return []UserOpt{
+			opts: func() []Opt {
+				return []Opt{
 					WithID(id),
 					WithUsername(username),
 				}
@@ -176,8 +176,8 @@ func TestNew_ValidationError(t *testing.T) {
 		},
 		{
 			name: "Missing Username",
-			opts: func() []UserOpt {
-				return []UserOpt{
+			opts: func() []Opt {
+				return []Opt{
 					WithID(id),
 					WithTelegramID(telegramID),
 				}
@@ -186,8 +186,8 @@ func TestNew_ValidationError(t *testing.T) {
 		},
 		{
 			name: "Empty options",
-			opts: func() []UserOpt {
-				return []UserOpt{}
+			opts: func() []Opt {
+				return []Opt{}
 			},
 			expectedError: domain.ErrIDRequired,
 		},

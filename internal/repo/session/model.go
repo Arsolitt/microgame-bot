@@ -35,10 +35,10 @@ func (m Session) ToDomain() (se.Session, error) {
 func (Session) FromDomain(u se.Session) Session {
 	return Session{
 		ID:              u.ID(),
-		GameType:        domain.GameType(u.GameType()),
+		GameType:        u.GameType(),
 		GameCount:       u.GameCount(),
 		Bet:             u.Bet(),
-		Status:          domain.GameStatus(u.Status()),
+		Status:          u.Status(),
 		CreatedAt:       u.CreatedAt(),
 		UpdatedAt:       u.UpdatedAt(),
 		InlineMessageID: u.InlineMessageID(),

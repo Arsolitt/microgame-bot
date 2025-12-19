@@ -19,7 +19,7 @@ type UnitOfWork struct {
 	rpsRepo     rps.IRPSRepository
 }
 
-// NewUnitOfWork creates a new unit of work instance.
+// New creates a new unit of work instance.
 func New(db *gorm.DB, opts ...UnitOfWorkOpt) *UnitOfWork {
 	u := &UnitOfWork{
 		db: db,
@@ -31,7 +31,7 @@ func New(db *gorm.DB, opts ...UnitOfWorkOpt) *UnitOfWork {
 }
 
 // Do executes function within a transaction.
-func (u *UnitOfWork) Do(ctx context.Context, fn func(unit IUnitOfWork) error) error {
+func (u *UnitOfWork) Do(_ context.Context, fn func(unit IUnitOfWork) error) error {
 	return u.db.Transaction(func(tx *gorm.DB) error {
 		opts := make([]UnitOfWorkOpt, 0, 4)
 
@@ -81,32 +81,28 @@ func (u *UnitOfWork) RPSRepo() (rps.IRPSRepository, error) {
 	return u.rpsRepo, nil
 }
 
-type UnitOfWorkOpt func(*UnitOfWork) error
+type UnitOfWorkOpt func(*UnitOfWork)
 
 func WithUserRepo(userR user.IUserRepository) UnitOfWorkOpt {
-	return func(u *UnitOfWork) error {
+	return func(u *UnitOfWork) {
 		u.userRepo = userR
-		return nil
 	}
 }
 
 func WithTTTRepo(tttR ttt.ITTTRepository) UnitOfWorkOpt {
-	return func(u *UnitOfWork) error {
+	return func(u *UnitOfWork) {
 		u.tttRepo = tttR
-		return nil
 	}
 }
 
 func WithSessionRepo(gsR session.ISessionRepository) UnitOfWorkOpt {
-	return func(u *UnitOfWork) error {
+	return func(u *UnitOfWork) {
 		u.sessionRepo = gsR
-		return nil
 	}
 }
 
 func WithRPSRepo(rpsR rps.IRPSRepository) UnitOfWorkOpt {
-	return func(u *UnitOfWork) error {
+	return func(u *UnitOfWork) {
 		u.rpsRepo = rpsR
-		return nil
 	}
 }

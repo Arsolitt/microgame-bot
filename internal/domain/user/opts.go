@@ -16,9 +16,9 @@ var (
 	ErrUsernameRequired   = errors.New("username required")
 )
 
-type UserOpt func(*User) error
+type Opt func(*User) error
 
-func WithID(id ID) UserOpt {
+func WithID(id ID) Opt {
 	return func(u *User) error {
 		if id.IsZero() {
 			return domain.ErrIDRequired
@@ -28,11 +28,11 @@ func WithID(id ID) UserOpt {
 	}
 }
 
-func WithNewID() UserOpt {
+func WithNewID() Opt {
 	return WithID(ID(utils.NewUniqueID()))
 }
 
-func WithIDFromString(id string) UserOpt {
+func WithIDFromString(id string) Opt {
 	return func(u *User) error {
 		idUUID, err := utils.UUIDFromString[ID](id)
 		if err != nil {
@@ -43,11 +43,11 @@ func WithIDFromString(id string) UserOpt {
 	}
 }
 
-func WithIDFromUUID(id uuid.UUID) UserOpt {
+func WithIDFromUUID(id uuid.UUID) Opt {
 	return WithID(ID(id))
 }
 
-func WithTelegramID(telegramID TelegramID) UserOpt {
+func WithTelegramID(telegramID TelegramID) Opt {
 	return func(u *User) error {
 		if telegramID.IsZero() {
 			return ErrTelegramIDRequired
@@ -57,18 +57,18 @@ func WithTelegramID(telegramID TelegramID) UserOpt {
 	}
 }
 
-func WithTelegramIDFromInt(telegramID int64) UserOpt {
+func WithTelegramIDFromInt(telegramID int64) Opt {
 	return WithTelegramID(TelegramID(telegramID))
 }
 
-func WithChatID(chatID *ChatID) UserOpt {
+func WithChatID(chatID *ChatID) Opt {
 	return func(u *User) error {
 		u.chatID = chatID
 		return nil
 	}
 }
 
-func WithChatIDFromInt(chatID int64) UserOpt {
+func WithChatIDFromInt(chatID int64) Opt {
 	return func(u *User) error {
 		if chatID == 0 {
 			u.chatID = nil
@@ -80,7 +80,7 @@ func WithChatIDFromInt(chatID int64) UserOpt {
 	}
 }
 
-func WithChatIDFromPointer(chatID *int64) UserOpt {
+func WithChatIDFromPointer(chatID *int64) Opt {
 	return func(u *User) error {
 		if chatID == nil {
 			u.chatID = nil
@@ -92,7 +92,7 @@ func WithChatIDFromPointer(chatID *int64) UserOpt {
 	}
 }
 
-func WithFirstName(firstName FirstName) UserOpt {
+func WithFirstName(firstName FirstName) Opt {
 	return func(u *User) error {
 		firstNameRunes := []rune(firstName)
 		if len(firstNameRunes) > maxFirstNameLength {
@@ -103,11 +103,11 @@ func WithFirstName(firstName FirstName) UserOpt {
 	}
 }
 
-func WithFirstNameFromString(firstName string) UserOpt {
+func WithFirstNameFromString(firstName string) Opt {
 	return WithFirstName(FirstName(firstName))
 }
 
-func WithLastName(lastName LastName) UserOpt {
+func WithLastName(lastName LastName) Opt {
 	return func(u *User) error {
 		lastNameRunes := []rune(lastName)
 		if len(lastNameRunes) > maxLastNameLength {
@@ -118,11 +118,11 @@ func WithLastName(lastName LastName) UserOpt {
 	}
 }
 
-func WithLastNameFromString(lastName string) UserOpt {
+func WithLastNameFromString(lastName string) Opt {
 	return WithLastName(LastName(lastName))
 }
 
-func WithUsername(username Username) UserOpt {
+func WithUsername(username Username) Opt {
 	return func(u *User) error {
 		if username.IsZero() {
 			return ErrUsernameRequired
@@ -132,11 +132,11 @@ func WithUsername(username Username) UserOpt {
 	}
 }
 
-func WithUsernameFromString(username string) UserOpt {
+func WithUsernameFromString(username string) Opt {
 	return WithUsername(Username(username))
 }
 
-func WithCreatedAt(createdAt time.Time) UserOpt {
+func WithCreatedAt(createdAt time.Time) Opt {
 	return func(u *User) error {
 		if createdAt.IsZero() {
 			return domain.ErrCreatedAtRequired
@@ -146,7 +146,7 @@ func WithCreatedAt(createdAt time.Time) UserOpt {
 	}
 }
 
-func WithUpdatedAt(updatedAt time.Time) UserOpt {
+func WithUpdatedAt(updatedAt time.Time) Opt {
 	return func(u *User) error {
 		if updatedAt.IsZero() {
 			return domain.ErrUpdatedAtRequired

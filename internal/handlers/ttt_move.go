@@ -123,7 +123,7 @@ func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Callba
 			games[i] = g
 		}
 
-		manager := domainSession.NewSessionManager(session, games)
+		manager := domainSession.NewManager(session, games)
 		result := manager.CalculateResult()
 
 		if result.IsCompleted {

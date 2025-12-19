@@ -106,7 +106,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 			games[i] = g
 		}
 
-		manager := domainSession.NewSessionManager(session, games)
+		manager := domainSession.NewManager(session, games)
 		result := manager.CalculateResult()
 
 		player1, err := userGetter.UserByID(ctx, game.Player1ID())

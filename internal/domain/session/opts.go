@@ -10,9 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
-type SessionOpt func(*Session) error
+type Opt func(*Session) error
 
-func WithID(id ID) SessionOpt {
+func WithID(id ID) Opt {
 	return func(gs *Session) error {
 		if id.IsZero() {
 			return domain.ErrIDRequired
@@ -22,11 +22,11 @@ func WithID(id ID) SessionOpt {
 	}
 }
 
-func WithNewID() SessionOpt {
+func WithNewID() Opt {
 	return WithID(ID(utils.NewUniqueID()))
 }
 
-func WithIDFromString(id string) SessionOpt {
+func WithIDFromString(id string) Opt {
 	return func(gs *Session) error {
 		idUUID, err := utils.UUIDFromString[ID](id)
 		if err != nil {
@@ -37,11 +37,11 @@ func WithIDFromString(id string) SessionOpt {
 	}
 }
 
-func WithIDFromUUID(id uuid.UUID) SessionOpt {
+func WithIDFromUUID(id uuid.UUID) Opt {
 	return WithID(ID(id))
 }
 
-func WithInlineMessageID(inlineMessageID domain.InlineMessageID) SessionOpt {
+func WithInlineMessageID(inlineMessageID domain.InlineMessageID) Opt {
 	return func(r *Session) error {
 		if inlineMessageID.IsZero() {
 			return domain.ErrInlineMessageIDRequired
@@ -51,32 +51,32 @@ func WithInlineMessageID(inlineMessageID domain.InlineMessageID) SessionOpt {
 	}
 }
 
-func WithInlineMessageIDFromString(inlineMessageID string) SessionOpt {
+func WithInlineMessageIDFromString(inlineMessageID string) Opt {
 	return WithInlineMessageID(domain.InlineMessageID(inlineMessageID))
 }
 
-func WithGameType(gameType domain.GameType) SessionOpt {
+func WithGameType(gameType domain.GameType) Opt {
 	return func(gs *Session) error {
 		gs.gameType = gameType
 		return nil
 	}
 }
 
-func WithGameCount(gameCount int) SessionOpt {
+func WithGameCount(gameCount int) Opt {
 	return func(gs *Session) error {
 		gs.gameCount = gameCount
 		return nil
 	}
 }
 
-func WithBet(bet int) SessionOpt {
+func WithBet(bet int) Opt {
 	return func(gs *Session) error {
 		gs.bet = bet
 		return nil
 	}
 }
 
-func WithStatus(status domain.GameStatus) SessionOpt {
+func WithStatus(status domain.GameStatus) Opt {
 	return func(gs *Session) error {
 		if status.IsZero() {
 			return domain.ErrGameStatusRequired
@@ -89,7 +89,7 @@ func WithStatus(status domain.GameStatus) SessionOpt {
 	}
 }
 
-func WithCreatedAt(createdAt time.Time) SessionOpt {
+func WithCreatedAt(createdAt time.Time) Opt {
 	return func(gs *Session) error {
 		if createdAt.IsZero() {
 			return domain.ErrCreatedAtRequired
@@ -99,7 +99,7 @@ func WithCreatedAt(createdAt time.Time) SessionOpt {
 	}
 }
 
-func WithUpdatedAt(updatedAt time.Time) SessionOpt {
+func WithUpdatedAt(updatedAt time.Time) Opt {
 	return func(gs *Session) error {
 		if updatedAt.IsZero() {
 			return domain.ErrUpdatedAtRequired

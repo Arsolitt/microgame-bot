@@ -19,7 +19,7 @@ const (
 	ChoiceHiddenIcon   = "🤫"
 )
 
-func (_ Choice) HiddenIcon() string {
+func (Choice) HiddenIcon() string {
 	return ChoiceHiddenIcon
 }
 
