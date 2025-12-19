@@ -6,14 +6,14 @@ import (
 )
 
 type EditMessageTextResponse struct {
+	LinkPreviewOptions *telego.LinkPreviewOptions
+	ReplyMarkup        *telego.InlineKeyboardMarkup
 	InlineMessageID    string
-	ChatID             int64
-	MessageID          int
 	Text               string
 	ParseMode          string
 	Entities           []telego.MessageEntity
-	LinkPreviewOptions *telego.LinkPreviewOptions
-	ReplyMarkup        *telego.InlineKeyboardMarkup
+	ChatID             int64
+	MessageID          int
 }
 
 func (r *EditMessageTextResponse) Handle(ctx *th.Context) error {

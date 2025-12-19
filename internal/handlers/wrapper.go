@@ -74,7 +74,6 @@ func WrapCallbackQuery(handler CallbackQueryHandlerFunc) func(*th.Context, teleg
 	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
 
 	return func(ctx *th.Context, query telego.CallbackQuery) error {
-
 		response, err := handler(ctx, query)
 		if err != nil {
 			l.ErrorContext(ctx, "Callback query handler returned error", logger.ErrorField, err.Error())

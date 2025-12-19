@@ -14,8 +14,8 @@ type (
 	ID utils.UniqueID
 )
 
-// Scan implements gorm.Serializer interface for reading from database
-func (id *ID) Scan(ctx context.Context, field *schema.Field, dst reflect.Value, dbValue interface{}) error {
+// Scan implements gorm.Serializer interface for reading from database.
+func (id *ID) Scan(ctx context.Context, field *schema.Field, dst reflect.Value, dbValue any) error {
 	switch value := dbValue.(type) {
 	case []byte:
 		parsed, err := utils.UUIDFromString[ID](string(value))
@@ -37,8 +37,8 @@ func (id *ID) Scan(ctx context.Context, field *schema.Field, dst reflect.Value, 
 	return nil
 }
 
-// Value implements gorm.Serializer interface for writing to database
-func (id ID) Value(ctx context.Context, field *schema.Field, dst reflect.Value, fieldValue interface{}) (interface{}, error) {
+// Value implements gorm.Serializer interface for writing to database.
+func (id ID) Value(ctx context.Context, field *schema.Field, dst reflect.Value, fieldValue any) (any, error) {
 	return id.String(), nil
 }
 

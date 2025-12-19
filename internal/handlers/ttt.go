@@ -11,8 +11,12 @@ import (
 )
 
 // buildTTTGameBoardKeyboard creates inline keyboard with game board
-// playerX must be the actual X player, playerO must be the actual O player
-func buildTTTGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO domainUser.User) *telego.InlineKeyboardMarkup {
+// playerX must be the actual X player, playerO must be the actual O player.
+func buildTTTGameBoardKeyboard(
+	game *ttt.TTT,
+	playerX domainUser.User,
+	playerO domainUser.User,
+) *telego.InlineKeyboardMarkup {
 	const OPERATION_NAME = "handlers::ttt_join::buildTTTGameBoardKeyboard"
 	rows := make([][]telego.InlineKeyboardButton, 0, 4)
 
@@ -64,7 +68,6 @@ func buildTTTGameBoardKeyboard(game *ttt.TTT, playerX domainUser.User, playerO d
 		InlineKeyboard: rows,
 	}
 }
-
 
 func tttExtractCellNumber(callbackData string) (int, error) {
 	parts := strings.Split(callbackData, "::")

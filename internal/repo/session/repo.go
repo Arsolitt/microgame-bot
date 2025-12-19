@@ -38,7 +38,10 @@ func (r *Repository) UpdateSession(ctx context.Context, session se.Session) (se.
 	model, err = gorm.G[Session](r.db).Where("id = ?", model.ID.String()).First(ctx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return se.Session{}, fmt.Errorf("game session not found while updating gorm database: %w", domain.ErrGameNotFound)
+			return se.Session{}, fmt.Errorf(
+				"game session not found while updating gorm database: %w",
+				domain.ErrGameNotFound,
+			)
 		}
 		return se.Session{}, fmt.Errorf("failed to get game session by ID from gorm database: %w", err)
 	}
@@ -63,9 +66,17 @@ func (r *Repository) sessionByID(ctx context.Context, id se.ID, opts ...clause.E
 		First(ctx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return se.Session{}, fmt.Errorf("game session not found by ID in %s: %w", OPERATION_NAME, domain.ErrGameNotFound)
+			return se.Session{}, fmt.Errorf(
+				"game session not found by ID in %s: %w",
+				OPERATION_NAME,
+				domain.ErrGameNotFound,
+			)
 		}
-		return se.Session{}, fmt.Errorf("failed to get game session by ID from gorm database in %s: %w", OPERATION_NAME, err)
+		return se.Session{}, fmt.Errorf(
+			"failed to get game session by ID from gorm database in %s: %w",
+			OPERATION_NAME,
+			err,
+		)
 	}
 	return model.ToDomain()
 }

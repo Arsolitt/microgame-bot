@@ -1,6 +1,7 @@
 package msgs
 
 import (
+	"errors"
 	"fmt"
 	"microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/ttt"
@@ -8,7 +9,7 @@ import (
 	"strings"
 )
 
-// getTTTCreatorUsername returns creator username based on creator ID
+// getTTTCreatorUsername returns creator username based on creator ID.
 func getTTTCreatorUsername(creatorID domainUser.ID, playerX domainUser.User, playerO domainUser.User) string {
 	if creatorID == playerX.ID() {
 		return string(playerX.Username())
@@ -16,7 +17,7 @@ func getTTTCreatorUsername(creatorID domainUser.ID, playerX domainUser.User, pla
 	return string(playerO.Username())
 }
 
-// buildTTTRoundsHistory generates rounds history section
+// buildTTTRoundsHistory generates rounds history section.
 func buildTTTRoundsHistory(games []ttt.TTT, playerX domainUser.User, playerO domainUser.User) string {
 	var sb strings.Builder
 
@@ -42,7 +43,7 @@ func buildTTTRoundsHistory(games []ttt.TTT, playerX domainUser.User, playerO dom
 	return sb.String()
 }
 
-// TTTSeriesCompleted generates message when series is finished
+// TTTSeriesCompleted generates message when series is finished.
 func TTTSeriesCompleted(
 	games []ttt.TTT,
 	playerX domainUser.User,
@@ -52,7 +53,7 @@ func TTTSeriesCompleted(
 	var sb strings.Builder
 
 	if len(games) == 0 {
-		return "", fmt.Errorf("no games provided")
+		return "", errors.New("no games provided")
 	}
 
 	creatorUsername := getTTTCreatorUsername(games[0].CreatorID(), playerX, playerO)
@@ -85,7 +86,7 @@ func TTTSeriesCompleted(
 	return sb.String(), nil
 }
 
-// TTTRoundCompleted generates message when round is finished and new round starts
+// TTTRoundCompleted generates message when round is finished and new round starts.
 func TTTRoundCompleted(
 	games []ttt.TTT,
 	playerX domainUser.User,
@@ -95,7 +96,7 @@ func TTTRoundCompleted(
 	var sb strings.Builder
 
 	if len(games) == 0 {
-		return "", fmt.Errorf("no games provided")
+		return "", errors.New("no games provided")
 	}
 
 	creatorUsername := getTTTCreatorUsername(games[0].CreatorID(), playerX, playerO)

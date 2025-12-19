@@ -10,6 +10,8 @@ import (
 // TODO: add tests
 func (t TTT) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
+		CreatedAt time.Time  `json:"created_at"`
+		UpdatedAt time.Time  `json:"updated_at"`
 		Board     [3][3]Cell `json:"board"`
 		Turn      user.ID    `json:"turn"`
 		WinnerID  user.ID    `json:"winner_id"`
@@ -18,8 +20,6 @@ func (t TTT) MarshalJSON() ([]byte, error) {
 		PlayerXID user.ID    `json:"player_x_id"`
 		PlayerOID user.ID    `json:"player_o_id"`
 		CreatorID user.ID    `json:"creator_id"`
-		CreatedAt time.Time  `json:"created_at"`
-		UpdatedAt time.Time  `json:"updated_at"`
 	}{
 		ID:        t.id,
 		SessionID: t.sessionID,
@@ -37,6 +37,8 @@ func (t TTT) MarshalJSON() ([]byte, error) {
 // TODO: add tests
 func (t *TTT) UnmarshalJSON(data []byte) error {
 	var aux struct {
+		CreatedAt time.Time  `json:"created_at"`
+		UpdatedAt time.Time  `json:"updated_at"`
 		Board     [3][3]Cell `json:"board"`
 		Turn      user.ID    `json:"turn"`
 		WinnerID  user.ID    `json:"winner_id"`
@@ -45,8 +47,6 @@ func (t *TTT) UnmarshalJSON(data []byte) error {
 		PlayerXID user.ID    `json:"player_x_id"`
 		PlayerOID user.ID    `json:"player_o_id"`
 		CreatorID user.ID    `json:"creator_id"`
-		CreatedAt time.Time  `json:"created_at"`
-		UpdatedAt time.Time  `json:"updated_at"`
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err

@@ -86,7 +86,8 @@ func RPSCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 				ParseMode:       "HTML",
 				ReplyMarkup: tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
-						tu.InlineKeyboardButton("Присоединиться").WithCallbackData("g::rps::join::" + game.ID().String()),
+						tu.InlineKeyboardButton("Присоединиться").
+							WithCallbackData("g::rps::join::" + game.ID().String()),
 					),
 				),
 			},

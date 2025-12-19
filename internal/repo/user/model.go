@@ -9,14 +9,14 @@ import (
 )
 
 type User struct {
-	ID         uuid.UUID `gorm:"primaryKey;type:uuid"`
-	TelegramID int64     `gorm:"not null;uniqueIndex"`
+	CreatedAt  time.Time `gorm:"not null"`
+	UpdatedAt  time.Time `gorm:"not null"`
 	ChatID     *int64    `gorm:"index"`
 	FirstName  string    `gorm:"size:64"`
 	LastName   string    `gorm:"size:64"`
 	Username   string    `gorm:"not null;index"`
-	CreatedAt  time.Time `gorm:"not null"`
-	UpdatedAt  time.Time `gorm:"not null"`
+	TelegramID int64     `gorm:"not null;uniqueIndex"`
+	ID         uuid.UUID `gorm:"primaryKey;type:uuid"`
 }
 
 // TODO: add tests

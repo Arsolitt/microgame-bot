@@ -7,12 +7,12 @@ import (
 type SessionResult struct {
 	Session       Session
 	Scores        map[user.ID]int
+	Participants  []user.ID
 	Draws         int
+	SeriesWinner  user.ID
 	IsCompleted   bool
 	IsDraw        bool
-	SeriesWinner  user.ID
 	NeedsNewRound bool
-	Participants  []user.ID
 }
 
 type IGame interface {

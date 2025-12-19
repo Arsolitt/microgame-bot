@@ -19,7 +19,7 @@ type UnitOfWork struct {
 	rpsRepo     rps.IRPSRepository
 }
 
-// NewUnitOfWork creates a new unit of work instance
+// NewUnitOfWork creates a new unit of work instance.
 func New(db *gorm.DB, opts ...UnitOfWorkOpt) *UnitOfWork {
 	u := &UnitOfWork{
 		db: db,
@@ -30,7 +30,7 @@ func New(db *gorm.DB, opts ...UnitOfWorkOpt) *UnitOfWork {
 	return u
 }
 
-// Do executes function within a transaction
+// Do executes function within a transaction.
 func (u *UnitOfWork) Do(ctx context.Context, fn func(unit IUnitOfWork) error) error {
 	return u.db.Transaction(func(tx *gorm.DB) error {
 		opts := make([]UnitOfWorkOpt, 0, 4)

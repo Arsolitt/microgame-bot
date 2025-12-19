@@ -8,9 +8,9 @@ import (
 type CallbackQueryResponse struct {
 	CallbackQueryID string
 	Text            string
-	ShowAlert       bool
 	URL             string
 	CacheTime       int
+	ShowAlert       bool
 }
 
 func (r *CallbackQueryResponse) Handle(ctx *th.Context) error {

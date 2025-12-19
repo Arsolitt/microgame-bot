@@ -11,12 +11,12 @@ import (
 type TelegramToken string
 
 type Config struct {
-	Nats     NatsConfig     `env-prefix:"NATS__"`
 	Postgres PostgresConfig `env-prefix:"POSTGRES__"`
 	Sqlite   SqliteConfig   `env-prefix:"SQLITE__"`
+	Nats     NatsConfig     `env-prefix:"NATS__"`
+	App      AppConfig      `env-prefix:"APP__"`
 	Logs     LogsConfig     `env-prefix:"LOGS__"`
 	Telegram TelegramConfig `env-prefix:"TELEGRAM__"`
-	App      AppConfig      `env-prefix:"APP__"`
 }
 
 type LogsConfig struct {
@@ -37,13 +37,13 @@ type PostgresConfig struct {
 type TelegramConfig struct {
 	Token    TelegramToken `env:"TOKEN"     validate:"required"`
 	AdminIDs []int64       `env:"ADMIN_IDS" validate:""`
-	Debug    bool          `env:"DEBUG"                               env-default:"false"`
+	Debug    bool          `env:"DEBUG"                         env-default:"false"`
 }
 
 type AppConfig struct {
-	MaxRequestsPerUser int    `env:"MAX_REQUESTS_PER_USER" env-default:"3" validate:"min=1"`
-	GormDialector      string `env:"GORM_DIALECTOR" env-default:"sqlite" validate:"oneof=sqlite postgres"`
-	MaxGameCount       int    `env:"MAX_GAME_COUNT" env-default:"10" validate:"min=1"`
+	GormDialector      string `env:"GORM_DIALECTOR"        env-default:"sqlite" validate:"oneof=sqlite postgres"`
+	MaxRequestsPerUser int    `env:"MAX_REQUESTS_PER_USER" env-default:"3"      validate:"min=1"`
+	MaxGameCount       int    `env:"MAX_GAME_COUNT"        env-default:"10"     validate:"min=1"`
 }
 
 type NatsConfig struct {

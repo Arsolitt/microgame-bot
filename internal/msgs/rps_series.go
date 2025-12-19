@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// getCreatorUsername returns creator username based on creator ID
+// getCreatorUsername returns creator username based on creator ID.
 func getCreatorUsername(creatorID domainUser.ID, player1 domainUser.User, player2 domainUser.User) string {
 	if creatorID == player1.ID() {
 		return string(player1.Username())
@@ -15,7 +15,7 @@ func getCreatorUsername(creatorID domainUser.ID, player1 domainUser.User, player
 	return string(player2.Username())
 }
 
-// buildRPSRoundsHistory generates rounds history section
+// buildRPSRoundsHistory generates rounds history section.
 func buildRPSRoundsHistory(games []rps.RPS, player1 domainUser.User, player2 domainUser.User) string {
 	var sb strings.Builder
 
@@ -37,7 +37,7 @@ func buildRPSRoundsHistory(games []rps.RPS, player1 domainUser.User, player2 dom
 	return sb.String()
 }
 
-// RPSSeriesCompleted generates message when series is finished
+// RPSSeriesCompleted generates message when series is finished.
 func RPSSeriesCompleted(
 	games []rps.RPS,
 	player1 domainUser.User,
@@ -68,7 +68,7 @@ func RPSSeriesCompleted(
 // 	return fmt.Sprintf("🎉 Победил @%s", winner.Username())
 // }
 
-// RPSSeriesDraw generates message when series ends in a draw
+// RPSSeriesDraw generates message when series ends in a draw.
 func RPSSeriesDraw(
 	games []rps.RPS,
 	player1 domainUser.User,
@@ -98,7 +98,7 @@ func RPSSeriesDraw(
 // 	return "🤝 Ничья!"
 // }
 
-// RPSRoundCompleted generates message when round is finished and new round starts
+// RPSRoundCompleted generates message when round is finished and new round starts.
 func RPSRoundCompleted(
 	games []rps.RPS,
 	player1 domainUser.User,
@@ -128,7 +128,7 @@ func RPSRoundCompleted(
 	return sb.String()
 }
 
-// RPSRoundFinishedWithScore generates message showing round result with history and current score
+// RPSRoundFinishedWithScore generates message showing round result with history and current score.
 func RPSRoundFinishedWithScore(
 	games []rps.RPS,
 	player1 domainUser.User,

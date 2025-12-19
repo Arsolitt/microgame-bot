@@ -49,7 +49,8 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 				tu.ResultArticle(
 					"game::ttt",
 					"Крестики-Нолики "+roundsLabel,
-					tu.TextMessage(fmt.Sprintf("🎮 <b>Крестики-Нолики</b>\n<i>%s</i>\n\nНажми кнопку, чтобы начать игру!", roundsLabel)).WithParseMode("HTML"),
+					tu.TextMessage(fmt.Sprintf("🎮 <b>Крестики-Нолики</b>\n<i>%s</i>\n\nНажми кнопку, чтобы начать игру!", roundsLabel)).
+						WithParseMode("HTML"),
 				).WithReplyMarkup(tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
 						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::ttt::" + roundsStr),
@@ -58,7 +59,8 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 				tu.ResultArticle(
 					"game::rps",
 					"Камень-Ножницы-Бумага "+roundsLabel,
-					tu.TextMessage(fmt.Sprintf("🎮 <b>Камень-Ножницы-Бумага</b>\n<i>%s</i>\n\n\nНажми кнопку, чтобы начать игру!", roundsLabel)).WithParseMode("HTML"),
+					tu.TextMessage(fmt.Sprintf("🎮 <b>Камень-Ножницы-Бумага</b>\n<i>%s</i>\n\n\nНажми кнопку, чтобы начать игру!", roundsLabel)).
+						WithParseMode("HTML"),
 				).WithReplyMarkup(tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
 						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::rps::" + roundsStr),

@@ -15,7 +15,7 @@ var (
 	}
 )
 
-// IUnitOfWork provides transactional operations over multiple repositories
+// IUnitOfWork provides transactional operations over multiple repositories.
 type IUnitOfWork interface {
 	Do(ctx context.Context, fn func(uow IUnitOfWork) error) error
 

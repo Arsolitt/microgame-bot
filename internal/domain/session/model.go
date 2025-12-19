@@ -6,14 +6,14 @@ import (
 )
 
 type Session struct {
-	id              ID
-	gameType        domain.GameType
-	inlineMessageID domain.InlineMessageID
-	gameCount       int
-	bet             int
-	status          domain.GameStatus
 	createdAt       time.Time
 	updatedAt       time.Time
+	gameType        domain.GameType
+	inlineMessageID domain.InlineMessageID
+	status          domain.GameStatus
+	gameCount       int
+	bet             int
+	id              ID
 }
 
 func New(opts ...SessionOpt) (Session, error) {

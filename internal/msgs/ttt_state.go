@@ -38,7 +38,9 @@ func TTTGameState(game ttt.TTT, playerX domainUser.User, playerO domainUser.User
 			winner = playerO
 		}
 
-		sb.WriteString(fmt.Sprintf("🏆 <b>Победитель:</b> @%s %s", winner.Username(), game.PlayerCell(game.WinnerID()).Icon()))
+		sb.WriteString(
+			fmt.Sprintf("🏆 <b>Победитель:</b> @%s %s", winner.Username(), game.PlayerCell(game.WinnerID()).Icon()),
+		)
 	} else if game.IsDraw() {
 		sb.WriteString("🤝 <b>Ничья!</b>")
 	}

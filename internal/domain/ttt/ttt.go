@@ -12,20 +12,20 @@ import (
 )
 
 type TTT struct {
+	createdAt time.Time
+	updatedAt time.Time
+	board     [3][3]Cell
+	status    domain.GameStatus
 	id        ID
 	creatorID user.ID
 	playerXID user.ID
 	playerOID user.ID
-	status    domain.GameStatus
 	winnerID  user.ID
 	sessionID session.ID
 	turn      user.ID
-	board     [3][3]Cell
-	createdAt time.Time
-	updatedAt time.Time
 }
 
-// New creates a new TTT instance with the given options
+// New creates a new TTT instance with the given options.
 func New(opts ...TTTOpt) (TTT, error) {
 	t := &TTT{
 		board: [3][3]Cell{},
@@ -74,7 +74,7 @@ func (t TTT) SessionID() session.ID     { return t.sessionID }
 func (t TTT) IDtoUUID() uuid.UUID       { return uuid.UUID(t.id) }
 func (t TTT) Type() domain.GameType     { return domain.GameTypeTTT }
 
-// Participants returns all participants in the game
+// Participants returns all participants in the game.
 func (t TTT) Participants() []user.ID {
 	participants := make([]user.ID, 0, 2)
 	if !t.playerXID.IsZero() {
@@ -131,7 +131,7 @@ func (t TTT) GetCell(row, col int) (Cell, error) {
 	return t.board[row][col], nil
 }
 
-// assignPlayersRandomly randomly assigns two players to X and O roles
+// assignPlayersRandomly randomly assigns two players to X and O roles.
 func (t TTT) AssignPlayersRandomly() TTT {
 	if utils.RandInt(2) == 0 {
 		t.turn = t.playerXID
@@ -206,7 +206,7 @@ func (t TTT) countPieces() (countX, countO int) {
 			}
 		}
 	}
-	return
+	return countX, countO
 }
 
 // checkWinners checks if either player has a winning combination.

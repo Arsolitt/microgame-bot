@@ -6,10 +6,10 @@ import (
 )
 
 type EditMessageReplyMarkupResponse struct {
+	ReplyMarkup     *telego.InlineKeyboardMarkup
 	InlineMessageID string
 	ChatID          int64
 	MessageID       int
-	ReplyMarkup     *telego.InlineKeyboardMarkup
 	SkipError       bool
 }
 

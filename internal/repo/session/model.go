@@ -7,14 +7,14 @@ import (
 )
 
 type Session struct {
-	ID              se.ID                  `gorm:"primaryKey;type:uuid"`
-	GameType        domain.GameType        `gorm:"not null"`
-	GameCount       int                    `gorm:"not null"`
-	InlineMessageID domain.InlineMessageID `gorm:"not null;uniqueIndex"`
-	Bet             int                    `gorm:"not null"`
-	Status          domain.GameStatus      `gorm:"not null"`
 	CreatedAt       time.Time              `gorm:"not null"`
 	UpdatedAt       time.Time              `gorm:"not null"`
+	GameType        domain.GameType        `gorm:"not null"`
+	InlineMessageID domain.InlineMessageID `gorm:"not null;uniqueIndex"`
+	Status          domain.GameStatus      `gorm:"not null"`
+	GameCount       int                    `gorm:"not null"`
+	Bet             int                    `gorm:"not null"`
+	ID              se.ID                  `gorm:"primaryKey;type:uuid"`
 }
 
 // TODO: add tests

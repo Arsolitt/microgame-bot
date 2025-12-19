@@ -11,10 +11,10 @@ import (
 
 type rpsPlayers []rpsPlayer
 type rpsPlayer struct {
-	ID       uuid.UUID   `json:"id"`
-	Number   int         `json:"number"`
-	IsWinner bool        `json:"is_winner"`
 	Choice   rpsD.Choice `json:"choice"`
+	Number   int         `json:"number"`
+	ID       uuid.UUID   `json:"id"`
+	IsWinner bool        `json:"is_winner"`
 }
 
 type rpsData struct {
@@ -83,7 +83,6 @@ func (_ Repository) ToDomain(gm gM.Game) (rpsD.RPS, error) {
 		return rpsD.RPS{}, fmt.Errorf("failed to create RPS in %s: %w", OPERATION_NAME, err)
 	}
 	return model, nil
-
 }
 
 func rpsPlayerByNumber(players rpsPlayers, number int) rpsPlayer {

@@ -10,6 +10,8 @@ import (
 )
 
 type RPS struct {
+	createdAt time.Time
+	updatedAt time.Time
 	status    domain.GameStatus
 	choice1   Choice
 	choice2   Choice
@@ -19,8 +21,6 @@ type RPS struct {
 	player1ID user.ID
 	player2ID user.ID
 	creatorID user.ID
-	createdAt time.Time
-	updatedAt time.Time
 }
 
 func New(opts ...RPSOpt) (RPS, error) {
@@ -105,7 +105,6 @@ func (r RPS) JoinGame(playerID user.ID) (RPS, error) {
 }
 
 func (r RPS) MakeChoice(playerID user.ID, choice Choice) (RPS, error) {
-
 	if playerID != r.player1ID && playerID != r.player2ID {
 		return RPS{}, domain.ErrPlayerNotInGame
 	}

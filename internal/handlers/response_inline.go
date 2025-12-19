@@ -7,10 +7,10 @@ import (
 
 type InlineQueryResponse struct {
 	QueryID    string
+	NextOffset string
 	Results    []telego.InlineQueryResult
 	CacheTime  int
 	IsPersonal bool
-	NextOffset string
 }
 
 func (r *InlineQueryResponse) Handle(ctx *th.Context) error {

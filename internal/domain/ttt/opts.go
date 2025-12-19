@@ -104,7 +104,7 @@ func WithBoard(board [3][3]Cell) TTTOpt {
 	}
 }
 
-// WithRandomFirstPlayer randomly assigns creator to X or O
+// WithRandomFirstPlayer randomly assigns creator to X or O.
 func WithRandomFirstPlayer() TTTOpt {
 	return func(t *TTT) error {
 		if t.creatorID.IsZero() {
@@ -120,7 +120,7 @@ func WithRandomFirstPlayer() TTTOpt {
 	}
 }
 
-// WithCreatorAsX assigns creator to player X
+// WithCreatorAsX assigns creator to player X.
 func WithCreatorAsX() TTTOpt {
 	return func(t *TTT) error {
 		if t.creatorID.IsZero() {
@@ -131,7 +131,7 @@ func WithCreatorAsX() TTTOpt {
 	}
 }
 
-// WithCreatorAsO assigns creator to player O
+// WithCreatorAsO assigns creator to player O.
 func WithCreatorAsO() TTTOpt {
 	return func(t *TTT) error {
 		if t.creatorID.IsZero() {

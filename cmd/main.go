@@ -86,9 +86,13 @@ func startup() error {
 		return err
 	}
 
-	bh, err := th.NewBotHandler(bot, updates, th.WithErrorHandler(func(ctx *th.Context, update telego.Update, err error) {
-		slog.ErrorContext(ctx, "Handler error occurred", logger.ErrorField, err.Error())
-	}))
+	bh, err := th.NewBotHandler(
+		bot,
+		updates,
+		th.WithErrorHandler(func(ctx *th.Context, update telego.Update, err error) {
+			slog.ErrorContext(ctx, "Handler error occurred", logger.ErrorField, err.Error())
+		}),
+	)
 	if err != nil {
 		return err
 	}
@@ -116,15 +120,24 @@ func startup() error {
 		uowGorm.WithSessionRepo(sessionRepo),
 		uowGorm.WithTTTRepo(tttRepo),
 	)
-	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTJoin(userRepo, tttJoinUnit)), th.CallbackDataPrefix("g::ttt::join::"))
+	tttG.HandleCallbackQuery(
+		handlers.WrapCallbackQuery(handlers.TTTJoin(userRepo, tttJoinUnit)),
+		th.CallbackDataPrefix("g::ttt::join::"),
+	)
 
 	tttMoveUnit := uowGorm.New(db,
 		uowGorm.WithSessionRepo(sessionRepo),
 		uowGorm.WithTTTRepo(tttRepo),
 	)
-	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTMove(userRepo, tttMoveUnit)), th.CallbackDataPrefix("g::ttt::move::"))
+	tttG.HandleCallbackQuery(
+		handlers.WrapCallbackQuery(handlers.TTTMove(userRepo, tttMoveUnit)),
+		th.CallbackDataPrefix("g::ttt::move::"),
+	)
 
-	tttG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTRebuild(userRepo, tttRepo)), th.CallbackDataPrefix("g::ttt::rebuild::"))
+	tttG.HandleCallbackQuery(
+		handlers.WrapCallbackQuery(handlers.TTTRebuild(userRepo, tttRepo)),
+		th.CallbackDataPrefix("g::ttt::rebuild::"),
+	)
 
 	rpsG := bh.Group(th.CallbackDataPrefix("g::rps::"))
 	// rpsG.Use(mdw.GameProvider(memoryLocker.New[rps.ID](), rpsRepo, gsRepo, "rps"))
@@ -133,24 +146,36 @@ func startup() error {
 		uowGorm.WithSessionRepo(sessionRepo),
 		uowGorm.WithRPSRepo(rpsRepo),
 	)
-	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSJoin(userRepo, rpsJoinUnit)), th.CallbackDataPrefix("g::rps::join::"))
+	rpsG.HandleCallbackQuery(
+		handlers.WrapCallbackQuery(handlers.RPSJoin(userRepo, rpsJoinUnit)),
+		th.CallbackDataPrefix("g::rps::join::"),
+	)
 	rpsChoiceUnit := uowGorm.New(db,
 		uowGorm.WithSessionRepo(sessionRepo),
 		uowGorm.WithRPSRepo(rpsRepo),
 	)
-	rpsG.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSChoice(userRepo, rpsChoiceUnit)), th.CallbackDataPrefix("g::rps::choice::"))
+	rpsG.HandleCallbackQuery(
+		handlers.WrapCallbackQuery(handlers.RPSChoice(userRepo, rpsChoiceUnit)),
+		th.CallbackDataPrefix("g::rps::choice::"),
+	)
 
 	tttUow := uowGorm.New(db,
 		uowGorm.WithSessionRepo(sessionRepo),
 		uowGorm.WithTTTRepo(tttRepo),
 	)
-	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.TTTCreate(tttUow, cfg.App)), th.CallbackDataPrefix("create::ttt"))
+	bh.HandleCallbackQuery(
+		handlers.WrapCallbackQuery(handlers.TTTCreate(tttUow, cfg.App)),
+		th.CallbackDataPrefix("create::ttt"),
+	)
 
 	rpsCreateUnit := uowGorm.New(db,
 		uowGorm.WithSessionRepo(sessionRepo),
 		uowGorm.WithRPSRepo(rpsRepo),
 	)
-	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.RPSCreate(rpsCreateUnit, cfg.App)), th.CallbackDataPrefix("create::rps"))
+	bh.HandleCallbackQuery(
+		handlers.WrapCallbackQuery(handlers.RPSCreate(rpsCreateUnit, cfg.App)),
+		th.CallbackDataPrefix("create::rps"),
+	)
 
 	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.Empty()), th.CallbackDataEqual("empty"))
 

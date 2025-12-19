@@ -77,7 +77,7 @@ func (r *Repository) GamesBySessionID(ctx context.Context, id session.ID) ([]rps
 	for i, model := range models {
 		results[i], err = r.ToDomain(model)
 		if err != nil {
-			ctx = logger.WithLogValue(ctx, logger.ModelIDField, model.ID)
+			ctx := logger.WithLogValue(ctx, logger.ModelIDField, model.ID)
 			slog.WarnContext(ctx, "Failed to convert model to domain", logger.ErrorField, err)
 			continue
 		}

@@ -11,14 +11,14 @@ import (
 
 type tttPlayers []tttPlayer
 type tttPlayer struct {
+	Figure   tttD.Cell `json:"figure"`
 	ID       uuid.UUID `json:"id"`
 	IsWinner bool      `json:"is_winner"`
-	Figure   tttD.Cell `json:"figure"`
 }
 
 type tttData struct {
-	WinnerID uuid.UUID  `json:"winner"`
 	Board    tttD.Board `json:"board"`
+	WinnerID uuid.UUID  `json:"winner"`
 	Turn     uuid.UUID  `json:"turn"`
 }
 
