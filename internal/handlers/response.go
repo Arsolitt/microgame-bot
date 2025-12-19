@@ -3,7 +3,6 @@ package handlers
 import (
 	"microgame-bot/internal/domain/user"
 
-	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
@@ -20,92 +19,6 @@ func (r ResponseChain) Handle(ctx *th.Context) error {
 		}
 	}
 	return nil
-}
-
-type InlineQueryResponse struct {
-	QueryID    string
-	Results    []telego.InlineQueryResult
-	CacheTime  int
-	IsPersonal bool
-	NextOffset string
-}
-
-func (r *InlineQueryResponse) Handle(ctx *th.Context) error {
-	params := &telego.AnswerInlineQueryParams{
-		InlineQueryID: r.QueryID,
-		Results:       r.Results,
-		CacheTime:     r.CacheTime,
-		IsPersonal:    r.IsPersonal,
-		NextOffset:    r.NextOffset,
-	}
-	return ctx.Bot().AnswerInlineQuery(ctx, params)
-}
-
-type EditMessageTextResponse struct {
-	InlineMessageID    string
-	ChatID             int64
-	MessageID          int
-	Text               string
-	ParseMode          string
-	Entities           []telego.MessageEntity
-	LinkPreviewOptions *telego.LinkPreviewOptions
-	ReplyMarkup        *telego.InlineKeyboardMarkup
-}
-
-func (r *EditMessageTextResponse) Handle(ctx *th.Context) error {
-	params := &telego.EditMessageTextParams{
-		InlineMessageID:    r.InlineMessageID,
-		ChatID:             telego.ChatID{ID: r.ChatID},
-		MessageID:          r.MessageID,
-		Text:               r.Text,
-		ParseMode:          r.ParseMode,
-		Entities:           r.Entities,
-		LinkPreviewOptions: r.LinkPreviewOptions,
-		ReplyMarkup:        r.ReplyMarkup,
-	}
-	_, err := ctx.Bot().EditMessageText(ctx, params)
-	return err
-}
-
-type EditMessageReplyMarkupResponse struct {
-	InlineMessageID string
-	ChatID          int64
-	MessageID       int
-	ReplyMarkup     *telego.InlineKeyboardMarkup
-	SkipError       bool
-}
-
-func (r *EditMessageReplyMarkupResponse) Handle(ctx *th.Context) error {
-	params := &telego.EditMessageReplyMarkupParams{
-		InlineMessageID: r.InlineMessageID,
-		ChatID:          telego.ChatID{ID: r.ChatID},
-		MessageID:       r.MessageID,
-		ReplyMarkup:     r.ReplyMarkup,
-	}
-	_, err := ctx.Bot().EditMessageReplyMarkup(ctx, params)
-	if err != nil && !r.SkipError {
-		return err
-	}
-	return nil
-}
-
-type CallbackQueryResponse struct {
-	CallbackQueryID string
-	Text            string
-	ShowAlert       bool
-	URL             string
-	CacheTime       int
-}
-
-func (r *CallbackQueryResponse) Handle(ctx *th.Context) error {
-	params := &telego.AnswerCallbackQueryParams{
-		CallbackQueryID: r.CallbackQueryID,
-		Text:            r.Text,
-		ShowAlert:       r.ShowAlert,
-		URL:             r.URL,
-		CacheTime:       r.CacheTime,
-	}
-	return ctx.Bot().AnswerCallbackQuery(ctx, params)
 }
 
 type iSuccessMessageDefiner interface {
