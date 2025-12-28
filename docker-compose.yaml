@@ -11,6 +11,9 @@ services:
     #   - "8000:8080"
     depends_on:
       - postgres
+      - nats1
+      - nats2
+      - nats3
     restart: unless-stopped
 
   postgres:
@@ -32,14 +35,50 @@ services:
       timeout: 5s
       retries: 5
 
-  nats:
-    image: nats:2.12.1
+  nats1:
+    image: nats:2.12.3-alpine
     command: ["-c", "/etc/nats/nats.conf"]
     environment:
-      - NATS_URL=nats://nats:4222
+      - NATS_SERVER_NAME=nats1
+      - NATS_CLUSTER_NAME=nats-cluster
+      - NATS_ROUTES=nats://nats1:6222,nats://nats2:6222,nats://nats3:6222
+      - NATS_STORE_DIR=/data/jetstream/nats1
     ports:
       - "4222:4222"
+      - "6222:6222"
       - "8222:8222"
+    volumes:
+      - ./nats.conf:/etc/nats/nats.conf:ro
+      - nats-data:/data/jetstream
+
+  nats2:
+    image: nats:2.12.3-alpine
+    command: ["-c", "/etc/nats/nats.conf"]
+    environment:
+      - NATS_SERVER_NAME=nats2
+      - NATS_CLUSTER_NAME=nats-cluster
+      - NATS_ROUTES=nats://nats1:6222,nats://nats2:6222,nats://nats3:6222
+      - NATS_STORE_DIR=/data/jetstream/nats2
+    ports:
+      - "4223:4222"
+      - "6223:6222"
+      - "8223:8222"
+    volumes:
+      - ./nats.conf:/etc/nats/nats.conf:ro
+      - nats-data:/data/jetstream
+
+  nats3:
+    image: nats:2.12.3-alpine
+    command: ["-c", "/etc/nats/nats.conf"]
+    environment:
+      - NATS_SERVER_NAME=nats3
+      - NATS_CLUSTER_NAME=nats-cluster
+      - NATS_ROUTES=nats://nats1:6222,nats://nats2:6222,nats://nats3:6222
+      - NATS_STORE_DIR=/data/jetstream/nats3
+    ports:
+      - "4224:4222"
+      - "6224:6222"
+      - "8224:8222"
     volumes:
       - ./nats.conf:/etc/nats/nats.conf:ro
       - nats-data:/data/jetstream
