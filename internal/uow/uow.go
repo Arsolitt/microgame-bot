@@ -3,6 +3,7 @@ package uow
 import (
 	"context"
 	"errors"
+	"microgame-bot/internal/repo/claim"
 	"microgame-bot/internal/repo/game/rps"
 	"microgame-bot/internal/repo/game/ttt"
 	"microgame-bot/internal/repo/session"
@@ -17,6 +18,7 @@ type UnitOfWork struct {
 	tttRepo     ttt.ITTTRepository
 	sessionRepo session.ISessionRepository
 	rpsRepo     rps.IRPSRepository
+	claimRepo   claim.IClaimRepository
 }
 
 // New creates a new unit of work instance.
@@ -46,6 +48,9 @@ func (u *UnitOfWork) Do(_ context.Context, fn func(unit IUnitOfWork) error) erro
 		}
 		if u.userRepo != nil {
 			opts = append(opts, WithUserRepo(user.New(tx)))
+		}
+		if u.claimRepo != nil {
+			opts = append(opts, WithClaimRepo(claim.New(tx)))
 		}
 
 		txUow := New(tx, opts...)
@@ -81,6 +86,13 @@ func (u *UnitOfWork) RPSRepo() (rps.IRPSRepository, error) {
 	return u.rpsRepo, nil
 }
 
+func (u *UnitOfWork) ClaimRepo() (claim.IClaimRepository, error) {
+	if u.claimRepo == nil {
+		return nil, errors.New("claim repository is not set")
+	}
+	return u.claimRepo, nil
+}
+
 type UnitOfWorkOpt func(*UnitOfWork)
 
 func WithUserRepo(userR user.IUserRepository) UnitOfWorkOpt {
@@ -104,5 +116,11 @@ func WithSessionRepo(gsR session.ISessionRepository) UnitOfWorkOpt {
 func WithRPSRepo(rpsR rps.IRPSRepository) UnitOfWorkOpt {
 	return func(u *UnitOfWork) {
 		u.rpsRepo = rpsR
+	}
+}
+
+func WithClaimRepo(claimR claim.IClaimRepository) UnitOfWorkOpt {
+	return func(u *UnitOfWork) {
+		u.claimRepo = claimR
 	}
 }
