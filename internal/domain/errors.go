@@ -26,4 +26,5 @@ var (
 	ErrMultipleGamesInProgress         = errors.New("multiple games in progress")
 	ErrGameCountRequired               = errors.New("round count required")
 	ErrGameNotStarted                  = errors.New("game not started")
+	ErrInsufficientTokens              = errors.New("insufficient tokens")
 )

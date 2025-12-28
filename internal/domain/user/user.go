@@ -13,6 +13,7 @@ type User struct {
 	lastName   LastName
 	username   Username
 	telegramID TelegramID
+	tokens     domain.Token
 	id         ID
 }
 
@@ -46,3 +47,9 @@ func (u User) LastName() LastName     { return u.lastName }
 func (u User) Username() Username     { return u.username }
 func (u User) CreatedAt() time.Time   { return u.createdAt }
 func (u User) UpdatedAt() time.Time   { return u.updatedAt }
+func (u User) Tokens() domain.Token   { return u.tokens }
+
+func (u User) AddTokens(amount domain.Token) (User, error) {
+	u.tokens += amount
+	return u, nil
+}

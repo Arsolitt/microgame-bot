@@ -13,6 +13,13 @@ type (
 	GameStatus      string
 	GameType        string
 	Player          string
+	Token           uint64
+)
+
+const (
+	DailyBonusTokens Token = 100
+	MinTokens        Token = 0
+	StartBonusTokens Token = 1000
 )
 
 const (

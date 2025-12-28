@@ -155,3 +155,21 @@ func WithUpdatedAt(updatedAt time.Time) Opt {
 		return nil
 	}
 }
+
+func WithTokens(tokens domain.Token) Opt {
+	return func(u *User) error {
+		if tokens < domain.MinTokens {
+			return domain.ErrInsufficientTokens
+		}
+		u.tokens = tokens
+		return nil
+	}
+}
+
+func WithTokensFromUInt(tokens uint64) Opt {
+	return WithTokens(domain.Token(tokens))
+}
+
+func WithTokensFromInt(tokens int64) Opt {
+	return WithTokens(domain.Token(tokens))
+}
