@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/logger"
+	"microgame-bot/internal/domain"
 	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/locker"
 	repository "microgame-bot/internal/repo/user"
@@ -19,6 +20,7 @@ func UserProvider(
 	userRepo repository.IUserRepository,
 ) func(ctx *th.Context, update telego.Update) error {
 	const operationName = "middleware::user_provider"
+	l := slog.With(slog.String(logger.OperationField, operationName))
 	return func(ctx *th.Context, update telego.Update) error {
 		var userTelegramID int64
 		var firstName string
@@ -64,8 +66,6 @@ func UserProvider(
 			return core.ErrInvalidUpdate
 		}
 
-		l := slog.With(slog.String(logger.OperationField, operationName))
-
 		rawCtx := ctx.Context()
 		rawCtx = logger.WithLogValue(rawCtx, logger.UserTelegramIDField, userTelegramID)
 		rawCtx = logger.WithLogValue(rawCtx, logger.UserFirstNameField, firstName)
@@ -89,6 +89,7 @@ func UserProvider(
 					domainUser.WithLastName(domainUser.LastName(lastName)),
 					domainUser.WithUsername(domainUser.Username(username)),
 					domainUser.WithChatIDFromPointer(privateChatID),
+					domainUser.WithTokens(domain.StartBonusTokens),
 				)
 				if err != nil {
 					return err
