@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"microgame-bot/internal/core"
 
+	gormClaimRepository "microgame-bot/internal/repo/claim"
 	gormGameRepository "microgame-bot/internal/repo/game"
 	gormSessionRepository "microgame-bot/internal/repo/session"
 	gormUserRepository "microgame-bot/internal/repo/user"
@@ -44,6 +45,10 @@ func MustInit(cfg core.Config) (*gorm.DB, error) {
 	err = db.AutoMigrate(&gormGameRepository.Game{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to migrate game table in %s: %w", operationName, err)
+	}
+	err = db.AutoMigrate(&gormClaimRepository.Claim{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate claim table in %s: %w", operationName, err)
 	}
 	return db, nil
 }
