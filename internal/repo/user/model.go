@@ -17,6 +17,7 @@ type User struct {
 	Username   string    `gorm:"not null;index"`
 	TelegramID int64     `gorm:"not null;uniqueIndex"`
 	ID         uuid.UUID `gorm:"primaryKey;type:uuid"`
+	Tokens     uint64    `gorm:"not null"`
 }
 
 // TODO: add tests
@@ -30,6 +31,7 @@ func (m User) ToDomain() (domainUser.User, error) {
 		domainUser.WithUsernameFromString(m.Username),
 		domainUser.WithCreatedAt(m.CreatedAt),
 		domainUser.WithUpdatedAt(m.UpdatedAt),
+		domainUser.WithTokensFromUInt(m.Tokens),
 	)
 }
 
@@ -50,5 +52,6 @@ func (m User) FromDomain(u domainUser.User) User {
 		Username:   string(u.Username()),
 		CreatedAt:  u.CreatedAt(),
 		UpdatedAt:  u.UpdatedAt(),
+		Tokens:     uint64(u.Tokens()),
 	}
 }
