@@ -6,6 +6,7 @@ import (
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/bot"
 	"microgame-bot/internal/core/database"
+	"microgame-bot/internal/core/kv"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/user"
@@ -17,6 +18,8 @@ import (
 
 	"microgame-bot/internal/handlers"
 	memoryLocker "microgame-bot/internal/locker/memory"
+	natsMetastore "microgame-bot/internal/metastore/nats"
+	gormClaimRepository "microgame-bot/internal/repo/claim"
 	gormRPSRepository "microgame-bot/internal/repo/game/rps"
 	gormTTTRepository "microgame-bot/internal/repo/game/ttt"
 	gormSessionRepository "microgame-bot/internal/repo/session"
@@ -41,6 +44,17 @@ func startup() error {
 		return err
 	}
 
+	natsConn, err := kv.MustInit(ctx, cfg.Nats)
+	if err != nil {
+		return err
+	}
+	defer natsConn.Close()
+
+	claimMetastore, err := natsMetastore.New(ctx, natsConn, "claims_cache", 3)
+	if err != nil {
+		return err
+	}
+
 	userLocker := memoryLocker.New[user.ID]()
 
 	bh, err := bot.MustInit(ctx, cfg)
@@ -53,13 +67,20 @@ func startup() error {
 	tttRepo := gormTTTRepository.New(db)
 	rpsRepo := gormRPSRepository.New(db)
 	sessionRepo := gormSessionRepository.New(db)
+	claimRepo := gormClaimRepository.New(db)
 
 	inlineMsgLocker := memoryLocker.New[domain.InlineMessageID]()
+
+	dbmUow := uowGorm.New(db,
+		uowGorm.WithUserRepo(userRepo),
+		uowGorm.WithClaimRepo(claimRepo),
+	)
 
 	bh.Use(
 		mdw.CorrelationIDProvider(),
 		mdw.InlineMsgProvider(inlineMsgLocker),
 		mdw.UserProvider(userLocker, userRepo),
+		mdw.DailyBonusMiddleware(dbmUow, claimMetastore),
 	)
 
 	// Game selector

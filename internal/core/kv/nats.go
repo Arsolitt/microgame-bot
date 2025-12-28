@@ -9,7 +9,7 @@ import (
 	"github.com/nats-io/nkeys"
 )
 
-func GetNatsConn(ctx context.Context, cfg core.NatsConfig) (*nats.Conn, error) {
+func MustInit(_ context.Context, cfg core.NatsConfig) (*nats.Conn, error) {
 	sig, err := nkeys.FromSeed([]byte(cfg.NKeySeed))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create signature: %w", err)
