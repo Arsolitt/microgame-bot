@@ -40,6 +40,7 @@ func TTTCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 			domainSession.WithGameType(domain.GameTypeTTT),
 			domainSession.WithInlineMessageIDFromString(query.InlineMessageID),
 			domainSession.WithGameCount(gameCount),
+			domainSession.WithWinCondition(domainSession.WinConditionFirstTo),
 		)
 		if err != nil {
 			return nil, err

@@ -66,6 +66,7 @@ func (t TTT) PlayerXID() user.ID        { return t.playerXID }
 func (t TTT) PlayerOID() user.ID        { return t.playerOID }
 func (t TTT) Turn() user.ID             { return t.turn }
 func (t TTT) WinnerID() user.ID         { return t.winnerID }
+func (t TTT) Winners() []user.ID        { return []user.ID{t.winnerID} }
 func (t TTT) Board() [3][3]Cell         { return t.board }
 func (t TTT) Status() domain.GameStatus { return t.status }
 func (t TTT) CreatedAt() time.Time      { return t.createdAt }

@@ -67,7 +67,7 @@ func TTTSeriesCompleted(
 			result.Scores[playerO.ID()]))
 	} else {
 		var winner domainUser.User
-		if result.SeriesWinner == playerX.ID() {
+		if result.SeriesWinners[0] == playerX.ID() {
 			winner = playerX
 		} else {
 			winner = playerO
