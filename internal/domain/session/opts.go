@@ -108,3 +108,10 @@ func WithUpdatedAt(updatedAt time.Time) Opt {
 		return nil
 	}
 }
+
+func WithWinCondition(winCondition WinCondition) Opt {
+	return func(gs *Session) error {
+		gs.winCondition = winCondition
+		return nil
+	}
+}

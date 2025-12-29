@@ -1,7 +1,9 @@
 package session
 
 import (
+	"maps"
 	"microgame-bot/internal/domain/user"
+	"slices"
 )
 
 type Result struct {
@@ -9,7 +11,7 @@ type Result struct {
 	Participants  []user.ID
 	Session       Session
 	Draws         int
-	SeriesWinner  user.ID
+	SeriesWinners []user.ID
 	IsCompleted   bool
 	IsDraw        bool
 	NeedsNewRound bool
@@ -17,7 +19,7 @@ type Result struct {
 
 type IGame interface {
 	IsFinished() bool
-	WinnerID() user.ID
+	Winners() []user.ID
 	Participants() []user.ID
 	IsDraw() bool
 }
@@ -55,55 +57,68 @@ func (sm *Manager) CalculateResult() Result {
 			continue
 		}
 
-		winnerID := game.WinnerID()
-		if !winnerID.IsZero() {
+		for _, winnerID := range game.Winners() {
 			result.Scores[winnerID]++
 		}
 	}
 
-	winsNeeded := (sm.session.gameCount + 1) / 2
-
-	for participantID, wins := range result.Scores {
-		if wins >= winsNeeded {
-			result.IsCompleted = true
-			result.SeriesWinner = participantID
-			return result
-		}
-	}
-
-	finishedCount := sm.countFinishedGames()
-
-	if finishedCount >= sm.session.gameCount {
-		result.IsCompleted = true
-
-		// Find player with max score
-		var maxWins int
-		var leader user.ID
-		leaderCount := 0
-
+	if sm.session.WinCondition() == WinConditionFirstTo {
+		winsNeeded := (sm.session.gameCount + 1) / 2
 		for participantID, wins := range result.Scores {
-			if wins > maxWins {
-				maxWins = wins
-				leader = participantID
-				leaderCount = 1
-			} else if wins == maxWins {
-				leaderCount++
+			if wins >= winsNeeded {
+				result.IsCompleted = true
+				result.SeriesWinners = []user.ID{participantID}
+				return result
 			}
 		}
-
-		if leaderCount > 1 || maxWins == 0 {
-			result.IsDraw = true
-		} else {
-			result.SeriesWinner = leader
-		}
-
-		return result
 	}
 
-	result.NeedsNewRound = finishedCount < sm.session.gameCount &&
-		!sm.hasActiveGame()
+	if sm.session.WinCondition() == WinConditionBestOf {
+		finishedCount := sm.countFinishedGames()
+		if finishedCount >= sm.session.gameCount {
+			winners := sm.determineWinners(result.Scores)
+			if len(winners) > 1 {
+				result.IsDraw = true
+				result.SeriesWinners = []user.ID{}
+				return result
+			}
+			result.SeriesWinners = winners
+			return result
+		}
+		result.NeedsNewRound = finishedCount < sm.session.gameCount &&
+			!sm.hasActiveGame()
+	}
+
+	if sm.session.WinCondition() == WinConditionAllTo {
+		finishedCount := sm.countFinishedGames()
+		if finishedCount >= sm.session.gameCount {
+			result.SeriesWinners = sm.determineWinners(result.Scores)
+			if len(result.SeriesWinners) == 0 {
+				result.IsDraw = true
+			}
+			result.IsCompleted = true
+			return result
+		}
+		result.NeedsNewRound = finishedCount < sm.session.gameCount &&
+			!sm.hasActiveGame()
+	}
 
 	return result
+}
+
+func (sm *Manager) determineWinners(scores map[user.ID]int) []user.ID {
+	maxWins := slices.Max(slices.Collect(maps.Values(scores)))
+	if maxWins == 0 {
+		return []user.ID{}
+	}
+	winners := make([]user.ID, 0)
+	for participantID, wins := range scores {
+		if wins == maxWins {
+			winners = append(winners, participantID)
+		}
+	}
+
+	return winners
 }
 
 func (sm *Manager) hasActiveGame() bool {
