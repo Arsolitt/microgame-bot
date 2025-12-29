@@ -62,6 +62,8 @@ func (sm *Manager) CalculateResult() Result {
 		}
 	}
 
+	finishedCount := sm.countFinishedGames()
+
 	if sm.session.WinCondition() == WinConditionFirstTo {
 		winsNeeded := (sm.session.gameCount + 1) / 2
 		for participantID, wins := range result.Scores {
@@ -74,7 +76,6 @@ func (sm *Manager) CalculateResult() Result {
 	}
 
 	if sm.session.WinCondition() == WinConditionBestOf {
-		finishedCount := sm.countFinishedGames()
 		if finishedCount >= sm.session.gameCount {
 			winners := sm.determineWinners(result.Scores)
 			if len(winners) > 1 {
@@ -90,7 +91,6 @@ func (sm *Manager) CalculateResult() Result {
 	}
 
 	if sm.session.WinCondition() == WinConditionAllTo {
-		finishedCount := sm.countFinishedGames()
 		if finishedCount >= sm.session.gameCount {
 			result.SeriesWinners = sm.determineWinners(result.Scores)
 			if len(result.SeriesWinners) == 0 {
@@ -99,9 +99,9 @@ func (sm *Manager) CalculateResult() Result {
 			result.IsCompleted = true
 			return result
 		}
-		result.NeedsNewRound = finishedCount < sm.session.gameCount &&
-			!sm.hasActiveGame()
 	}
+	result.NeedsNewRound = finishedCount < sm.session.gameCount &&
+		!sm.hasActiveGame()
 
 	return result
 }

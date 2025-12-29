@@ -15,6 +15,7 @@ type Session struct {
 	GameCount       int                    `gorm:"not null"`
 	Bet             int                    `gorm:"not null"`
 	ID              se.ID                  `gorm:"primaryKey;type:uuid"`
+	WinCondition    se.WinCondition        `gorm:"not null"`
 }
 
 // TODO: add tests
@@ -28,6 +29,7 @@ func (m Session) ToDomain() (se.Session, error) {
 		se.WithCreatedAt(m.CreatedAt),
 		se.WithUpdatedAt(m.UpdatedAt),
 		se.WithInlineMessageID(m.InlineMessageID),
+		se.WithWinCondition(m.WinCondition),
 	)
 }
 
@@ -42,5 +44,6 @@ func (Session) FromDomain(u se.Session) Session {
 		CreatedAt:       u.CreatedAt(),
 		UpdatedAt:       u.UpdatedAt(),
 		InlineMessageID: u.InlineMessageID(),
+		WinCondition:    u.WinCondition(),
 	}
 }
