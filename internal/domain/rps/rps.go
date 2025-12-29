@@ -119,6 +119,8 @@ func (r RPS) MakeChoice(playerID user.ID, choice Choice) (RPS, error) {
 	if winnerID := r.tryWinnerID(); !winnerID.IsZero() {
 		r.winnerID = winnerID
 		r.status = domain.GameStatusFinished
+	} else if r.IsDraw() {
+		r.status = domain.GameStatusFinished
 	}
 
 	return r, nil

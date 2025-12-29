@@ -73,12 +73,48 @@ func (sm *Manager) CalculateResult() Result {
 				return result
 			}
 		}
+
+		// Check if it's mathematically impossible to reach winsNeeded
+		gamesRemaining := sm.session.gameCount - finishedCount
+		maxWins := sm.maxScore(result.Scores)
+		if maxWins+gamesRemaining < winsNeeded {
+			result.IsCompleted = true
+			result.IsDraw = true
+			result.SeriesWinners = []user.ID{}
+			return result
+		}
+
+		// Check if all games finished but no one reached the win condition (all draws)
+		if finishedCount >= sm.session.gameCount {
+			result.IsCompleted = true
+			winners := sm.determineWinners(result.Scores)
+			if len(winners) > 1 || len(winners) == 0 {
+				result.IsDraw = true
+				result.SeriesWinners = []user.ID{}
+				return result
+			}
+			result.SeriesWinners = winners
+			return result
+		}
 	}
 
 	if sm.session.WinCondition() == WinConditionBestOf {
+		// Check for early winner (someone won more than half of total games)
+		maxWins := sm.maxScore(result.Scores)
+		if maxWins > sm.session.gameCount/2 {
+			result.IsCompleted = true
+			for participantID, wins := range result.Scores {
+				if wins == maxWins {
+					result.SeriesWinners = []user.ID{participantID}
+					return result
+				}
+			}
+		}
+
 		if finishedCount >= sm.session.gameCount {
+			result.IsCompleted = true
 			winners := sm.determineWinners(result.Scores)
-			if len(winners) > 1 {
+			if len(winners) > 1 || len(winners) == 0 {
 				result.IsDraw = true
 				result.SeriesWinners = []user.ID{}
 				return result
@@ -107,7 +143,7 @@ func (sm *Manager) CalculateResult() Result {
 }
 
 func (sm *Manager) determineWinners(scores map[user.ID]int) []user.ID {
-	maxWins := slices.Max(slices.Collect(maps.Values(scores)))
+	maxWins := sm.maxScore(scores)
 	if maxWins == 0 {
 		return []user.ID{}
 	}
@@ -119,6 +155,13 @@ func (sm *Manager) determineWinners(scores map[user.ID]int) []user.ID {
 	}
 
 	return winners
+}
+
+func (sm *Manager) maxScore(scores map[user.ID]int) int {
+	if len(scores) == 0 {
+		return 0
+	}
+	return slices.Max(slices.Collect(maps.Values(scores)))
 }
 
 func (sm *Manager) hasActiveGame() bool {
