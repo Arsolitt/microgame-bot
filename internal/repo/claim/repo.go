@@ -3,6 +3,7 @@ package claim
 import (
 	"context"
 	"errors"
+	"fmt"
 	"microgame-bot/internal/domain/user"
 	"microgame-bot/internal/utils"
 	"strings"
@@ -36,6 +37,21 @@ func (r *Repository) TryClaimDaily(ctx context.Context, userID user.ID, date tim
 		return false, err
 	}
 
+	return true, nil
+}
+
+func (r *Repository) HasClaimedToday(ctx context.Context, userID user.ID) (bool, error) {
+	const operationName = "repo::claim::gorm::HasClaimedToday"
+	_, err := gorm.G[Claim](r.db).
+		Where("user_id = ?", userID).
+		Where("claim_date = ?", truncateToDate(time.Now())).
+		First(ctx)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check if user has claimed today in %s: %w", operationName, err)
+	}
 	return true, nil
 }
 

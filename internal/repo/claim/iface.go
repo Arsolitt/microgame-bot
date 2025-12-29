@@ -7,5 +7,6 @@ import (
 )
 
 type IClaimRepository interface {
+	HasClaimedToday(ctx context.Context, userID user.ID) (bool, error)
 	TryClaimDaily(ctx context.Context, userID user.ID, date time.Time) (bool, error)
 }
