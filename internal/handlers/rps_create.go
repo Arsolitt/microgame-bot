@@ -40,6 +40,7 @@ func RPSCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 			domainSession.WithGameType(domain.GameTypeRPS),
 			domainSession.WithInlineMessageID(inlineMessageID),
 			domainSession.WithGameCount(gameCount),
+			domainSession.WithWinCondition(domainSession.WinConditionFirstTo),
 		)
 		if err != nil {
 			return nil, err

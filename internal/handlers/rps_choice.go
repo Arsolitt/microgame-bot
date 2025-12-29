@@ -163,7 +163,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 			}
 
 			var winner domainUser.User
-			if result.SeriesWinner == player1.ID() {
+			if result.SeriesWinners[0] == player1.ID() {
 				winner = player1
 			} else {
 				winner = player2

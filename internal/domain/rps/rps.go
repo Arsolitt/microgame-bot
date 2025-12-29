@@ -66,6 +66,7 @@ func (r RPS) Player2ID() user.ID        { return r.player2ID }
 func (r RPS) Choice1() Choice           { return r.choice1 }
 func (r RPS) Choice2() Choice           { return r.choice2 }
 func (r RPS) Winner() user.ID           { return r.winnerID }
+func (r RPS) Winners() []user.ID        { return []user.ID{r.winnerID} }
 func (r RPS) Status() domain.GameStatus { return r.status }
 func (r RPS) CreatedAt() time.Time      { return r.createdAt }
 func (r RPS) UpdatedAt() time.Time      { return r.updatedAt }
