@@ -12,6 +12,8 @@ import (
 	"gorm.io/gorm"
 )
 
+// UnitOfWork is a unit of work that can be used to perform transactional operations.
+// It uses GORM as a underlying storage.
 type UnitOfWork struct {
 	db          *gorm.DB
 	userRepo    user.IUserRepository

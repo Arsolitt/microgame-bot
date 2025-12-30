@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/bot"
@@ -11,8 +12,12 @@ import (
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/user"
 	"microgame-bot/internal/mdw"
+	"microgame-bot/internal/queue"
+	"microgame-bot/internal/scheduler"
+	"microgame-bot/internal/utils"
 	"os"
 	"os/signal"
+	"time"
 
 	th "github.com/mymmrac/telego/telegohandler"
 
@@ -70,6 +75,22 @@ func startup() error {
 	claimRepo := gormClaimRepository.New(db)
 
 	inlineMsgLocker := memoryLocker.New[domain.InlineMessageID]()
+
+	sc := scheduler.New(db, 10, queue.New(db), 60*time.Second)
+
+	cronJobs := []scheduler.CronJob{
+		scheduler.NewCronJob("test", "42 * * * * *", "test", utils.EmptyPayload, time.Now()),
+	}
+	err = sc.CreateOrUpdateCronJobs(ctx, cronJobs)
+	if err != nil {
+		return fmt.Errorf("failed to create or update test cron job: %w", err)
+	}
+
+	defer func() { _ = sc.Stop(ctx) }()
+	err = sc.Start(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to start scheduler: %w", err)
+	}
 
 	dbmUow := uowGorm.New(db,
 		uowGorm.WithUserRepo(userRepo),

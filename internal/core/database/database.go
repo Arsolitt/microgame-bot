@@ -3,6 +3,8 @@ package database
 import (
 	"fmt"
 	"microgame-bot/internal/core"
+	"microgame-bot/internal/queue"
+	"microgame-bot/internal/scheduler"
 
 	gormClaimRepository "microgame-bot/internal/repo/claim"
 	gormGameRepository "microgame-bot/internal/repo/game"
@@ -49,6 +51,14 @@ func MustInit(cfg core.Config) (*gorm.DB, error) {
 	err = db.AutoMigrate(&gormClaimRepository.Claim{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to migrate claim table in %s: %w", operationName, err)
+	}
+	err = db.AutoMigrate(&scheduler.CronJob{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate cron job table in %s: %w", operationName, err)
+	}
+	err = db.AutoMigrate(&queue.Task{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate task table in %s: %w", operationName, err)
 	}
 	return db, nil
 }
