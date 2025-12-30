@@ -1,0 +1,96 @@
+package scheduler
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"microgame-bot/internal/core/logger"
+	"microgame-bot/internal/utils"
+	"reflect"
+	"time"
+
+	"github.com/robfig/cron/v3"
+	"gorm.io/gorm/schema"
+)
+
+const IMPOSSIBLE_EXPRESSION = "0 0 12 31 2 *"
+
+type CronExpression string
+
+func (e CronExpression) Validate() error {
+	parser := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+	_, err := parser.Parse(string(e))
+	return err
+}
+
+// Scan implements gorm.Serializer interface for reading from database.
+func (e *CronExpression) Scan(_ context.Context, _ *schema.Field, _ reflect.Value, dbValue any) error {
+	switch value := dbValue.(type) {
+	case string:
+		expr := CronExpression(value)
+		if err := expr.Validate(); err != nil {
+			return fmt.Errorf("failed to validate cron expression: %w", err)
+		}
+		*e = expr
+	default:
+		return fmt.Errorf("unsupported data type for CronExpression: %T", dbValue)
+	}
+	return nil
+}
+
+// Value implements gorm.Serializer interface for writing to database.
+func (e CronExpression) Value(_ context.Context, _ *schema.Field, _ reflect.Value, _ any) (any, error) {
+	if err := e.Validate(); err != nil {
+		return nil, fmt.Errorf("failed to validate CronExpression: %w", err)
+	}
+	return string(e), nil
+}
+
+type CronJobStatus string
+
+const (
+	CronJobStatusActive   CronJobStatus = "active"
+	CronJobStatusDisabled CronJobStatus = "disabled"
+)
+
+type CronJob struct {
+	ID           utils.UniqueID `gorm:"primaryKey;type:uuid"`
+	Name         string         `gorm:"uniqueIndex:idx_cron_name;not null;size:255"`
+	Expression   string         `gorm:"not null;size:255"`
+	Status       CronJobStatus  `gorm:"not null;default:active"`
+	Subject      string         `gorm:"not null;size:255"`
+	Payload      []byte         `gorm:"not null;type:jsonb"`
+	TaskRunAfter time.Time      `gorm:"not null"`
+	NextRunAt    time.Time      `gorm:"not null;index:idx_cron_active_run,where:status = 'active'"`
+	LastRunAt    time.Time      `gorm:"not null;index:idx_cron_last_run,where:status = 'active'"`
+	CreatedAt    time.Time      `gorm:"not null"`
+	UpdatedAt    time.Time      `gorm:"not null"`
+}
+
+func NewCronJob(name string, expression string, subject string, payload []byte, taskRunAfter time.Time) CronJob {
+	const OPERATION_NAME = "scheduler::NewCronJob"
+	nextRunAt := calculateNextRun(expression)
+	return CronJob{
+		ID:           utils.NewUniqueID(),
+		Name:         name,
+		Expression:   expression,
+		Status:       CronJobStatusActive,
+		Subject:      subject,
+		Payload:      payload,
+		TaskRunAfter: taskRunAfter,
+		NextRunAt:    nextRunAt,
+	}
+}
+
+func calculateNextRun(expression string) time.Time {
+	const OPERATION_NAME = "scheduler::calculateNextRun"
+	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+	parser := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+	schedule, err := parser.Parse(expression)
+	if err != nil {
+		expression = IMPOSSIBLE_EXPRESSION
+		l.Error("Failed to parse cron expression, using impossible expression", logger.ErrorField, err.Error())
+		return time.Time{}
+	}
+	return schedule.Next(time.Now())
+}
