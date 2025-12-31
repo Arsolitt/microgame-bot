@@ -67,21 +67,6 @@ type CronJob struct {
 	UpdatedAt    time.Time      `gorm:"not null"`
 }
 
-func NewCronJob(name string, expression string, subject string, payload []byte, taskRunAfter time.Time) CronJob {
-	const OPERATION_NAME = "scheduler::NewCronJob"
-	nextRunAt := calculateNextRun(expression)
-	return CronJob{
-		ID:           utils.NewUniqueID(),
-		Name:         name,
-		Expression:   expression,
-		Status:       CronJobStatusActive,
-		Subject:      subject,
-		Payload:      payload,
-		TaskRunAfter: taskRunAfter,
-		NextRunAt:    nextRunAt,
-	}
-}
-
 func calculateNextRun(expression string) time.Time {
 	const OPERATION_NAME = "scheduler::calculateNextRun"
 	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
