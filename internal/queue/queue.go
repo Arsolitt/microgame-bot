@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"microgame-bot/internal/utils"
 	"sync"
 	"time"
@@ -143,6 +144,7 @@ func (q *Queue) CleanupStuckTasks(ctx context.Context, timeout time.Duration) er
 	threshold := time.Now().Add(-timeout)
 	result := q.db.WithContext(ctx).Model(&Task{}).
 		Where("status = ? AND last_attempt < ?", TaskStatusRunning, threshold).
+		Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
 		Updates(map[string]interface{}{
 			"status":    TaskStatusPending,
 			"run_after": time.Now(),
@@ -153,7 +155,8 @@ func (q *Queue) CleanupStuckTasks(ctx context.Context, timeout time.Duration) er
 	}
 
 	if result.RowsAffected > 0 {
-		return fmt.Errorf("cleaned up %d stuck tasks in %s", result.RowsAffected, OPERATION_NAME)
+		slog.InfoContext(ctx, "Cleaned up stuck tasks", "count", result.RowsAffected, "operation", OPERATION_NAME)
+		return nil
 	}
 
 	return nil
@@ -169,7 +172,7 @@ type Consumer struct {
 	minPoll     time.Duration
 	maxPoll     time.Duration
 	currentPoll time.Duration
-	mu          sync.RWMutex // Protects currentPoll
+	mu          sync.RWMutex
 }
 
 // GetCurrentPollInterval returns the current polling interval for monitoring.
@@ -197,6 +200,7 @@ func (c *Consumer) run(ctx context.Context) {
 		case <-ticker.C:
 			tasksFound, err := c.fetchAndEnqueueBatch(ctx)
 			if err != nil {
+				slog.WarnContext(ctx, "Failed to fetch and enqueue batch", "error", err.Error())
 				continue
 			}
 
@@ -244,21 +248,13 @@ func (c *Consumer) fetchAndEnqueueBatch(ctx context.Context) (int, error) {
 
 		// Update all tasks in batch
 		now := time.Now()
-		taskIDs := make([]utils.UniqueID, len(tasks))
 		for i := range tasks {
-			taskIDs[i] = tasks[i].ID
 			tasks[i].Status = TaskStatusRunning
 			tasks[i].Attempts++
 			tasks[i].LastAttempt = now
 		}
 
-		err = tx.Model(&Task{}).
-			Where("id IN ?", taskIDs).
-			Updates(map[string]interface{}{
-				"status":       TaskStatusRunning,
-				"attempts":     gorm.Expr("attempts + 1"),
-				"last_attempt": now,
-			}).Error
+		err = tx.Save(&tasks).Error
 		if err != nil {
 			return fmt.Errorf("failed to update task status in %s: %w", OPERATION_NAME, err)
 		}
