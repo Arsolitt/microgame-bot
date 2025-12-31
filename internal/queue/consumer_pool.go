@@ -6,6 +6,7 @@ import (
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/utils"
 	"sync"
+	"time"
 )
 
 type ConsumerUnitHandler func(ctx context.Context, data []byte) error
@@ -57,26 +58,31 @@ func (p *ConsumerPool) Start(ctx context.Context) error {
 				go func(t *Task) {
 					defer p.wgHandlers.Done()
 					defer p.sem.Release()
-					ctx = logger.WithLogValue(ctx, "task_id", t.ID.String())
-					ctx = logger.WithLogValue(ctx, "subject", t.Subject)
-					ctx = logger.WithLogValue(ctx, "attempts", t.Attempts)
+
+					// Create handler context with task metadata
+					handlerCtx := logger.WithLogValue(ctx, "task_id", t.ID.String())
+					handlerCtx = logger.WithLogValue(handlerCtx, "subject", t.Subject)
+					handlerCtx = logger.WithLogValue(handlerCtx, "attempts", t.Attempts)
 
 					// Check if context is already cancelled
-					if ctx.Err() != nil {
-						_ = c.Nack(ctx, t.ID, ctx.Err())
+					if handlerCtx.Err() != nil {
+						// Use background context for cleanup operations
+						cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+						defer cancel()
+						_ = c.Nack(cleanupCtx, t.ID, handlerCtx.Err())
 						return
 					}
 
-					if err := u.Handler(ctx, t.Payload); err != nil {
-						slog.ErrorContext(ctx, "Failed to handle queue message", logger.ErrorField, err.Error())
-						if nackErr := c.Nack(ctx, t.ID, err); nackErr != nil {
-							slog.ErrorContext(ctx, "Failed to nack task", logger.ErrorField, nackErr.Error())
+					if err := u.Handler(handlerCtx, t.Payload); err != nil {
+						slog.ErrorContext(handlerCtx, "Failed to handle queue message", logger.ErrorField, err.Error())
+						if nackErr := c.Nack(handlerCtx, t.ID, err); nackErr != nil {
+							slog.ErrorContext(handlerCtx, "Failed to nack task", logger.ErrorField, nackErr.Error())
 						}
 						return
 					}
 
-					if ackErr := c.Ack(ctx, t.ID); ackErr != nil {
-						slog.ErrorContext(ctx, "Failed to ack task", logger.ErrorField, ackErr.Error())
+					if ackErr := c.Ack(handlerCtx, t.ID); ackErr != nil {
+						slog.ErrorContext(handlerCtx, "Failed to ack task", logger.ErrorField, ackErr.Error())
 					}
 				}(task)
 			}

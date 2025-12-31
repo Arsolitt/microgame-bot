@@ -19,7 +19,8 @@ type Queue struct {
 	db        *gorm.DB
 	consumers []*Consumer
 	mu        sync.RWMutex
-	stopCh    chan struct{}
+	ctx       context.Context
+	cancel    context.CancelFunc
 
 	// Consumer configuration
 	batchSize   int
@@ -60,10 +61,12 @@ func WithMaxPollInterval(d time.Duration) QueueOption {
 }
 
 func New(db *gorm.DB, opts ...QueueOption) *Queue {
+	ctx, cancel := context.WithCancel(context.Background())
 	q := &Queue{
 		db:          db,
 		consumers:   make([]*Consumer, 0),
-		stopCh:      make(chan struct{}),
+		ctx:         ctx,
+		cancel:      cancel,
 		batchSize:   10,
 		minPollTime: 50 * time.Millisecond,
 		maxPollTime: 5 * time.Second,
@@ -89,16 +92,24 @@ func (q *Queue) NewConsumer(ctx context.Context, subject string) (IQueueConsumer
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
+	// Check if queue is already stopped
+	if q.ctx.Err() != nil {
+		return nil, fmt.Errorf("queue is stopped")
+	}
+
 	// Buffer size = 10x batch size for smooth operation
 	bufferSize := q.batchSize * 10
 	if bufferSize < 100 {
 		bufferSize = 100
 	}
 
+	// Create consumer with its own context, tied to queue lifecycle
+	consumerCtx, cancel := context.WithCancel(q.ctx)
 	consumer := &Consumer{
 		db:          q.db,
 		subject:     subject,
-		stopCh:      q.stopCh,
+		ctx:         consumerCtx,
+		cancel:      cancel,
 		taskCh:      make(chan *Task, bufferSize),
 		doneCh:      make(chan struct{}),
 		batchSize:   q.batchSize,
@@ -108,21 +119,23 @@ func (q *Queue) NewConsumer(ctx context.Context, subject string) (IQueueConsumer
 	}
 
 	q.consumers = append(q.consumers, consumer)
-	go consumer.run(ctx)
+	go consumer.run()
 
 	return consumer, nil
 }
 
 func (q *Queue) Stop(ctx context.Context) error {
-	close(q.stopCh)
+	// Signal all consumers to stop
+	q.cancel()
 
 	q.mu.RLock()
-	defer q.mu.RUnlock()
+	consumers := q.consumers
+	q.mu.RUnlock()
 
-	// Wait for all consumers to finish
+	// Wait for all consumers to finish with timeout
 	done := make(chan struct{})
 	go func() {
-		for _, consumer := range q.consumers {
+		for _, consumer := range consumers {
 			<-consumer.doneCh
 		}
 		close(done)
@@ -132,7 +145,7 @@ func (q *Queue) Stop(ctx context.Context) error {
 	case <-done:
 		return nil
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("shutdown timeout: %w", ctx.Err())
 	}
 }
 
@@ -156,7 +169,6 @@ func (q *Queue) CleanupStuckTasks(ctx context.Context, timeout time.Duration) er
 
 	if result.RowsAffected > 0 {
 		slog.InfoContext(ctx, "Cleaned up stuck tasks", "count", result.RowsAffected, "operation", OPERATION_NAME)
-		return nil
 	}
 
 	return nil
@@ -165,7 +177,8 @@ func (q *Queue) CleanupStuckTasks(ctx context.Context, timeout time.Duration) er
 type Consumer struct {
 	db          *gorm.DB
 	subject     string
-	stopCh      chan struct{}
+	ctx         context.Context
+	cancel      context.CancelFunc
 	taskCh      chan *Task
 	doneCh      chan struct{}
 	batchSize   int
@@ -173,7 +186,6 @@ type Consumer struct {
 	maxPoll     time.Duration
 	currentPoll time.Duration
 	mu          sync.RWMutex
-	closeOnce   sync.Once
 }
 
 // GetCurrentPollInterval returns the current polling interval for monitoring.
@@ -183,9 +195,9 @@ func (c *Consumer) GetCurrentPollInterval() time.Duration {
 	return c.currentPoll
 }
 
-func (c *Consumer) run(ctx context.Context) {
+func (c *Consumer) run() {
 	defer close(c.doneCh)
-	defer c.closeOnce.Do(func() { close(c.taskCh) })
+	defer close(c.taskCh)
 
 	c.mu.RLock()
 	initialPoll := c.currentPoll
@@ -196,12 +208,16 @@ func (c *Consumer) run(ctx context.Context) {
 
 	for {
 		select {
-		case <-c.stopCh:
+		case <-c.ctx.Done():
+			slog.DebugContext(c.ctx, "Consumer stopped", "subject", c.subject)
 			return
 		case <-ticker.C:
-			tasksFound, err := c.fetchAndEnqueueBatch(ctx)
+			tasksFound, err := c.fetchAndEnqueueBatch(c.ctx)
 			if err != nil {
-				slog.WarnContext(ctx, "Failed to fetch and enqueue batch", "error", err.Error())
+				// Don't log if context is cancelled (normal shutdown)
+				if c.ctx.Err() == nil {
+					slog.WarnContext(c.ctx, "Failed to fetch and enqueue batch", "subject", c.subject, "error", err.Error())
+				}
 				continue
 			}
 
@@ -273,9 +289,9 @@ func (c *Consumer) fetchAndEnqueueBatch(ctx context.Context) (int, error) {
 	for i := range tasks {
 		select {
 		case c.taskCh <- &tasks[i]:
-		case <-c.stopCh:
-			// Don't revert tasks - let CleanupStuckTasks handle them
-			return i, fmt.Errorf("consumer stopped")
+		case <-c.ctx.Done():
+			// Consumer stopped - let CleanupStuckTasks handle remaining tasks
+			return i, c.ctx.Err()
 		}
 	}
 
@@ -286,7 +302,7 @@ func (c *Consumer) Consume(ctx context.Context) (*Task, bool) {
 	select {
 	case <-ctx.Done():
 		return nil, false
-	case <-c.stopCh:
+	case <-c.ctx.Done():
 		return nil, false
 	case task, ok := <-c.taskCh:
 		return task, ok
