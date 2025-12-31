@@ -33,7 +33,7 @@ func NewConsumerPool(q IQueue, units []ConsumerUnit, sem utils.ISemaphore) *Cons
 
 func (p *ConsumerPool) Start(ctx context.Context) error {
 	for _, unit := range p.units {
-		consumer, err := p.q.NewConsumer(unit.Subject)
+		consumer, err := p.q.NewConsumer(ctx, unit.Subject)
 		if err != nil {
 			slog.Error("Failed to get consumer", "error", err.Error())
 			return err

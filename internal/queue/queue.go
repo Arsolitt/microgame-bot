@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // Queue is a queue that can be used to publish tasks.
@@ -18,14 +19,60 @@ type Queue struct {
 	consumers []*Consumer
 	mu        sync.RWMutex
 	stopCh    chan struct{}
+
+	// Consumer configuration
+	batchSize   int
+	minPollTime time.Duration
+	maxPollTime time.Duration
 }
 
-func New(db *gorm.DB) *Queue {
-	return &Queue{
-		db:        db,
-		consumers: make([]*Consumer, 0),
-		stopCh:    make(chan struct{}),
+type QueueOption func(*Queue)
+
+// WithBatchSize sets the number of tasks to fetch in a single query.
+// Default: 10
+func WithBatchSize(size int) QueueOption {
+	return func(q *Queue) {
+		if size > 0 {
+			q.batchSize = size
+		}
 	}
+}
+
+// WithMinPollInterval sets the minimum polling interval when tasks are available.
+// Default: 50ms
+func WithMinPollInterval(d time.Duration) QueueOption {
+	return func(q *Queue) {
+		if d > 0 {
+			q.minPollTime = d
+		}
+	}
+}
+
+// WithMaxPollInterval sets the maximum polling interval when queue is idle.
+// Default: 5s
+func WithMaxPollInterval(d time.Duration) QueueOption {
+	return func(q *Queue) {
+		if d > 0 {
+			q.maxPollTime = d
+		}
+	}
+}
+
+func New(db *gorm.DB, opts ...QueueOption) *Queue {
+	q := &Queue{
+		db:          db,
+		consumers:   make([]*Consumer, 0),
+		stopCh:      make(chan struct{}),
+		batchSize:   10,
+		minPollTime: 50 * time.Millisecond,
+		maxPollTime: 5 * time.Second,
+	}
+
+	for _, opt := range opts {
+		opt(q)
+	}
+
+	return q
 }
 
 func (q *Queue) Publish(ctx context.Context, tasks []Task) error {
@@ -37,20 +84,30 @@ func (q *Queue) Publish(ctx context.Context, tasks []Task) error {
 	return nil
 }
 
-func (q *Queue) NewConsumer(subject string) (IQueueConsumer, error) {
+func (q *Queue) NewConsumer(ctx context.Context, subject string) (IQueueConsumer, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
+	// Buffer size = 10x batch size for smooth operation
+	bufferSize := q.batchSize * 10
+	if bufferSize < 100 {
+		bufferSize = 100
+	}
+
 	consumer := &Consumer{
-		db:      q.db,
-		subject: subject,
-		stopCh:  q.stopCh,
-		taskCh:  make(chan *Task, 100),
-		doneCh:  make(chan struct{}),
+		db:          q.db,
+		subject:     subject,
+		stopCh:      q.stopCh,
+		taskCh:      make(chan *Task, bufferSize),
+		doneCh:      make(chan struct{}),
+		batchSize:   q.batchSize,
+		minPoll:     q.minPollTime,
+		maxPoll:     q.maxPollTime,
+		currentPoll: q.minPollTime * 2, // Start with 2x min
 	}
 
 	q.consumers = append(q.consumers, consumer)
-	go consumer.run()
+	go consumer.run(ctx)
 
 	return consumer, nil
 }
@@ -103,18 +160,34 @@ func (q *Queue) CleanupStuckTasks(ctx context.Context, timeout time.Duration) er
 }
 
 type Consumer struct {
-	db      *gorm.DB
-	subject string
-	stopCh  chan struct{}
-	taskCh  chan *Task
-	doneCh  chan struct{}
+	db          *gorm.DB
+	subject     string
+	stopCh      chan struct{}
+	taskCh      chan *Task
+	doneCh      chan struct{}
+	batchSize   int
+	minPoll     time.Duration
+	maxPoll     time.Duration
+	currentPoll time.Duration
+	mu          sync.RWMutex // Protects currentPoll
 }
 
-func (c *Consumer) run() {
+// GetCurrentPollInterval returns the current polling interval for monitoring.
+func (c *Consumer) GetCurrentPollInterval() time.Duration {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.currentPoll
+}
+
+func (c *Consumer) run(ctx context.Context) {
 	defer close(c.doneCh)
 	defer close(c.taskCh)
 
-	ticker := time.NewTicker(100 * time.Millisecond)
+	c.mu.RLock()
+	initialPoll := c.currentPoll
+	c.mu.RUnlock()
+
+	ticker := time.NewTicker(initialPoll)
 	defer ticker.Stop()
 
 	for {
@@ -122,49 +195,97 @@ func (c *Consumer) run() {
 		case <-c.stopCh:
 			return
 		case <-ticker.C:
-			if err := c.fetchAndEnqueue(); err != nil {
+			tasksFound, err := c.fetchAndEnqueueBatch(ctx)
+			if err != nil {
 				continue
 			}
+
+			c.mu.Lock()
+			// Adaptive polling: decrease interval when tasks found, increase when idle
+			if tasksFound > 0 {
+				// Tasks found - poll more frequently
+				c.currentPoll = c.minPoll
+			} else {
+				// No tasks - gradually slow down polling (exponential backoff)
+				c.currentPoll = c.currentPoll * 2
+				if c.currentPoll > c.maxPoll {
+					c.currentPoll = c.maxPoll
+				}
+			}
+			nextPoll := c.currentPoll
+			c.mu.Unlock()
+
+			ticker.Reset(nextPoll)
 		}
 	}
 }
 
-func (c *Consumer) fetchAndEnqueue() error {
-	var task Task
-
+func (c *Consumer) fetchAndEnqueueBatch(ctx context.Context) (int, error) {
+	const OPERATION_NAME = "queue::fetchAndEnqueueBatch"
+	var tasks []Task
 	err := c.db.Transaction(func(tx *gorm.DB) error {
-		err := tx.Where("subject = ? AND status = ? AND run_after <= ?", c.subject, TaskStatusPending, time.Now()).
+		var err error
+		// Use FOR UPDATE SKIP LOCKED for proper concurrent access
+		tasks, err = gorm.G[Task](tx, clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
+			Where("subject = ?", c.subject).
+			Where("status = ?", TaskStatusPending).
+			Where("run_after <= ?", time.Now()).
 			Order("run_after ASC").
-			Limit(1).
-			First(&task).Error
+			Limit(c.batchSize).
+			Find(ctx)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to find tasks in %s: %w", OPERATION_NAME, err)
 		}
 
-		task.Status = TaskStatusRunning
-		task.Attempts++
-		task.LastAttempt = time.Now()
+		if len(tasks) == 0 {
+			return nil
+		}
 
-		return tx.Save(&task).Error
+		// Update all tasks in batch
+		now := time.Now()
+		taskIDs := make([]utils.UniqueID, len(tasks))
+		for i := range tasks {
+			taskIDs[i] = tasks[i].ID
+			tasks[i].Status = TaskStatusRunning
+			tasks[i].Attempts++
+			tasks[i].LastAttempt = now
+		}
+
+		err = tx.Model(&Task{}).
+			Where("id IN ?", taskIDs).
+			Updates(map[string]interface{}{
+				"status":       TaskStatusRunning,
+				"attempts":     gorm.Expr("attempts + 1"),
+				"last_attempt": now,
+			}).Error
+		if err != nil {
+			return fmt.Errorf("failed to update task status in %s: %w", OPERATION_NAME, err)
+		}
+		return nil
 	})
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil
+			return 0, nil
 		}
-		return err
+		return 0, fmt.Errorf("failed to do transaction in %s: %w", OPERATION_NAME, err)
 	}
 
-	select {
-	case c.taskCh <- &task:
-	case <-c.stopCh:
-		// Revert task status if we can't enqueue
-		_ = c.revertTaskStatus(task.ID)
-		return fmt.Errorf("consumer stopped")
+	// Enqueue all fetched tasks
+	for i := range tasks {
+		select {
+		case c.taskCh <- &tasks[i]:
+		case <-c.stopCh:
+			// Revert remaining tasks if we can't enqueue them
+			for j := i; j < len(tasks); j++ {
+				_ = c.revertTaskStatus(tasks[j].ID)
+			}
+			return i, fmt.Errorf("consumer stopped")
+		}
 	}
 
-	return nil
+	return len(tasks), nil
 }
 
 func (c *Consumer) revertTaskStatus(taskID utils.UniqueID) error {

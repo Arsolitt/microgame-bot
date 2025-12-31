@@ -8,7 +8,7 @@ import (
 
 type IQueue interface {
 	IQueuePublisher
-	NewConsumer(subject string) (IQueueConsumer, error)
+	NewConsumer(ctx context.Context, subject string) (IQueueConsumer, error)
 	CleanupStuckTasks(ctx context.Context, timeout time.Duration) error
 
 	Stop(ctx context.Context) error
