@@ -76,14 +76,36 @@ func startup() error {
 
 	inlineMsgLocker := memoryLocker.New[domain.InlineMessageID]()
 
-	sc := scheduler.New(db, 10, queue.New(db), 60*time.Second)
+	q := queue.New(db, 10)
+	q.Register("test", func(ctx context.Context, data []byte) error {
+		slog.InfoContext(ctx, "Test message received", "data", string(data))
+		// if utils.RandInt(2) == 0 {
+		// 	return fmt.Errorf("test error")
+		// }
+		time.Sleep(10 * time.Second)
+		return nil
+	})
+	q.Register("queue:cleanup", func(ctx context.Context, data []byte) error {
+		return q.CleanupStuckTasks(ctx, 15*time.Minute)
+	})
+	defer func() { _ = q.Stop(ctx) }()
+	q.Start(ctx)
 
 	cronJobs := []scheduler.CronJob{
-		scheduler.NewCronJob("test", "42 * * * * *", "test", utils.EmptyPayload, time.Now()),
+		{
+			ID:         utils.NewUniqueID(),
+			Name:       "queue-cleanup",
+			Expression: "0 */15 * * * *",
+			Status:     scheduler.CronJobStatusActive,
+			Subject:    "queue:cleanup",
+			Payload:    utils.EmptyPayload,
+		},
 	}
+	sc := scheduler.New(db, 10, q, 1*time.Second)
+
 	err = sc.CreateOrUpdateCronJobs(ctx, cronJobs)
 	if err != nil {
-		return fmt.Errorf("failed to create or update test cron job: %w", err)
+		return fmt.Errorf("failed to create or update cron jobs: %w", err)
 	}
 
 	defer func() { _ = sc.Stop(ctx) }()
