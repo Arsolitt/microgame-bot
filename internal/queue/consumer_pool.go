@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"log/slog"
+	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/utils"
 	"sync"
 )
@@ -39,11 +40,11 @@ func (p *ConsumerPool) Start(ctx context.Context) error {
 		}
 
 		p.wgConsumers.Add(1)
-		go func(u ConsumerUnit) {
+		go func(u ConsumerUnit, c IQueueConsumer) {
 			defer p.wgConsumers.Done()
 			for {
-				data, closed := consumer.Consume(ctx)
-				if !closed {
+				task, ok := c.Consume(ctx)
+				if !ok {
 					slog.DebugContext(ctx, "Queue consumer closed")
 					return
 				}
@@ -53,16 +54,27 @@ func (p *ConsumerPool) Start(ctx context.Context) error {
 				}
 
 				p.wgHandlers.Add(1)
-				go func(d []byte) {
+				go func(t *Task) {
 					defer p.wgHandlers.Done()
 					defer p.sem.Release()
-					if err := u.Handler(ctx, d); err != nil {
-						slog.ErrorContext(ctx, "Failed to handle queue message", "error", err.Error())
+					ctx = logger.WithLogValue(ctx, "task_id", t.ID.String())
+					ctx = logger.WithLogValue(ctx, "subject", t.Subject)
+					ctx = logger.WithLogValue(ctx, "attempts", t.Attempts)
+
+					if err := u.Handler(ctx, t.Payload); err != nil {
+						slog.ErrorContext(ctx, "Failed to handle queue message", logger.ErrorField, err.Error())
+						if nackErr := c.Nack(ctx, t.ID, err); nackErr != nil {
+							slog.ErrorContext(ctx, "Failed to nack task", logger.ErrorField, nackErr.Error())
+						}
 						return
 					}
-				}(data)
+
+					if ackErr := c.Ack(ctx, t.ID); ackErr != nil {
+						slog.ErrorContext(ctx, "Failed to ack task", logger.ErrorField, ackErr.Error())
+					}
+				}(task)
 			}
-		}(unit)
+		}(unit, consumer)
 	}
 	return nil
 }
