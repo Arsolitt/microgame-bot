@@ -61,6 +61,12 @@ func (p *ConsumerPool) Start(ctx context.Context) error {
 					ctx = logger.WithLogValue(ctx, "subject", t.Subject)
 					ctx = logger.WithLogValue(ctx, "attempts", t.Attempts)
 
+					// Check if context is already cancelled
+					if ctx.Err() != nil {
+						_ = c.Nack(ctx, t.ID, ctx.Err())
+						return
+					}
+
 					if err := u.Handler(ctx, t.Payload); err != nil {
 						slog.ErrorContext(ctx, "Failed to handle queue message", logger.ErrorField, err.Error())
 						if nackErr := c.Nack(ctx, t.ID, err); nackErr != nil {
@@ -79,7 +85,12 @@ func (p *ConsumerPool) Start(ctx context.Context) error {
 	return nil
 }
 
-func (p *ConsumerPool) Stop(_ context.Context) error {
+func (p *ConsumerPool) Stop(ctx context.Context) error {
+	// Stop queue first to prevent new tasks
+	if err := p.q.Stop(ctx); err != nil {
+		return err
+	}
+	// Wait for all consumers and handlers to finish
 	p.wgConsumers.Wait()
 	p.wgHandlers.Wait()
 	return nil

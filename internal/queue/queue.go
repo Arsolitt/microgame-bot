@@ -173,6 +173,7 @@ type Consumer struct {
 	maxPoll     time.Duration
 	currentPoll time.Duration
 	mu          sync.RWMutex
+	closeOnce   sync.Once
 }
 
 // GetCurrentPollInterval returns the current polling interval for monitoring.
@@ -184,7 +185,7 @@ func (c *Consumer) GetCurrentPollInterval() time.Duration {
 
 func (c *Consumer) run(ctx context.Context) {
 	defer close(c.doneCh)
-	defer close(c.taskCh)
+	defer c.closeOnce.Do(func() { close(c.taskCh) })
 
 	c.mu.RLock()
 	initialPoll := c.currentPoll
@@ -273,24 +274,12 @@ func (c *Consumer) fetchAndEnqueueBatch(ctx context.Context) (int, error) {
 		select {
 		case c.taskCh <- &tasks[i]:
 		case <-c.stopCh:
-			// Revert remaining tasks if we can't enqueue them
-			for j := i; j < len(tasks); j++ {
-				_ = c.revertTaskStatus(tasks[j].ID)
-			}
+			// Don't revert tasks - let CleanupStuckTasks handle them
 			return i, fmt.Errorf("consumer stopped")
 		}
 	}
 
 	return len(tasks), nil
-}
-
-func (c *Consumer) revertTaskStatus(taskID utils.UniqueID) error {
-	return c.db.Model(&Task{}).
-		Where("id = ?", taskID).
-		Updates(map[string]interface{}{
-			"status":   TaskStatusPending,
-			"attempts": gorm.Expr("attempts - 1"),
-		}).Error
 }
 
 func (c *Consumer) Consume(ctx context.Context) (*Task, bool) {
@@ -338,8 +327,12 @@ func (c *Consumer) Nack(ctx context.Context, taskID utils.UniqueID, handlerErr e
 			task.Status = TaskStatusFailed
 		} else {
 			task.Status = TaskStatusPending
-			// Exponential backoff: 10s, 20s, 40s, 80s, ...
+			// Exponential backoff: 10s, 20s, 40s, 80s, ... capped at 30 minutes
 			backoffDuration := time.Duration(1<<task.Attempts) * time.Second * 10
+			const maxBackoff = 30 * time.Minute
+			if backoffDuration > maxBackoff {
+				backoffDuration = maxBackoff
+			}
 			task.RunAfter = time.Now().Add(backoffDuration)
 		}
 

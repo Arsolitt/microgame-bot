@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-const DEFAULT_MAX_ATTEMPTS = 3
+const DefaultMaxAttempts = 3
 
 type TaskStatus string
 
@@ -32,7 +32,7 @@ type Task struct {
 
 func NewTask(subject string, payload []byte, runAfter time.Time, maxAttempts int) Task {
 	if maxAttempts <= 0 {
-		maxAttempts = DEFAULT_MAX_ATTEMPTS
+		maxAttempts = DefaultMaxAttempts
 	}
 	return Task{
 		ID:          utils.NewUniqueID(),
