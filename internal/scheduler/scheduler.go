@@ -75,8 +75,8 @@ func (s *Scheduler) Start(ctx context.Context) error {
 
 func (s *Scheduler) processCronJobs(ctx context.Context) error {
 	const OPERATION_NAME = "scheduler::processCronJobs"
-	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
-	l.DebugContext(ctx, "Processing cron jobs")
+	// l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+	// l.DebugContext(ctx, "Processing cron jobs")
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		cronJobs, err := gorm.G[CronJob](tx, clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).Where("status = ?", CronJobStatusActive).Where("next_run_at <= ?", time.Now()).Order("next_run_at ASC").Limit(s.batchSize).Find(ctx)
 		if err != nil {
