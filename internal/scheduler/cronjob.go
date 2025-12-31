@@ -3,8 +3,6 @@ package scheduler
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/utils"
 	"reflect"
 	"time"
@@ -12,8 +10,6 @@ import (
 	"github.com/robfig/cron/v3"
 	"gorm.io/gorm/schema"
 )
-
-const IMPOSSIBLE_EXPRESSION = "0 0 12 31 2 *"
 
 type CronExpression string
 
@@ -67,15 +63,12 @@ type CronJob struct {
 	UpdatedAt    time.Time      `gorm:"not null"`
 }
 
-func calculateNextRun(expression string) time.Time {
+func calculateNextRun(expression string) (time.Time, error) {
 	const OPERATION_NAME = "scheduler::calculateNextRun"
-	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
 	parser := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 	schedule, err := parser.Parse(expression)
 	if err != nil {
-		expression = IMPOSSIBLE_EXPRESSION
-		l.Error("Failed to parse cron expression, using impossible expression", logger.ErrorField, err.Error())
-		return time.Time{}
+		return time.Time{}, fmt.Errorf("failed to parse cron expression in %s: %w", OPERATION_NAME, err)
 	}
-	return schedule.Next(time.Now())
+	return schedule.Next(time.Now()), nil
 }

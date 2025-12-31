@@ -108,7 +108,11 @@ func (s *Scheduler) processCronJobs(ctx context.Context) error {
 		now := time.Now()
 		for i := range cronJobs {
 			cronJobs[i].LastRunAt = now
-			cronJobs[i].NextRunAt = calculateNextRun(cronJobs[i].Expression)
+			nextRunAt, err := calculateNextRun(cronJobs[i].Expression)
+			if err != nil {
+				return fmt.Errorf("failed to calculate next run at in %s: %w", OPERATION_NAME, err)
+			}
+			cronJobs[i].NextRunAt = nextRunAt
 		}
 
 		err = tx.Save(&cronJobs).Error
