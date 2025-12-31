@@ -47,6 +47,8 @@ func New(db *gorm.DB, maxWorkers int) *Queue {
 }
 
 func (q *Queue) Register(subject string, handler Handler) {
+	const OPERATION_NAME = "queue::Register"
+	slog.Info("Registering task handler", "subject", subject, logger.OperationField, OPERATION_NAME)
 	q.handlers[subject] = handler
 }
 
@@ -55,6 +57,8 @@ func (q *Queue) Publish(ctx context.Context, tasks []Task) error {
 }
 
 func (q *Queue) Start(ctx context.Context) {
+	const OPERATION_NAME = "queue::Start"
+	slog.InfoContext(ctx, "Starting task queue", logger.OperationField, OPERATION_NAME)
 	for subject := range q.handlers {
 		q.wg.Add(1)
 		go q.pollSubject(ctx, subject)
