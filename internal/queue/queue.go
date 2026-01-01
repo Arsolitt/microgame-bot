@@ -167,7 +167,10 @@ func (q *Queue) processTask(ctx context.Context, task *Task) {
 		return
 	}
 
-	if err := handler(taskCtx, task.Payload); err != nil {
+	timeoutCtx, cancel := context.WithTimeout(taskCtx, task.Timeout.Duration())
+	defer cancel()
+
+	if err := handler(timeoutCtx, task.Payload); err != nil {
 		slog.ErrorContext(taskCtx, "Task handler failed", logger.ErrorField, err.Error())
 		q.nack(taskCtx, task.ID, err)
 		return

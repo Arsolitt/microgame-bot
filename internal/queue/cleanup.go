@@ -9,14 +9,13 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func (q *Queue) CleanupStuckTasks(ctx context.Context, timeout time.Duration) error {
+func (q *Queue) CleanupStuckTasks(ctx context.Context) error {
 	now := time.Now()
-	threshold := now.Add(-timeout)
 
 	var tasks []Task
 	err := q.db.Transaction(func(tx *gorm.DB) error {
 		result := tx.Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
-			Where("status = ? AND last_attempt < ?", TaskStatusRunning, threshold).
+			Where("status = ?", TaskStatusRunning).
 			Find(&tasks)
 
 		if result.Error != nil {
@@ -27,16 +26,27 @@ func (q *Queue) CleanupStuckTasks(ctx context.Context, timeout time.Duration) er
 			return nil
 		}
 
+		var toUpdate []Task
 		for i := range tasks {
-			if tasks[i].Attempts >= tasks[i].MaxAttempts {
-				tasks[i].Status = TaskStatusFailed
-			} else {
-				tasks[i].Status = TaskStatusPending
-				tasks[i].RunAfter = now
+			timeout := tasks[i].Timeout.Duration()
+			threshold := tasks[i].LastAttempt.Add(timeout)
+
+			if now.After(threshold) {
+				if tasks[i].Attempts >= tasks[i].MaxAttempts {
+					tasks[i].Status = TaskStatusFailed
+				} else {
+					tasks[i].Status = TaskStatusPending
+					tasks[i].RunAfter = now
+				}
+				toUpdate = append(toUpdate, tasks[i])
 			}
 		}
 
-		return tx.Save(&tasks).Error
+		if len(toUpdate) == 0 {
+			return nil
+		}
+
+		return tx.Save(&toUpdate).Error
 	})
 
 	if err != nil {
@@ -46,16 +56,19 @@ func (q *Queue) CleanupStuckTasks(ctx context.Context, timeout time.Duration) er
 	if len(tasks) > 0 {
 		var pending, failed int
 		for i := range tasks {
-			if tasks[i].Status == TaskStatusFailed {
+			switch tasks[i].Status {
+			case TaskStatusFailed:
 				failed++
-			} else {
+			case TaskStatusPending:
 				pending++
 			}
 		}
-		slog.InfoContext(ctx, "Cleaned up stuck tasks",
-			"total", len(tasks),
-			"retried", pending,
-			"failed", failed)
+		if pending > 0 || failed > 0 {
+			slog.InfoContext(ctx, "Cleaned up stuck tasks",
+				"total", pending+failed,
+				"retried", pending,
+				"failed", failed)
+		}
 	}
 
 	return nil
