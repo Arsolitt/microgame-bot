@@ -13,6 +13,8 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+var EmptyPayload = []byte("{}")
+
 type Handler func(ctx context.Context, data []byte) error
 
 const (

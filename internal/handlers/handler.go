@@ -8,8 +8,10 @@ import (
 	"microgame-bot/internal/domain"
 	domainBet "microgame-bot/internal/domain/bet"
 	domainUser "microgame-bot/internal/domain/user"
+	"microgame-bot/internal/queue"
 	"microgame-bot/internal/utils"
 	"strings"
+	"time"
 )
 
 var (
@@ -98,4 +100,8 @@ func extractBetAmount(callbackData string, maxBet int) domain.Token {
 	}
 
 	return domain.Token(bet)
+}
+
+func publishPayoutTask(ctx context.Context, publisher queue.IQueuePublisher) error {
+	return publisher.Publish(ctx, []queue.Task{queue.NewTask("bets.payout", queue.EmptyPayload, time.Now(), 1, queue.DefaultTimeout)})
 }

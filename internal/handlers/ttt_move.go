@@ -10,6 +10,7 @@ import (
 	"microgame-bot/internal/domain/ttt"
 	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
+	"microgame-bot/internal/queue"
 	tttRepository "microgame-bot/internal/repo/game/ttt"
 	sRepository "microgame-bot/internal/repo/session"
 	userRepository "microgame-bot/internal/repo/user"
@@ -20,7 +21,7 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
-func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
+func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork, qPublisher queue.IQueuePublisher) CallbackQueryHandlerFunc {
 	const operationName = "handler::ttt_move"
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		slog.DebugContext(ctx, "TTT Move callback received", logger.OperationField, operationName)
@@ -153,6 +154,7 @@ func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Callba
 					if err != nil {
 						return fmt.Errorf("failed to update bets status in %s: %w", operationName, err)
 					}
+					_ = publishPayoutTask(ctx, qPublisher)
 				}
 
 				return nil

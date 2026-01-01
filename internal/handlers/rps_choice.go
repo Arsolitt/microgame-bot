@@ -10,6 +10,7 @@ import (
 	domainSession "microgame-bot/internal/domain/session"
 	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/msgs"
+	"microgame-bot/internal/queue"
 	rpsRepository "microgame-bot/internal/repo/game/rps"
 	sRepository "microgame-bot/internal/repo/session"
 	userRepository "microgame-bot/internal/repo/user"
@@ -20,7 +21,7 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
-func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
+func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork, qPublisher queue.IQueuePublisher) CallbackQueryHandlerFunc {
 	const operationName = "handler::rps_choice"
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		slog.DebugContext(ctx, "RPS Choice callback received", logger.OperationField, operationName)
@@ -146,6 +147,7 @@ func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Call
 					if err != nil {
 						return fmt.Errorf("failed to update bets status in %s: %w", operationName, err)
 					}
+					_ = publishPayoutTask(ctx, qPublisher)
 				}
 
 				return nil
