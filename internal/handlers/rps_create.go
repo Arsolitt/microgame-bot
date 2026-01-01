@@ -34,12 +34,14 @@ func RPSCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 		}
 
 		gameCount := extractGameCount(query.Data, cfg.MaxGameCount)
+		betAmount := extractBetAmount(query.Data, 10000)
 
 		session, err := domainSession.New(
 			domainSession.WithNewID(),
 			domainSession.WithGameType(domain.GameTypeRPS),
 			domainSession.WithInlineMessageID(inlineMessageID),
 			domainSession.WithGameCount(gameCount),
+			domainSession.WithBet(betAmount),
 			domainSession.WithWinCondition(domainSession.WinConditionFirstTo),
 		)
 		if err != nil {
@@ -74,7 +76,7 @@ func RPSCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 			return nil, err
 		}
 
-		msg, err := msgs.RPSStart(user)
+		msg, err := msgs.RPSStart(user, session.Bet())
 		if err != nil {
 			return nil, uow.ErrFailedToDoTransaction(operationName, err)
 		}
