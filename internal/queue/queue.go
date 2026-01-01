@@ -59,10 +59,8 @@ func (q *Queue) Publish(ctx context.Context, tasks []Task) error {
 func (q *Queue) Start(ctx context.Context) {
 	const OPERATION_NAME = "queue::Start"
 	slog.InfoContext(ctx, "Starting task queue", logger.OperationField, OPERATION_NAME)
-	for subject := range q.handlers {
-		q.wg.Add(1)
-		go q.pollSubject(ctx, subject)
-	}
+	q.wg.Add(1)
+	go q.pollTasks(ctx)
 }
 
 func (q *Queue) Stop(ctx context.Context) error {
@@ -80,23 +78,21 @@ func (q *Queue) Stop(ctx context.Context) error {
 	}
 }
 
-func (q *Queue) pollSubject(ctx context.Context, subject string) {
+func (q *Queue) pollTasks(ctx context.Context) {
 	defer q.wg.Done()
 
 	ticker := time.NewTicker(q.pollPeriod)
 	defer ticker.Stop()
-
-	handler := q.handlers[subject]
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			tasks, err := q.fetchBatch(ctx, subject)
+			tasks, err := q.fetchBatch(ctx)
 			if err != nil {
 				if ctx.Err() == nil {
-					slog.WarnContext(ctx, "Failed to fetch tasks", "subject", subject, "error", err)
+					slog.WarnContext(ctx, "Failed to fetch tasks", "error", err)
 				}
 				continue
 			}
@@ -110,18 +106,17 @@ func (q *Queue) pollSubject(ctx context.Context, subject string) {
 				}
 
 				q.wg.Add(1)
-				go q.processTask(ctx, task, handler)
+				go q.processTask(ctx, task)
 			}
 		}
 	}
 }
 
-func (q *Queue) fetchBatch(ctx context.Context, subject string) ([]Task, error) {
+func (q *Queue) fetchBatch(ctx context.Context) ([]Task, error) {
 	var tasks []Task
 	err := q.db.Transaction(func(tx *gorm.DB) error {
 		var err error
 		tasks, err = gorm.G[Task](tx, clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
-			Where("subject = ?", subject).
 			Where("status = ?", TaskStatusPending).
 			Where("run_after <= ?", time.Now()).
 			Order("run_after ASC").
@@ -153,7 +148,7 @@ func (q *Queue) fetchBatch(ctx context.Context, subject string) ([]Task, error) 
 	return tasks, err
 }
 
-func (q *Queue) processTask(ctx context.Context, task *Task, handler Handler) {
+func (q *Queue) processTask(ctx context.Context, task *Task) {
 	defer q.wg.Done()
 	defer q.sem.Release()
 
@@ -162,6 +157,13 @@ func (q *Queue) processTask(ctx context.Context, task *Task, handler Handler) {
 
 	if ctx.Err() != nil {
 		q.nack(context.Background(), task.ID, ctx.Err())
+		return
+	}
+
+	handler, ok := q.handlers[task.Subject]
+	if !ok {
+		slog.WarnContext(taskCtx, "No handler found for subject, requeueing")
+		q.requeue(taskCtx, task.ID)
 		return
 	}
 
