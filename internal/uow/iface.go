@@ -3,6 +3,7 @@ package uow
 import (
 	"context"
 	"fmt"
+	"microgame-bot/internal/repo/bet"
 	"microgame-bot/internal/repo/claim"
 	"microgame-bot/internal/repo/game/rps"
 	"microgame-bot/internal/repo/game/ttt"
@@ -25,4 +26,5 @@ type IUnitOfWork interface {
 	TTTRepo() (ttt.ITTTRepository, error)
 	RPSRepo() (rps.IRPSRepository, error)
 	ClaimRepo() (claim.IClaimRepository, error)
+	BetRepo() (bet.IBetRepository, error)
 }

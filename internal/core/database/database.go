@@ -6,6 +6,7 @@ import (
 	"microgame-bot/internal/queue"
 	"microgame-bot/internal/scheduler"
 
+	gormBetRepository "microgame-bot/internal/repo/bet"
 	gormClaimRepository "microgame-bot/internal/repo/claim"
 	gormGameRepository "microgame-bot/internal/repo/game"
 	gormSessionRepository "microgame-bot/internal/repo/session"
@@ -59,6 +60,10 @@ func MustInit(cfg core.Config) (*gorm.DB, error) {
 	err = db.AutoMigrate(&queue.Task{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to migrate task table in %s: %w", operationName, err)
+	}
+	err = db.AutoMigrate(&gormBetRepository.Bet{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate bet table in %s: %w", operationName, err)
 	}
 	return db, nil
 }
