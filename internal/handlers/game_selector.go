@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/logger"
+	domainBet "microgame-bot/internal/domain/bet"
 	"strconv"
 	"strings"
 
@@ -30,10 +31,10 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 				}
 			}
 			if len(fields) > 1 {
-				if parsed, err := strconv.Atoi(fields[1]); err == nil && parsed > 0 {
+				if parsed, err := (strconv.Atoi(fields[1])); err == nil && parsed > 0 {
 					bet = parsed
-					if bet > 10000 {
-						bet = 10000
+					if bet > int(domainBet.MaxBet) {
+						bet = int(domainBet.MaxBet)
 					}
 				}
 			}
@@ -59,7 +60,7 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 			betLabel = fmt.Sprintf(" 💰 %d токенов", bet)
 		}
 
-		tttMsg := fmt.Sprintf("🎮 <b>Крестики-Нолики</b>\n<i>%s</i>\n\nНажми кнопку, чтобы начать игру!", roundsLabel)
+		tttMsg := fmt.Sprintf("🎮 <b>Крестики-Нолики</b>\n<i>%s%s</i>\n\nНажми кнопку, чтобы начать игру!", roundsLabel, betLabel)
 		rpsMsg := fmt.Sprintf("🎮 <b>Камень-Ножницы-Бумага</b>\n<i>%s%s</i>\n\nНажми кнопку, чтобы начать игру!", roundsLabel, betLabel)
 
 		return &InlineQueryResponse{
@@ -67,11 +68,11 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 			Results: []telego.InlineQueryResult{
 				tu.ResultArticle(
 					"game::ttt",
-					"Крестики-Нолики "+roundsLabel,
+					"Крестики-Нолики "+roundsLabel+betLabel,
 					tu.TextMessage(tttMsg).WithParseMode("HTML"),
 				).WithReplyMarkup(tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
-						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::ttt::" + roundsStr),
+						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::ttt::" + roundsStr + "::" + betStr),
 					),
 				)),
 				tu.ResultArticle(

@@ -79,7 +79,7 @@ func RPSJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 			betAmount := domain.Token(session.Bet())
 			if betAmount > 0 {
 				// Get joining player
-				joiningPlayer, err := userRepo.UserByID(ctx, player2.ID())
+				joiningPlayer, err := userRepo.UserByIDLocked(ctx, player2.ID())
 				if err != nil {
 					return fmt.Errorf("failed to get joining player in %s: %w", operationName, err)
 				}

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
+	domainBet "microgame-bot/internal/domain/bet"
 	domainSession "microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/ttt"
 	domainUser "microgame-bot/internal/domain/user"
@@ -132,6 +133,11 @@ func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Callba
 				if err != nil {
 					return fmt.Errorf("failed to get game session repository in %s: %w", operationName, err)
 				}
+				betRepo, err := uow.BetRepo()
+				if err != nil {
+					return fmt.Errorf("failed to get bet repository in %s: %w", operationName, err)
+				}
+
 				session, err = session.ChangeStatus(domain.GameStatusFinished)
 				if err != nil {
 					return fmt.Errorf("failed to change status of game session: %w", err)
@@ -139,6 +145,14 @@ func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Callba
 				session, err = gsRepo.UpdateSession(ctx, session)
 				if err != nil {
 					return fmt.Errorf("failed to update game session: %w", err)
+				}
+
+				// Update bets status: RUNNING -> WAITING
+				if session.Bet() > 0 {
+					err = betRepo.UpdateBetsStatus(ctx, session.ID(), domainBet.StatusRunning, domainBet.StatusWaiting)
+					if err != nil {
+						return fmt.Errorf("failed to update bets status in %s: %w", operationName, err)
+					}
 				}
 
 				return nil

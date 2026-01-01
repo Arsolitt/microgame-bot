@@ -34,12 +34,14 @@ func TTTCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 		}
 
 		gameCount := extractGameCount(query.Data, cfg.MaxGameCount)
+		betAmount := extractBetAmount(query.Data, 10000)
 
 		session, err := domainSession.New(
 			domainSession.WithNewID(),
 			domainSession.WithGameType(domain.GameTypeTTT),
 			domainSession.WithInlineMessageIDFromString(query.InlineMessageID),
 			domainSession.WithGameCount(gameCount),
+			domainSession.WithBet(betAmount),
 			domainSession.WithWinCondition(domainSession.WinConditionFirstTo),
 		)
 		if err != nil {
@@ -77,7 +79,7 @@ func TTTCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 			return nil, uow.ErrFailedToDoTransaction(operationName, err)
 		}
 
-		msg, err := msgs.TTTStart(user)
+		msg, err := msgs.TTTStart(user, session.Bet())
 		if err != nil {
 			return nil, err
 		}
