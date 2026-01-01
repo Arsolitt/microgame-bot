@@ -72,7 +72,7 @@ func (s *Scheduler) processCronJobs(ctx context.Context) error {
 		// Second: publish tasks after successful update
 		tasks := make([]queue.Task, 0, len(cronJobs))
 		for _, cronJob := range cronJobs {
-			tasks = append(tasks, queue.NewTask(cronJob.Subject, cronJob.Payload, time.Time{}, 0))
+			tasks = append(tasks, queue.NewTask(cronJob.Subject, cronJob.Payload, time.Time{}, 0, cronJob.TaskTimeout))
 		}
 
 		if err := s.qp.Publish(ctx, tasks); err != nil {

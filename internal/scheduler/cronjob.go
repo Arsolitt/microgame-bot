@@ -56,14 +56,15 @@ const (
 )
 
 type CronJob struct {
-	ID         utils.UniqueID `gorm:"primaryKey;type:uuid"`
-	Name       string         `gorm:"uniqueIndex:idx_cron_name;not null;size:255"`
-	Expression CronExpression `gorm:"not null;size:255"`
-	Status     CronJobStatus  `gorm:"not null;default:active"`
-	Subject    string         `gorm:"not null;size:255"`
-	Payload    []byte         `gorm:"not null;type:jsonb"`
-	NextRunAt  time.Time      `gorm:"not null;index:idx_cron_active_run,where:status = 'active'"`
-	LastRunAt  time.Time      `gorm:"not null;index:idx_cron_last_run,where:status = 'active'"`
-	CreatedAt  time.Time      `gorm:"not null"`
-	UpdatedAt  time.Time      `gorm:"not null"`
+	ID          utils.UniqueID `gorm:"primaryKey;type:uuid"`
+	Name        string         `gorm:"uniqueIndex:idx_cron_name;not null;size:255"`
+	Expression  CronExpression `gorm:"not null;size:255"`
+	Status      CronJobStatus  `gorm:"not null;default:active"`
+	Subject     string         `gorm:"not null;size:255"`
+	Payload     []byte         `gorm:"not null;type:jsonb"`
+	TaskTimeout time.Duration  `gorm:"not null;type:bigint"` // Task timeout for jobs created from this cron
+	NextRunAt   time.Time      `gorm:"not null;index:idx_cron_active_run,where:status = 'active'"`
+	LastRunAt   time.Time      `gorm:"not null;index:idx_cron_last_run,where:status = 'active'"`
+	CreatedAt   time.Time      `gorm:"not null"`
+	UpdatedAt   time.Time      `gorm:"not null"`
 }
