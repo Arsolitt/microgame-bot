@@ -7,7 +7,6 @@ import (
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/bot"
 	"microgame-bot/internal/core/database"
-	"microgame-bot/internal/core/kv"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/user"
@@ -23,7 +22,6 @@ import (
 
 	"microgame-bot/internal/handlers"
 	memoryLocker "microgame-bot/internal/locker/memory"
-	natsMetastore "microgame-bot/internal/metastore/nats"
 	gormClaimRepository "microgame-bot/internal/repo/claim"
 	gormRPSRepository "microgame-bot/internal/repo/game/rps"
 	gormTTTRepository "microgame-bot/internal/repo/game/ttt"
@@ -49,17 +47,6 @@ func startup() error {
 		return err
 	}
 
-	natsConn, err := kv.MustInit(ctx, cfg.Nats)
-	if err != nil {
-		return err
-	}
-	defer natsConn.Close()
-
-	claimMetastore, err := natsMetastore.New(ctx, natsConn, "claims_cache", 3)
-	if err != nil {
-		return err
-	}
-
 	userLocker := memoryLocker.New[user.ID]()
 
 	bh, err := bot.MustInit(ctx, cfg)
@@ -77,16 +64,8 @@ func startup() error {
 	inlineMsgLocker := memoryLocker.New[domain.InlineMessageID]()
 
 	q := queue.New(db, 10)
-	q.Register("test", func(ctx context.Context, data []byte) error {
-		slog.InfoContext(ctx, "Test message received", "data", string(data))
-		// if utils.RandInt(2) == 0 {
-		// 	return fmt.Errorf("test error")
-		// }
-		time.Sleep(10 * time.Second)
-		return nil
-	})
-	q.Register("queue:cleanup", func(ctx context.Context, data []byte) error {
-		return q.CleanupStuckTasks(ctx, 15*time.Minute)
+	q.Register("queue:cleanup", func(ctx context.Context, _ []byte) error {
+		return q.CleanupStuckTasks(ctx)
 	})
 	defer func() { _ = q.Stop(ctx) }()
 	q.Start(ctx)
@@ -102,7 +81,6 @@ func startup() error {
 		},
 	}
 	sc := scheduler.New(db, 10, q, 1*time.Second)
-
 	err = sc.CreateOrUpdateCronJobs(ctx, cronJobs)
 	if err != nil {
 		return fmt.Errorf("failed to create or update cron jobs: %w", err)
@@ -123,7 +101,7 @@ func startup() error {
 		mdw.CorrelationIDProvider(),
 		mdw.InlineMsgProvider(inlineMsgLocker),
 		mdw.UserProvider(userLocker, userRepo),
-		mdw.DailyBonusMiddleware(dbmUow, claimMetastore),
+		mdw.DailyBonusMiddleware(dbmUow),
 	)
 
 	// Game selector

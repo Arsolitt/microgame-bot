@@ -7,7 +7,6 @@ import (
 
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
-	"microgame-bot/internal/metastore"
 	"microgame-bot/internal/uow"
 
 	"github.com/mymmrac/telego"
@@ -18,7 +17,6 @@ import (
 // Must be called AFTER UserProvider middleware
 func DailyBonusMiddleware(
 	unit uow.IUnitOfWork,
-	metastore metastore.IMetastore,
 ) func(*th.Context, telego.Update) error {
 	const operationName = "middleware::daily_bonus"
 	l := slog.With(slog.String(logger.OperationField, operationName))
