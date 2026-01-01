@@ -1,5 +1,7 @@
 package bet
 
+import "microgame-bot/internal/domain"
+
 type Status string
 
 const (
@@ -7,6 +9,11 @@ const (
 	StatusRunning Status = "running" // Game started
 	StatusWaiting Status = "waiting" // Game finished, waiting for payout
 	StatusPaid    Status = "paid"    // Payout completed
+)
+
+const (
+	MaxBet     domain.Token = 10000
+	DefaultBet domain.Token = 0
 )
 
 func (s Status) IsZero() bool {

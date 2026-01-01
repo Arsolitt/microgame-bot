@@ -12,7 +12,7 @@ type Session struct {
 	inlineMessageID domain.InlineMessageID
 	status          domain.GameStatus
 	gameCount       int
-	bet             int
+	bet             domain.Token
 	id              ID
 	winCondition    WinCondition
 }
@@ -46,7 +46,7 @@ func New(opts ...Opt) (Session, error) {
 func (g Session) ID() ID                                  { return g.id }
 func (g Session) GameType() domain.GameType               { return g.gameType }
 func (g Session) GameCount() int                          { return g.gameCount }
-func (g Session) Bet() int                                { return g.bet }
+func (g Session) Bet() domain.Token                       { return g.bet }
 func (g Session) Status() domain.GameStatus               { return g.status }
 func (g Session) CreatedAt() time.Time                    { return g.createdAt }
 func (g Session) UpdatedAt() time.Time                    { return g.updatedAt }

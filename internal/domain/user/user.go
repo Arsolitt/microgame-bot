@@ -53,3 +53,8 @@ func (u User) AddTokens(amount domain.Token) (User, error) {
 	u.tokens += amount
 	return u, nil
 }
+
+func (u User) SubtractTokens(amount domain.Token) (User, error) {
+	u.tokens -= amount
+	return u, nil
+}

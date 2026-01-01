@@ -69,11 +69,15 @@ func WithGameCount(gameCount int) Opt {
 	}
 }
 
-func WithBet(bet int) Opt {
+func WithBet(bet domain.Token) Opt {
 	return func(gs *Session) error {
 		gs.bet = bet
 		return nil
 	}
+}
+
+func WithBetFromUint64(bet uint64) Opt {
+	return WithBet(domain.Token(bet))
 }
 
 func WithStatus(status domain.GameStatus) Opt {

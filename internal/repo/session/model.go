@@ -13,7 +13,7 @@ type Session struct {
 	InlineMessageID domain.InlineMessageID `gorm:"not null;uniqueIndex"`
 	Status          domain.GameStatus      `gorm:"not null"`
 	GameCount       int                    `gorm:"not null"`
-	Bet             int                    `gorm:"not null"`
+	Bet             uint64                 `gorm:"not null"`
 	ID              se.ID                  `gorm:"primaryKey;type:uuid"`
 	WinCondition    se.WinCondition        `gorm:"not null"`
 }
@@ -24,7 +24,7 @@ func (m Session) ToDomain() (se.Session, error) {
 		se.WithID(m.ID),
 		se.WithGameType(m.GameType),
 		se.WithGameCount(m.GameCount),
-		se.WithBet(m.Bet),
+		se.WithBetFromUint64(m.Bet),
 		se.WithStatus(m.Status),
 		se.WithCreatedAt(m.CreatedAt),
 		se.WithUpdatedAt(m.UpdatedAt),
@@ -39,7 +39,7 @@ func (Session) FromDomain(u se.Session) Session {
 		ID:              u.ID(),
 		GameType:        u.GameType(),
 		GameCount:       u.GameCount(),
-		Bet:             u.Bet(),
+		Bet:             uint64(u.Bet()),
 		Status:          u.Status(),
 		CreatedAt:       u.CreatedAt(),
 		UpdatedAt:       u.UpdatedAt(),
