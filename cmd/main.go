@@ -22,6 +22,8 @@ import (
 
 	"microgame-bot/internal/handlers"
 	memoryLocker "microgame-bot/internal/locker/memory"
+	qHandlers "microgame-bot/internal/queue/handlers"
+	gormBetRepository "microgame-bot/internal/repo/bet"
 	gormClaimRepository "microgame-bot/internal/repo/claim"
 	gormRPSRepository "microgame-bot/internal/repo/game/rps"
 	gormTTTRepository "microgame-bot/internal/repo/game/ttt"
@@ -60,24 +62,46 @@ func startup() error {
 	rpsRepo := gormRPSRepository.New(db)
 	sessionRepo := gormSessionRepository.New(db)
 	claimRepo := gormClaimRepository.New(db)
+	betRepo := gormBetRepository.New(db)
 
 	inlineMsgLocker := memoryLocker.New[domain.InlineMessageID]()
 
 	q := queue.New(db, 10)
-	q.Register("queue:cleanup", func(ctx context.Context, _ []byte) error {
+	q.Register("queue.cleanup", func(ctx context.Context, _ []byte) error {
 		return q.CleanupStuckTasks(ctx)
 	})
+
+	// Register bet payout handler
+	betPayoutUnit := uowGorm.New(db,
+		uowGorm.WithBetRepo(betRepo),
+		uowGorm.WithSessionRepo(sessionRepo),
+		uowGorm.WithUserRepo(userRepo),
+		uowGorm.WithTTTRepo(tttRepo),
+		uowGorm.WithRPSRepo(rpsRepo),
+	)
+	q.Register("bets.payout", qHandlers.BetPayoutHandler(betPayoutUnit))
+
 	defer func() { _ = q.Stop(ctx) }()
 	q.Start(ctx)
 
 	cronJobs := []scheduler.CronJob{
 		{
-			ID:         utils.NewUniqueID(),
-			Name:       "queue-cleanup",
-			Expression: "0 */15 * * * *",
-			Status:     scheduler.CronJobStatusActive,
-			Subject:    "queue:cleanup",
-			Payload:    utils.EmptyPayload,
+			ID:          utils.NewUniqueID(),
+			Name:        "queue-cleanup",
+			Expression:  "0 */15 * * * *",
+			Status:      scheduler.CronJobStatusActive,
+			Subject:     "queue.cleanup",
+			Payload:     queue.EmptyPayload,
+			TaskTimeout: 5 * time.Minute,
+		},
+		{
+			ID:          utils.NewUniqueID(),
+			Name:        "bets-payout",
+			Expression:  "0 * * * * *",
+			Status:      scheduler.CronJobStatusActive,
+			Subject:     "bets.payout",
+			Payload:     queue.EmptyPayload,
+			TaskTimeout: 5 * time.Minute,
 		},
 	}
 	sc := scheduler.New(db, 10, q, 1*time.Second)
@@ -122,6 +146,8 @@ func startup() error {
 	rpsJoinUnit := uowGorm.New(db,
 		uowGorm.WithSessionRepo(sessionRepo),
 		uowGorm.WithRPSRepo(rpsRepo),
+		uowGorm.WithUserRepo(userRepo),
+		uowGorm.WithBetRepo(betRepo),
 	)
 	rpsG.HandleCallbackQuery(
 		handlers.WrapCallbackQuery(handlers.RPSJoin(userRepo, rpsJoinUnit)),
@@ -130,9 +156,10 @@ func startup() error {
 	rpsChoiceUnit := uowGorm.New(db,
 		uowGorm.WithSessionRepo(sessionRepo),
 		uowGorm.WithRPSRepo(rpsRepo),
+		uowGorm.WithBetRepo(betRepo),
 	)
 	rpsG.HandleCallbackQuery(
-		handlers.WrapCallbackQuery(handlers.RPSChoice(userRepo, rpsChoiceUnit)),
+		handlers.WrapCallbackQuery(handlers.RPSChoice(userRepo, rpsChoiceUnit, q)),
 		th.CallbackDataPrefix("g::rps::choice::"),
 	)
 
@@ -151,6 +178,8 @@ func startup() error {
 	tttJoinUnit := uowGorm.New(db,
 		uowGorm.WithSessionRepo(sessionRepo),
 		uowGorm.WithTTTRepo(tttRepo),
+		uowGorm.WithUserRepo(userRepo),
+		uowGorm.WithBetRepo(betRepo),
 	)
 	tttG.HandleCallbackQuery(
 		handlers.WrapCallbackQuery(handlers.TTTJoin(userRepo, tttJoinUnit)),
@@ -160,9 +189,10 @@ func startup() error {
 	tttMoveUnit := uowGorm.New(db,
 		uowGorm.WithSessionRepo(sessionRepo),
 		uowGorm.WithTTTRepo(tttRepo),
+		uowGorm.WithBetRepo(betRepo),
 	)
 	tttG.HandleCallbackQuery(
-		handlers.WrapCallbackQuery(handlers.TTTMove(userRepo, tttMoveUnit)),
+		handlers.WrapCallbackQuery(handlers.TTTMove(userRepo, tttMoveUnit, q)),
 		th.CallbackDataPrefix("g::ttt::move::"),
 	)
 
