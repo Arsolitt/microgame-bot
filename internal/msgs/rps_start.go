@@ -11,9 +11,19 @@ func RPSStart(user domainUser.User) (string, error) {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("@%s ", user.Username()))
 	sb.WriteString("запустил игру <b>камень-ножницы-бумага</b>")
+	sb.WriteString("\n\n")
+	sb.WriteString("👤 <i>Ожидание игроков...</i>")
+
+	return sb.String(), nil
+}
+
+func RPSFirstPlayerJoined(creator domainUser.User, player1 domainUser.User) (string, error) {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("@%s ", creator.Username()))
+	sb.WriteString("запустил игру <b>камень-ножницы-бумага</b>")
 	sb.WriteString("\n")
 	symbol1 := rps.ChoiceHiddenIcon
-	sb.WriteString(fmt.Sprintf("👤 <b>Игрок 1:</b> @%s %s", user.Username(), symbol1))
+	sb.WriteString(fmt.Sprintf("👤 <b>Игрок 1:</b> @%s %s", player1.Username(), symbol1))
 	sb.WriteString("\n")
 	sb.WriteString("👤 <b>Игрок 2:</b> <i>Ожидание второго игрока...</i>")
 

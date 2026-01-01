@@ -48,7 +48,6 @@ func RPSCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 		game, err := rps.New(
 			rps.WithNewID(),
 			rps.WithCreatorID(user.ID()),
-			rps.WithPlayer1ID(user.ID()),
 			rps.WithStatus(domain.GameStatusWaitingForPlayers),
 			rps.WithSessionID(session.ID()),
 		)
@@ -94,7 +93,7 @@ func RPSCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 			},
 			&CallbackQueryResponse{
 				CallbackQueryID: query.ID,
-				Text:            "Игра создана! Ждём второго игрока...",
+				Text:            "Игра создана! Ждём игроков...",
 			},
 		}, nil
 	}

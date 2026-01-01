@@ -46,9 +46,6 @@ func New(opts ...Opt) (RPS, error) {
 	if r.creatorID.IsZero() {
 		return RPS{}, domain.ErrCreatorIDRequired
 	}
-	if r.player1ID.IsZero() && r.player2ID.IsZero() {
-		return RPS{}, domain.ErrGamePlayersCantBeEmpty
-	}
 	if (r.player1ID.IsZero() || r.player2ID.IsZero()) &&
 		r.status != domain.GameStatusCreated &&
 		r.status != domain.GameStatusWaitingForPlayers &&
@@ -96,10 +93,11 @@ func (r RPS) JoinGame(playerID user.ID) (RPS, error) {
 
 	if r.player1ID.IsZero() {
 		r.player1ID = playerID
-	} else {
-		r.player2ID = playerID
+		// Status remains WaitingForPlayers
+		return r, nil
 	}
 
+	r.player2ID = playerID
 	r.status = domain.GameStatusInProgress
 
 	return r, nil
