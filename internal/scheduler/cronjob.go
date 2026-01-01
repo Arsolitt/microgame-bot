@@ -11,10 +11,16 @@ import (
 	"gorm.io/gorm/schema"
 )
 
+var cronParserPattern = cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow
+
 type CronExpression string
 
+func (e CronExpression) String() string {
+	return string(e)
+}
+
 func (e CronExpression) Validate() error {
-	parser := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+	parser := cron.NewParser(cronParserPattern)
 	_, err := parser.Parse(string(e))
 	return err
 }
@@ -52,7 +58,7 @@ const (
 type CronJob struct {
 	ID           utils.UniqueID `gorm:"primaryKey;type:uuid"`
 	Name         string         `gorm:"uniqueIndex:idx_cron_name;not null;size:255"`
-	Expression   string         `gorm:"not null;size:255"`
+	Expression   CronExpression `gorm:"not null;size:255"`
 	Status       CronJobStatus  `gorm:"not null;default:active"`
 	Subject      string         `gorm:"not null;size:255"`
 	Payload      []byte         `gorm:"not null;type:jsonb"`
@@ -63,10 +69,10 @@ type CronJob struct {
 	UpdatedAt    time.Time      `gorm:"not null"`
 }
 
-func calculateNextRun(expression string) (time.Time, error) {
+func calculateNextRun(expression CronExpression) (time.Time, error) {
 	const OPERATION_NAME = "scheduler::calculateNextRun"
-	parser := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-	schedule, err := parser.Parse(expression)
+	parser := cron.NewParser(cronParserPattern)
+	schedule, err := parser.Parse(expression.String())
 	if err != nil {
 		return time.Time{}, fmt.Errorf("failed to parse cron expression in %s: %w", OPERATION_NAME, err)
 	}

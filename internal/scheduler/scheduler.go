@@ -9,7 +9,6 @@ import (
 	"microgame-bot/internal/queue"
 	"time"
 
-	"github.com/robfig/cron/v3"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -37,10 +36,9 @@ func New(db *gorm.DB, batchSize int, qp queue.IQueuePublisher, pollInterval time
 func (s *Scheduler) CreateOrUpdateCronJobs(ctx context.Context, jobs []CronJob) error {
 	const OPERATION_NAME = "scheduler::CreateOrUpdateCronJob"
 	for i := range jobs {
-		parser := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-		_, err := parser.Parse(jobs[i].Expression)
+		err := jobs[i].Expression.Validate()
 		if err != nil {
-			return fmt.Errorf("failed to parse cron expression in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to validate cron expression in %s: %w", OPERATION_NAME, err)
 		}
 	}
 	err := s.db.Clauses(clause.OnConflict{
