@@ -131,7 +131,7 @@ func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 
 				// Update bets status: PENDING -> RUNNING
 				if session.Bet() > 0 {
-					err = betRepo.UpdateBetsStatus(ctx, session.ID(), domainBet.StatusPending, domainBet.StatusRunning)
+					err = betRepo.UpdateBetsStatusBatch(ctx, session.ID(), domainBet.StatusRunning)
 					if err != nil {
 						return fmt.Errorf("failed to update bets status in %s: %w", operationName, err)
 					}

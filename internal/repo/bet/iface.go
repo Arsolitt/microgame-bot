@@ -25,12 +25,11 @@ type IBetRepository interface {
 	UpdateBet(ctx context.Context, bet domainBet.Bet) (domainBet.Bet, error)
 
 	// UpdateBetsStatus updates status for multiple bets by session ID
-	UpdateBetsStatus(ctx context.Context, sessionID domainSession.ID, oldStatus, newStatus domainBet.Status) error
+	UpdateBetsStatusBatch(ctx context.Context, sessionID domainSession.ID, status domainBet.Status) error
 
-	// FindWaitingBets returns bets in WAITING status grouped by session_id
-	// Returns at most 'limit' unique sessions
+	// FindWaitingBetSession returns one session ID that has bets in WAITING status
 	// IMPORTANT: Must be called within transaction with FOR UPDATE SKIP LOCKED
-	FindWaitingBets(ctx context.Context, limit int) ([]domainSession.ID, error)
+	FindWaitingBetSession(ctx context.Context) (domainSession.ID, error)
 
 	// BetsBySessionIDLocked returns all bets for a session with row lock (SELECT FOR UPDATE)
 	// Must be called within transaction

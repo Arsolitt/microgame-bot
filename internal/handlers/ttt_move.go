@@ -149,7 +149,7 @@ func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork) Callba
 
 				// Update bets status: RUNNING -> WAITING
 				if session.Bet() > 0 {
-					err = betRepo.UpdateBetsStatus(ctx, session.ID(), domainBet.StatusRunning, domainBet.StatusWaiting)
+					err = betRepo.UpdateBetsStatusBatch(ctx, session.ID(), domainBet.StatusWaiting)
 					if err != nil {
 						return fmt.Errorf("failed to update bets status in %s: %w", operationName, err)
 					}

@@ -116,38 +116,36 @@ func (r *Repository) UpdateBet(ctx context.Context, bet domainBet.Bet) (domainBe
 	return r.BetByID(ctx, bet.ID())
 }
 
-func (r *Repository) UpdateBetsStatus(ctx context.Context, sessionID domainSession.ID, oldStatus, newStatus domainBet.Status) error {
-	return r.db.WithContext(ctx).
-		Model(&Bet{}).
-		Where("session_id = ? AND status = ?", uuid.UUID(sessionID), string(oldStatus)).
-		Update("status", string(newStatus)).
-		Error
+func (r *Repository) UpdateBetsStatusBatch(ctx context.Context, sessionID domainSession.ID, status domainBet.Status) error {
+	const operationName = "repo::bet::gorm::updateBetsBatch"
+	_, err := gorm.G[Bet](r.db).Where("session_id = ?", sessionID.String()).Update(ctx, "status", status)
+	if err != nil {
+		return fmt.Errorf("failed to update bets batch in %s: %w", operationName, err)
+	}
+	return nil
 }
 
-func (r *Repository) FindWaitingBets(ctx context.Context, limit int) ([]domainSession.ID, error) {
+func (r *Repository) FindWaitingBetSession(ctx context.Context) (domainSession.ID, error) {
 	if !r.isInTransaction() {
-		return nil, ErrNotInTransaction
+		return domainSession.ID{}, ErrNotInTransaction
 	}
 
-	var sessionIDs []uuid.UUID
+	// Get one bet with WAITING status and lock it
+	// Then return its session_id
+	var bet Bet
 	err := r.db.WithContext(ctx).
-		Model(&Bet{}).
-		Select("DISTINCT session_id").
 		Where("status = ?", string(domainBet.StatusWaiting)).
 		Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
-		Limit(limit).
-		Pluck("session_id", &sessionIDs).Error
+		First(&bet).Error
 
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domainSession.ID{}, domain.ErrBetNotFound
+		}
+		return domainSession.ID{}, err
 	}
 
-	result := make([]domainSession.ID, len(sessionIDs))
-	for i, id := range sessionIDs {
-		result[i] = domainSession.ID(id)
-	}
-
-	return result, nil
+	return domainSession.ID(bet.SessionID), nil
 }
 
 func (r *Repository) BetsBySessionIDLocked(ctx context.Context, sessionID domainSession.ID, status domainBet.Status) ([]domainBet.Bet, error) {
