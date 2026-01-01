@@ -42,4 +42,8 @@ const (
 	GameIDField          = "game_id"
 	GameNameField        = "game_name"
 	ModelIDField         = "model_id"
+	SessionIDField       = "session_id"
+	TotalPoolField       = "total_pool"
+	WinnersCountField    = "winners_count"
+	PayoutPerWinnerField = "payout_per_winner"
 )
