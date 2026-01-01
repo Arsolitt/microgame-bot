@@ -20,6 +20,7 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 		l.DebugContext(ctx, "Inline query received")
 
 		rounds := 1
+		bet := 0
 		queryText := strings.TrimSpace(query.Query)
 		if queryText != "" {
 			fields := strings.Fields(queryText)
@@ -28,12 +29,21 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 					rounds = parsed
 				}
 			}
+			if len(fields) > 1 {
+				if parsed, err := strconv.Atoi(fields[1]); err == nil && parsed > 0 {
+					bet = parsed
+					if bet > 10000 {
+						bet = 10000
+					}
+				}
+			}
 		}
 		if rounds > cfg.MaxGameCount {
 			rounds = cfg.MaxGameCount
 		}
 
 		roundsStr := strconv.Itoa(rounds)
+		betStr := strconv.Itoa(bet)
 		roundsLabel := fmt.Sprintf("(%d раунд", rounds)
 		switch rounds {
 		case 1:
@@ -44,14 +54,21 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 			roundsLabel += "ов)"
 		}
 
+		betLabel := ""
+		if bet > 0 {
+			betLabel = fmt.Sprintf(" 💰 %d токенов", bet)
+		}
+
+		tttMsg := fmt.Sprintf("🎮 <b>Крестики-Нолики</b>\n<i>%s</i>\n\nНажми кнопку, чтобы начать игру!", roundsLabel)
+		rpsMsg := fmt.Sprintf("🎮 <b>Камень-Ножницы-Бумага</b>\n<i>%s%s</i>\n\nНажми кнопку, чтобы начать игру!", roundsLabel, betLabel)
+
 		return &InlineQueryResponse{
 			QueryID: query.ID,
 			Results: []telego.InlineQueryResult{
 				tu.ResultArticle(
 					"game::ttt",
 					"Крестики-Нолики "+roundsLabel,
-					tu.TextMessage(fmt.Sprintf("🎮 <b>Крестики-Нолики</b>\n<i>%s</i>\n\nНажми кнопку, чтобы начать игру!", roundsLabel)).
-						WithParseMode("HTML"),
+					tu.TextMessage(tttMsg).WithParseMode("HTML"),
 				).WithReplyMarkup(tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
 						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::ttt::" + roundsStr),
@@ -59,12 +76,11 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 				)),
 				tu.ResultArticle(
 					"game::rps",
-					"Камень-Ножницы-Бумага "+roundsLabel,
-					tu.TextMessage(fmt.Sprintf("🎮 <b>Камень-Ножницы-Бумага</b>\n<i>%s</i>\n\n\nНажми кнопку, чтобы начать игру!", roundsLabel)).
-						WithParseMode("HTML"),
+					"Камень-Ножницы-Бумага "+roundsLabel+betLabel,
+					tu.TextMessage(rpsMsg).WithParseMode("HTML"),
 				).WithReplyMarkup(tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
-						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::rps::" + roundsStr),
+						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::rps::" + roundsStr + "::" + betStr),
 					),
 				)),
 			},

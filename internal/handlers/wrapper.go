@@ -22,6 +22,7 @@ var errorStatusMap = map[error]string{
 	ttt.ErrInvalidMove:            "Неверный ход",
 	ttt.ErrCellOccupied:           "Ячейка уже занята",
 	ttt.ErrOutOfBounds:            "Координаты выходят за пределы доски",
+	domain.ErrInsufficientTokens:  "Недостаточно токенов для ставки",
 }
 
 func getCustomErrorMessage(target error) string {

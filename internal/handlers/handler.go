@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/domain"
+	domainBet "microgame-bot/internal/domain/bet"
 	domainUser "microgame-bot/internal/domain/user"
 	"microgame-bot/internal/utils"
 	"strings"
@@ -74,4 +75,27 @@ func extractGameCount(callbackData string, maxGameCount int) int {
 	}
 
 	return gameCount
+}
+
+// Extracts the bet amount from the callback data. If the callback data is invalid, returns 0.
+func extractBetAmount(callbackData string, maxBet int) domain.Token {
+	parts := strings.Split(callbackData, "::")
+	if len(parts) < 4 {
+		return domainBet.DefaultBet
+	}
+
+	var bet int
+	_, err := fmt.Sscanf(parts[3], "%d", &bet)
+	if err != nil {
+		return domainBet.DefaultBet
+	}
+
+	if bet < 0 {
+		return domainBet.DefaultBet
+	}
+	if bet > maxBet {
+		return domainBet.MaxBet
+	}
+
+	return domain.Token(bet)
 }
