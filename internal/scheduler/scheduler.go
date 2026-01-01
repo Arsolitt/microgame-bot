@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"microgame-bot/internal/core/logger"
@@ -50,7 +49,7 @@ func (s *Scheduler) CreateOrUpdateCronJobs(ctx context.Context, jobs []CronJob) 
 	}
 	err := s.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "name"}},
-		DoUpdates: clause.AssignmentColumns([]string{"expression", "status", "subject", "payload", "task_run_after"}),
+		DoUpdates: clause.AssignmentColumns([]string{"expression", "status", "subject", "payload"}),
 	}).Create(&jobs).Error
 	if err != nil {
 		return fmt.Errorf("failed to create or update cron job in %s: %w", OPERATION_NAME, err)
@@ -65,6 +64,7 @@ func (s *Scheduler) CreateOrUpdateCronJobs(ctx context.Context, jobs []CronJob) 
 func (s *Scheduler) Start(ctx context.Context) error {
 	const OPERATION_NAME = "scheduler::Start"
 	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+	l.InfoContext(ctx, "Scheduler started", "poll_interval", s.pollInterval.Seconds())
 
 	s.mu.Lock()
 	if s.running {
@@ -85,7 +85,6 @@ func (s *Scheduler) Start(ctx context.Context) error {
 
 		// Add random jitter to avoid thundering herd
 		initialDelay := time.Duration(utils.RandInt(int(s.pollInterval)))
-		l.InfoContext(ctx, "Starting scheduler with initial delay", "delay_ms", initialDelay.Milliseconds())
 
 		select {
 		case <-time.After(initialDelay):
@@ -97,8 +96,6 @@ func (s *Scheduler) Start(ctx context.Context) error {
 
 		ticker := time.NewTicker(s.pollInterval)
 		defer ticker.Stop()
-
-		l.InfoContext(ctx, "Scheduler started", "poll_interval", s.pollInterval)
 
 		for {
 			select {
@@ -119,82 +116,6 @@ func (s *Scheduler) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *Scheduler) processCronJobs(ctx context.Context) error {
-	const OPERATION_NAME = "scheduler::processCronJobs"
-	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
-
-	startTime := time.Now()
-	var processedCount int
-
-	defer func() {
-		duration := time.Since(startTime)
-		if processedCount > 0 {
-			l.InfoContext(ctx, "Cron jobs processed",
-				"count", processedCount,
-				"duration_ms", duration.Milliseconds())
-		}
-	}()
-
-	err := s.db.Transaction(func(tx *gorm.DB) error {
-		now := time.Now()
-
-		cronJobs, err := gorm.G[CronJob](
-			tx,
-			clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"},
-		).
-			Where("status = ?", CronJobStatusActive).
-			Where("next_run_at <= ?", now).
-			Order("next_run_at ASC").
-			Limit(s.batchSize).
-			Find(ctx)
-
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil
-			}
-			return fmt.Errorf("failed to find cron jobs: %w", err)
-		}
-
-		if len(cronJobs) == 0 {
-			return nil
-		}
-
-		processedCount = len(cronJobs)
-
-		// First: update NextRunAt and LastRunAt
-		for i := range cronJobs {
-			cronJobs[i].LastRunAt = now
-			nextRunAt, err := s.calculateNextRun(cronJobs[i].Expression, now)
-			if err != nil {
-				return fmt.Errorf("failed to calculate next run for job %s: %w", cronJobs[i].Name, err)
-			}
-			cronJobs[i].NextRunAt = nextRunAt
-		}
-
-		if err := tx.Save(&cronJobs).Error; err != nil {
-			return fmt.Errorf("failed to update cron jobs: %w", err)
-		}
-
-		// Second: publish tasks after successful update
-		tasks := make([]queue.Task, 0, len(cronJobs))
-		for _, cronJob := range cronJobs {
-			tasks = append(tasks, queue.NewTask(cronJob.Subject, cronJob.Payload, cronJob.TaskRunAfter, 0))
-		}
-
-		if err := s.qp.Publish(ctx, tasks); err != nil {
-			return fmt.Errorf("failed to publish cron jobs: %w", err)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to process cron jobs: %w", err)
-	}
-
-	return nil
-}
-
 func (s *Scheduler) calculateNextRun(expression CronExpression, from time.Time) (time.Time, error) {
 	parser := cron.NewParser(cronParserPattern)
 	schedule, err := parser.Parse(expression.String())
@@ -209,45 +130,4 @@ func (s *Scheduler) IsHealthy() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.running
-}
-
-func (s *Scheduler) Stop(ctx context.Context) error {
-	const OPERATION_NAME = "scheduler::Stop"
-	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
-
-	s.mu.Lock()
-	if !s.running {
-		s.mu.Unlock()
-		l.InfoContext(ctx, "Scheduler is not running, nothing to stop")
-		return nil
-	}
-	s.running = false
-	s.mu.Unlock()
-
-	l.InfoContext(ctx, "Stopping scheduler...")
-
-	// Signal stop
-	select {
-	case s.stopCh <- struct{}{}:
-	default:
-	}
-
-	// Wait for goroutine to finish with timeout
-	done := make(chan struct{})
-	go func() {
-		s.wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		l.InfoContext(ctx, "Scheduler stopped successfully")
-		return nil
-	case <-ctx.Done():
-		l.WarnContext(ctx, "Scheduler stop cancelled by context")
-		return ctx.Err()
-	case <-time.After(30 * time.Second):
-		l.ErrorContext(ctx, "Scheduler stop timeout")
-		return fmt.Errorf("scheduler stop timeout after 30 seconds")
-	}
 }
