@@ -12,6 +12,7 @@ import (
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
+	tu "github.com/mymmrac/telego/telegoutil"
 )
 
 func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) CallbackQueryHandlerFunc {
@@ -31,6 +32,7 @@ func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 		}
 
 		var game ttt.TTT
+		var isSecondPlayer bool
 		err = unit.Do(ctx, func(uow uow.IUnitOfWork) error {
 			gameRepo, err := uow.TTTRepo()
 			if err != nil {
@@ -50,6 +52,9 @@ func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 				return fmt.Errorf("failed to get game session by ID with lock in %s: %w", operationName, err)
 			}
 
+			// Check if this is the second player joining
+			isSecondPlayer = !game.PlayerXID().IsZero() && game.PlayerOID().IsZero()
+
 			game, err = game.JoinGame(player2.ID())
 			if err != nil {
 				return err
@@ -60,14 +65,17 @@ func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 				return fmt.Errorf("failed to update game: %w", err)
 			}
 
-			session, err = session.ChangeStatus(domain.GameStatusInProgress)
-			if err != nil {
-				return err
-			}
+			// Only change session status if both players joined
+			if isSecondPlayer {
+				session, err = session.ChangeStatus(domain.GameStatusInProgress)
+				if err != nil {
+					return err
+				}
 
-			_, err = sessionRepo.UpdateSession(ctx, session)
-			if err != nil {
-				return fmt.Errorf("failed to update session: %w", err)
+				_, err = sessionRepo.UpdateSession(ctx, session)
+				if err != nil {
+					return fmt.Errorf("failed to update session: %w", err)
+				}
 			}
 
 			return nil
@@ -79,6 +87,32 @@ func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 		creator, err := userRepo.UserByID(ctx, game.CreatorID())
 		if err != nil {
 			return nil, fmt.Errorf("failed to get creator by ID in %s: %w", operationName, err)
+		}
+
+		// First player joined - wait for second
+		if !isSecondPlayer {
+			msg, err := msgs.TTTFirstPlayerJoined(creator, player2)
+			if err != nil {
+				return nil, err
+			}
+
+			return ResponseChain{
+				&EditMessageTextResponse{
+					InlineMessageID: query.InlineMessageID,
+					Text:            msg,
+					ParseMode:       "HTML",
+					ReplyMarkup: tu.InlineKeyboard(
+						tu.InlineKeyboardRow(
+							tu.InlineKeyboardButton("Присоединиться").
+								WithCallbackData("g::ttt::join::" + game.ID().String()),
+						),
+					),
+				},
+				&CallbackQueryResponse{
+					CallbackQueryID: query.ID,
+					Text:            "Вы присоединились! Ждём второго игрока...",
+				},
+			}, nil
 		}
 
 		// Second player joined - start the game
