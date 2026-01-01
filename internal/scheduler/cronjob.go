@@ -68,13 +68,3 @@ type CronJob struct {
 	CreatedAt    time.Time      `gorm:"not null"`
 	UpdatedAt    time.Time      `gorm:"not null"`
 }
-
-func calculateNextRun(expression CronExpression) (time.Time, error) {
-	const OPERATION_NAME = "scheduler::calculateNextRun"
-	parser := cron.NewParser(cronParserPattern)
-	schedule, err := parser.Parse(expression.String())
-	if err != nil {
-		return time.Time{}, fmt.Errorf("failed to parse cron expression in %s: %w", OPERATION_NAME, err)
-	}
-	return schedule.Next(time.Now()), nil
-}
