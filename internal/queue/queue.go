@@ -160,8 +160,8 @@ func (q *Queue) processTask(ctx context.Context, task *Task) {
 		return
 	}
 
-	handler, ok := q.handlers[task.Subject]
-	if !ok {
+	handler := q.findHandler(task.Subject)
+	if handler == nil {
 		slog.WarnContext(taskCtx, "No handler found for subject, requeueing")
 		q.requeue(taskCtx, task.ID)
 		return
@@ -174,4 +174,20 @@ func (q *Queue) processTask(ctx context.Context, task *Task) {
 	}
 
 	q.ack(taskCtx, task.ID)
+}
+
+func (q *Queue) findHandler(subject string) Handler {
+	// exact match first
+	if handler, ok := q.handlers[subject]; ok {
+		return handler
+	}
+
+	// wildcard matching
+	for pattern, handler := range q.handlers {
+		if matchSubject(subject, pattern) {
+			return handler
+		}
+	}
+
+	return nil
 }
