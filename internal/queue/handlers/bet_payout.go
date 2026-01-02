@@ -14,10 +14,11 @@ import (
 
 // BetPayoutHandler returns a handler function for processing bet payouts.
 func BetPayoutHandler(u uow.IUnitOfWork) func(ctx context.Context, data []byte) error {
-	const OPERATION_NAME = "handler::bet_payout"
+	const OPERATION_NAME = "queue::handler::bet_payout"
 	return func(ctx context.Context, data []byte) error {
 
 		err := u.Do(ctx, func(unit uow.IUnitOfWork) error {
+
 			betRepo, err := unit.BetRepo()
 			if err != nil {
 				return fmt.Errorf("failed to get bet repository: %w", err)
@@ -51,6 +52,7 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 		slog.String(logger.OperationField, OPERATION_NAME),
 	)
 	ctx = logger.WithLogValue(ctx, logger.SessionIDField, sessionID.String())
+	l.DebugContext(ctx, "Processing session payout", "session_id", sessionID.String())
 
 	betRepo, err := unit.BetRepo()
 	if err != nil {
@@ -76,13 +78,11 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 		return nil
 	}
 
-	// Get session
 	session, err := sessionRepo.SessionByID(ctx, sessionID)
 	if err != nil {
 		return fmt.Errorf("failed to get session in %s: %w", OPERATION_NAME, err)
 	}
 
-	// Get games for this session
 	var games []domainSession.IGame
 	switch session.GameType() {
 	case domain.GameTypeTTT:
@@ -119,7 +119,34 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 	manager := domainSession.NewManager(session, games)
 	result := manager.CalculateResult()
 
-	if !result.IsCompleted {
+	if session.Status() == domain.GameStatusCancelled || (session.Status() == domain.GameStatusAbandoned && !result.IsCompleted) {
+		l.InfoContext(ctx, "Processing cancelled session - full refund")
+
+		for _, bet := range bets {
+			user, err := userRepo.UserByIDLocked(ctx, bet.UserID())
+			if err != nil {
+				return fmt.Errorf("failed to get user in %s: %w", OPERATION_NAME, err)
+			}
+
+			user, err = user.AddTokens(bet.Amount())
+			if err != nil {
+				return fmt.Errorf("failed to add tokens to user in %s: %w", OPERATION_NAME, err)
+			}
+
+			if _, err := userRepo.UpdateUser(ctx, user); err != nil {
+				return fmt.Errorf("failed to update user in %s: %w", OPERATION_NAME, err)
+			}
+
+			l.DebugContext(ctx, "Refunded bet for cancelled game",
+				logger.UserIDField, bet.UserID().String(),
+				"amount", bet.Amount())
+		}
+
+		// Mark bets as paid (refund completed)
+		if err := betRepo.UpdateBetsStatusBatch(ctx, sessionID, domainBet.StatusPaid); err != nil {
+			return fmt.Errorf("failed to update bets batch in %s: %w", OPERATION_NAME, err)
+		}
+
 		return nil
 	}
 
