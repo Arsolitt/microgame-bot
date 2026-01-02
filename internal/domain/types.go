@@ -33,6 +33,7 @@ const (
 	GameStatusInProgress        GameStatus = "in_progress"
 	GameStatusFinished          GameStatus = "finished"
 	GameStatusCancelled         GameStatus = "cancelled"
+	GameStatusAbandoned         GameStatus = "abandoned" // Game started but player went AFK
 )
 
 const (
@@ -66,7 +67,8 @@ func (g GameStatus) IsValid() bool {
 		GameStatusWaitingForPlayers,
 		GameStatusInProgress,
 		GameStatusFinished,
-		GameStatusCancelled:
+		GameStatusCancelled,
+		GameStatusAbandoned:
 		return true
 	default:
 		return false
