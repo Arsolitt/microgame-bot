@@ -8,6 +8,7 @@ import (
 	se "microgame-bot/internal/domain/session"
 	"microgame-bot/internal/repo"
 	"microgame-bot/internal/utils"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -88,5 +89,35 @@ func (r *Repository) SessionByMessageID(ctx context.Context, id domain.InlineMes
 	if err != nil {
 		return se.Session{}, err
 	}
+	return model.ToDomain()
+}
+
+func (r *Repository) FindOldInProgressSession(ctx context.Context, timeout time.Duration) (se.Session, error) {
+	const operationName = "repo::session::FindOldInProgressSessions"
+
+	if !utils.IsInGormTransaction(r.db) {
+		return se.Session{}, repo.ErrNotInTransaction
+	}
+
+	cutoffTime := time.Now().Add(-timeout)
+
+	statuses := []domain.GameStatus{
+		domain.GameStatusInProgress,
+		domain.GameStatusWaitingForPlayers,
+		domain.GameStatusCreated,
+	}
+
+	model, err := gorm.G[Session](r.db, clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
+		Where("status IN (?)", statuses).
+		Where("updated_at < ?", cutoffTime).
+		First(ctx)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return se.Session{}, domain.ErrSessionNotFound
+		}
+		return se.Session{}, fmt.Errorf("failed to find old sessions in %s: %w", operationName, err)
+	}
+
 	return model.ToDomain()
 }
