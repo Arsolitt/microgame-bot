@@ -13,7 +13,6 @@ import (
 	"microgame-bot/internal/mdw"
 	"microgame-bot/internal/queue"
 	"microgame-bot/internal/scheduler"
-	"microgame-bot/internal/utils"
 	"os"
 	"os/signal"
 	"time"
@@ -81,27 +80,40 @@ func startup() error {
 	)
 	q.Register("bets.payout", qHandlers.BetPayoutHandler(betPayoutUnit))
 
+	// Register game timeout handler
+	gameTimeoutUnit := uowGorm.New(db,
+		uowGorm.WithBetRepo(betRepo),
+		uowGorm.WithSessionRepo(sessionRepo),
+		uowGorm.WithUserRepo(userRepo),
+		uowGorm.WithTTTRepo(tttRepo),
+		uowGorm.WithRPSRepo(rpsRepo),
+	)
+	q.Register("games.timeout", qHandlers.GameTimeoutHandler(gameTimeoutUnit, q))
+
 	defer func() { _ = q.Stop(ctx) }()
 	q.Start(ctx)
 
 	cronJobs := []scheduler.CronJob{
 		{
-			ID:          utils.NewUniqueID(),
-			Name:        "queue-cleanup",
-			Expression:  "0 */15 * * * *",
-			Status:      scheduler.CronJobStatusActive,
-			Subject:     "queue.cleanup",
-			Payload:     queue.EmptyPayload,
-			TaskTimeout: 5 * time.Minute,
+			Name:       "queue-cleanup",
+			Expression: "0 */15 * * * *",
+			Status:     scheduler.CronJobStatusActive,
+			Subject:    "queue.cleanup",
+			Payload:    queue.EmptyPayload,
 		},
 		{
-			ID:          utils.NewUniqueID(),
-			Name:        "bets-payout",
-			Expression:  "0 * * * * *",
-			Status:      scheduler.CronJobStatusActive,
-			Subject:     "bets.payout",
-			Payload:     queue.EmptyPayload,
-			TaskTimeout: 5 * time.Minute,
+			Name:       "bets-payout",
+			Expression: "0 */5 * * * *",
+			Status:     scheduler.CronJobStatusActive,
+			Subject:    "bets.payout",
+			Payload:    queue.EmptyPayload,
+		},
+		{
+			Name:       "games-timeout",
+			Expression: "0 */5 * * * *",
+			Status:     scheduler.CronJobStatusActive,
+			Subject:    "games.timeout",
+			Payload:    queue.EmptyPayload,
 		},
 	}
 	sc := scheduler.New(db, 10, q, 1*time.Second)

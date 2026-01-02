@@ -119,7 +119,8 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 	manager := domainSession.NewManager(session, games)
 	result := manager.CalculateResult()
 
-	if session.Status() == domain.GameStatusCancelled || (session.Status() == domain.GameStatusAbandoned && !result.IsCompleted) {
+	// Handle cancelled sessions - always full refund
+	if session.Status() == domain.GameStatusCancelled {
 		l.InfoContext(ctx, "Processing cancelled session - full refund")
 
 		for _, bet := range bets {
@@ -143,6 +144,85 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 		}
 
 		// Mark bets as paid (refund completed)
+		if err := betRepo.UpdateBetsStatusBatch(ctx, sessionID, domainBet.StatusPaid); err != nil {
+			return fmt.Errorf("failed to update bets batch in %s: %w", OPERATION_NAME, err)
+		}
+
+		return nil
+	}
+
+	// Handle abandoned sessions that are not completed
+	// Determine winner by current score, or refund if no clear winner
+	if session.Status() == domain.GameStatusAbandoned && !result.IsCompleted {
+		winners := manager.DetermineWinnersByCurrentScore()
+
+		// If no one won any games or multiple players have same score, refund
+		if len(winners) == 0 || len(winners) > 1 {
+			l.InfoContext(ctx, "Processing abandoned session with no clear winner - full refund")
+
+			for _, bet := range bets {
+				user, err := userRepo.UserByIDLocked(ctx, bet.UserID())
+				if err != nil {
+					return fmt.Errorf("failed to get user in %s: %w", OPERATION_NAME, err)
+				}
+
+				user, err = user.AddTokens(bet.Amount())
+				if err != nil {
+					return fmt.Errorf("failed to add tokens to user in %s: %w", OPERATION_NAME, err)
+				}
+
+				if _, err := userRepo.UpdateUser(ctx, user); err != nil {
+					return fmt.Errorf("failed to update user in %s: %w", OPERATION_NAME, err)
+				}
+
+				l.DebugContext(ctx, "Refunded bet for abandoned game",
+					logger.UserIDField, bet.UserID().String(),
+					"amount", bet.Amount())
+			}
+
+			if err := betRepo.UpdateBetsStatusBatch(ctx, sessionID, domainBet.StatusPaid); err != nil {
+				return fmt.Errorf("failed to update bets batch in %s: %w", OPERATION_NAME, err)
+			}
+
+			return nil
+		}
+
+		// Clear winner by current score - process payout for winner
+		l.InfoContext(ctx, "Processing abandoned session with clear winner by score", "winners", winners)
+
+		totalPool := domain.Token(0)
+		for _, bet := range bets {
+			totalPool += bet.Amount()
+		}
+
+		totalWinnerPayout := domainBet.CalculateWinPayout(totalPool)
+		winnersCount := len(winners)
+		payoutPerWinner := domain.Token(0)
+
+		if winnersCount > 0 {
+			payoutPerWinner = (totalWinnerPayout + domain.Token(winnersCount-1)) / domain.Token(winnersCount)
+		}
+
+		ctx = logger.WithLogValue(ctx, logger.TotalPoolField, totalPool)
+		ctx = logger.WithLogValue(ctx, logger.WinnersCountField, winnersCount)
+		ctx = logger.WithLogValue(ctx, logger.PayoutPerWinnerField, payoutPerWinner)
+
+		for _, winnerID := range winners {
+			winner, err := userRepo.UserByID(ctx, winnerID)
+			if err != nil {
+				return fmt.Errorf("failed to get winner in %s: %w", OPERATION_NAME, err)
+			}
+
+			winner, err = winner.AddTokens(payoutPerWinner)
+			if err != nil {
+				return fmt.Errorf("failed to add tokens to winner in %s: %w", OPERATION_NAME, err)
+			}
+
+			if _, err := userRepo.UpdateUser(ctx, winner); err != nil {
+				return fmt.Errorf("failed to update winner in %s: %w", OPERATION_NAME, err)
+			}
+		}
+
 		if err := betRepo.UpdateBetsStatusBatch(ctx, sessionID, domainBet.StatusPaid); err != nil {
 			return fmt.Errorf("failed to update bets batch in %s: %w", OPERATION_NAME, err)
 		}

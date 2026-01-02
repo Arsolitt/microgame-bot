@@ -168,6 +168,33 @@ func (sm *Manager) determineWinners(scores map[user.ID]int) []user.ID {
 	return winners
 }
 
+// DetermineWinnersByCurrentScore returns winners based on current score.
+// Used for abandoned sessions to determine if there's a clear leader.
+func (sm *Manager) DetermineWinnersByCurrentScore() []user.ID {
+	scores := make(map[user.ID]int)
+	participants := sm.collectParticipants()
+
+	for _, participantID := range participants {
+		scores[participantID] = 0
+	}
+
+	for _, game := range sm.games {
+		if !game.IsFinished() {
+			continue
+		}
+
+		if game.IsDraw() {
+			continue
+		}
+
+		for _, winnerID := range game.Winners() {
+			scores[winnerID]++
+		}
+	}
+
+	return sm.determineWinners(scores)
+}
+
 func (sm *Manager) maxScore(scores map[user.ID]int) int {
 	if len(scores) == 0 {
 		return 0

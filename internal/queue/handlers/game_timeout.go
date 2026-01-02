@@ -18,8 +18,7 @@ import (
 )
 
 const (
-	// GameTimeoutDuration = 24 * time.Hour
-	GameTimeoutDuration = 60 * time.Second
+	GameTimeoutDuration = 24 * time.Hour
 )
 
 // GameTimeoutHandler returns a handler function for processing game timeouts.
