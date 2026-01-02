@@ -55,13 +55,13 @@ func (r *Repository) HasClaimedToday(ctx context.Context, userID user.ID) (bool,
 	return true, nil
 }
 
-// truncateToDate truncates time to date (YYYY-MM-DD 00:00:00)
+// truncateToDate truncates time to date (YYYY-MM-DD 00:00:00).
 func truncateToDate(t time.Time) time.Time {
 	year, month, day := t.Date()
 	return time.Date(year, month, day, 0, 0, 0, 0, t.Location())
 }
 
-// isDuplicateKeyError checks if error is a unique constraint violation
+// isDuplicateKeyError checks if error is a unique constraint violation.
 func isDuplicateKeyError(err error) bool {
 	if err == nil {
 		return false

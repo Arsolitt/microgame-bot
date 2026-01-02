@@ -14,7 +14,7 @@ import (
 )
 
 // DailyBonusMiddleware checks and awards daily bonus tokens
-// Must be called AFTER UserProvider middleware
+// Must be called AFTER UserProvider middleware.
 func DailyBonusMiddleware(
 	unit uow.IUnitOfWork,
 ) func(*th.Context, telego.Update) error {

@@ -36,7 +36,12 @@ func TTTFirstPlayerJoined(creator domainUser.User, firstPlayer domainUser.User, 
 	return sb.String(), nil
 }
 
-func TTTGameStarted(creator domainUser.User, playerX domainUser.User, playerO domainUser.User, bet domain.Token) (string, error) {
+func TTTGameStarted(
+	creator domainUser.User,
+	playerX domainUser.User,
+	playerO domainUser.User,
+	bet domain.Token,
+) (string, error) {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("@%s ", creator.Username()))

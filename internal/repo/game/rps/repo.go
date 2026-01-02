@@ -88,7 +88,11 @@ func (r *Repository) UpdateGame(ctx context.Context, game rps.RPS) (rps.RPS, err
 	return r.ToDomain(model)
 }
 
-func (r *Repository) gamesBySessionID(ctx context.Context, id session.ID, opts ...clause.Expression) ([]rps.RPS, error) {
+func (r *Repository) gamesBySessionID(
+	ctx context.Context,
+	id session.ID,
+	opts ...clause.Expression,
+) ([]rps.RPS, error) {
 	const operationName = "repo::rps::gorm::gamesBySessionID"
 	models, err := gorm.G[gM.Game](r.db, opts...).
 		Where("session_id = ?", id.String()).

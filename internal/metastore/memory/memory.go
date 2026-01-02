@@ -11,9 +11,9 @@ import (
 )
 
 type Metastore struct {
-	mu        sync.RWMutex
 	store     map[string][]byte
 	keyPrefix string
+	mu        sync.RWMutex
 }
 
 func New(keyPrefix string) *Metastore {

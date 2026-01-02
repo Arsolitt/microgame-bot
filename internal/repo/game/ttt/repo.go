@@ -100,7 +100,11 @@ func (r *Repository) gameByID(ctx context.Context, id ttt.ID, opts ...clause.Exp
 	return r.ToDomain(model)
 }
 
-func (r *Repository) gamesBySessionID(ctx context.Context, id session.ID, opts ...clause.Expression) ([]ttt.TTT, error) {
+func (r *Repository) gamesBySessionID(
+	ctx context.Context,
+	id session.ID,
+	opts ...clause.Expression,
+) ([]ttt.TTT, error) {
 	const operationName = "repo::ttt::gorm::gamesBySessionID"
 	models, err := gorm.G[gM.Game](r.db, opts...).
 		Where("session_id = ?", id.String()).

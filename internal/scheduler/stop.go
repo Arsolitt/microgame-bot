@@ -2,7 +2,7 @@ package scheduler
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"log/slog"
 	"microgame-bot/internal/core/logger"
 	"time"
@@ -49,6 +49,6 @@ func (s *Scheduler) Stop(ctx context.Context) error {
 		return ctx.Err()
 	case <-time.After(stopTimeout):
 		l.ErrorContext(ctx, "Scheduler stop timeout")
-		return fmt.Errorf("scheduler stop timeout after 30 seconds")
+		return errors.New("scheduler stop timeout after 30 seconds")
 	}
 }

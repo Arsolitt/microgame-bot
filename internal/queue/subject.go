@@ -4,7 +4,7 @@ import "strings"
 
 // matchSubject checks if subject matches the pattern with NATS-style wildcards:
 // - '*' matches exactly one token
-// - '>' matches one or more tokens (only at the end)
+// - '>' matches one or more tokens (only at the end).
 func matchSubject(subject, pattern string) bool {
 	if pattern == subject {
 		return true

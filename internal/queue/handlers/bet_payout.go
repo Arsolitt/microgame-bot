@@ -16,9 +16,7 @@ import (
 func BetPayoutHandler(u uow.IUnitOfWork) func(ctx context.Context, data []byte) error {
 	const OPERATION_NAME = "queue::handler::bet_payout"
 	return func(ctx context.Context, data []byte) error {
-
 		err := u.Do(ctx, func(unit uow.IUnitOfWork) error {
-
 			betRepo, err := unit.BetRepo()
 			if err != nil {
 				return fmt.Errorf("failed to get bet repository: %w", err)
@@ -256,7 +254,6 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 				return fmt.Errorf("failed to update user in %s: %w", OPERATION_NAME, err)
 			}
 		}
-
 	} else if len(result.SeriesWinners) > 0 {
 		totalWinnerPayout := domainBet.CalculateWinPayout(totalPool)
 		winnersCount := len(result.SeriesWinners)
@@ -283,7 +280,6 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 				return fmt.Errorf("failed to update winner in %s: %w", OPERATION_NAME, err)
 			}
 		}
-
 	} else {
 		l.WarnContext(ctx, "No winners and not a draw - skipping payout")
 		return nil

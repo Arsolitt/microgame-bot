@@ -21,7 +21,11 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
-func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork, qPublisher queue.IQueuePublisher) CallbackQueryHandlerFunc {
+func TTTMove(
+	userGetter userRepository.IUserGetter,
+	unit uow.IUnitOfWork,
+	qPublisher queue.IQueuePublisher,
+) CallbackQueryHandlerFunc {
 	const operationName = "handler::ttt_move"
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		slog.DebugContext(ctx, "TTT Move callback received", logger.OperationField, operationName)

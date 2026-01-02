@@ -9,9 +9,9 @@ import (
 type Result struct {
 	Scores        map[user.ID]int
 	Participants  []user.ID
+	SeriesWinners []user.ID
 	Session       Session
 	Draws         int
-	SeriesWinners []user.ID
 	IsCompleted   bool
 	IsDraw        bool
 	NeedsNewRound bool

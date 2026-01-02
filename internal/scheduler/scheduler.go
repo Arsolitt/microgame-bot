@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"microgame-bot/internal/core/logger"
@@ -18,15 +19,14 @@ import (
 // Scheduler is a cron scheduler that can be used to schedule jobs.
 // It uses GORM as a storage for cron jobs.
 type Scheduler struct {
-	db           *gorm.DB
-	batchSize    int
 	qp           queue.IQueuePublisher
+	db           *gorm.DB
+	stopCh       chan struct{}
+	wg           sync.WaitGroup
+	batchSize    int
 	pollInterval time.Duration
-
-	mu      sync.Mutex
-	wg      sync.WaitGroup
-	running bool
-	stopCh  chan struct{}
+	mu           sync.Mutex
+	running      bool
 }
 
 func New(db *gorm.DB, batchSize int, qp queue.IQueuePublisher, pollInterval time.Duration) *Scheduler {
@@ -70,7 +70,7 @@ func (s *Scheduler) CreateOrUpdateCronJobs(ctx context.Context, jobs []CronJob) 
 // Start starts the cron scheduler.
 // It creates ticker that will tick every pollInterval
 // in transaction with select for update skip locked check if there are any cron jobs that are due to run
-// if there are any cron jobs that are due to run, publish task to task queue
+// if there are any cron jobs that are due to run, publish task to task queue.
 func (s *Scheduler) Start(ctx context.Context) error {
 	const OPERATION_NAME = "scheduler::Start"
 	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
@@ -79,14 +79,12 @@ func (s *Scheduler) Start(ctx context.Context) error {
 	s.mu.Lock()
 	if s.running {
 		s.mu.Unlock()
-		return fmt.Errorf("scheduler is already running")
+		return errors.New("scheduler is already running")
 	}
 	s.running = true
 	s.mu.Unlock()
 
-	s.wg.Add(1)
-	go func() {
-		defer s.wg.Done()
+	s.wg.Go(func() {
 		defer func() {
 			if r := recover(); r != nil {
 				l.ErrorContext(ctx, "Scheduler panic recovered", "panic", r)
@@ -121,7 +119,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 				}
 			}
 		}
-	}()
+	})
 
 	return nil
 }
@@ -135,7 +133,7 @@ func (s *Scheduler) calculateNextRun(expression CronExpression, from time.Time) 
 	return schedule.Next(from), nil
 }
 
-// IsHealthy returns true if scheduler is running
+// IsHealthy returns true if scheduler is running.
 func (s *Scheduler) IsHealthy() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()

@@ -26,12 +26,12 @@ type iCommonGame interface {
 type Game struct {
 	CreatedAt time.Time         `gorm:"not null"`
 	UpdatedAt time.Time         `gorm:"not null"`
+	Session   seM.Session       `gorm:"not null;foreignKey:SessionID;references:ID;constraint:OnDelete:RESTRICT"`
 	Type      domain.GameType   `gorm:"not null"`
 	Status    domain.GameStatus `gorm:"not null"`
 	Players   []byte            `gorm:"type:jsonb"`
 	Data      []byte            `gorm:"type:jsonb"`
 	Creator   uM.User           `gorm:"foreignKey:CreatorID;references:ID;constraint:OnDelete:RESTRICT"`
-	Session   seM.Session       `gorm:"not null;foreignKey:SessionID;references:ID;constraint:OnDelete:RESTRICT"`
 	ID        uuid.UUID         `gorm:"primaryKey;type:uuid"`
 	SessionID se.ID             `gorm:"type:uuid;not null"`
 	CreatorID user.ID           `gorm:"type:uuid;not null"`

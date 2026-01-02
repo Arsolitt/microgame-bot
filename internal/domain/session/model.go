@@ -11,10 +11,10 @@ type Session struct {
 	gameType        domain.GameType
 	inlineMessageID domain.InlineMessageID
 	status          domain.GameStatus
+	winCondition    WinCondition
 	gameCount       int
 	bet             domain.Token
 	id              ID
-	winCondition    WinCondition
 }
 
 func New(opts ...Opt) (Session, error) {

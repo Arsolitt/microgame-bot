@@ -66,7 +66,11 @@ func (r *Repository) UpdateUser(ctx context.Context, user domainUser.User) (doma
 	return model.ToDomain()
 }
 
-func (r *Repository) userByID(ctx context.Context, id domainUser.ID, opts ...clause.Expression) (domainUser.User, error) {
+func (r *Repository) userByID(
+	ctx context.Context,
+	id domainUser.ID,
+	opts ...clause.Expression,
+) (domainUser.User, error) {
 	const operationName = "repo::user::gorm::userByID"
 	model, err := gorm.G[User](r.db, opts...).
 		Where("id = ?", id.String()).
@@ -75,7 +79,11 @@ func (r *Repository) userByID(ctx context.Context, id domainUser.ID, opts ...cla
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return domainUser.User{}, fmt.Errorf("user not found by ID in %s: %w", operationName, core.ErrUserNotFound)
 		}
-		return domainUser.User{}, fmt.Errorf("failed to get user by ID from gorm database in %s: %w", operationName, err)
+		return domainUser.User{}, fmt.Errorf(
+			"failed to get user by ID from gorm database in %s: %w",
+			operationName,
+			err,
+		)
 	}
 	return model.ToDomain()
 }

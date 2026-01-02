@@ -21,7 +21,11 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
-func RPSChoice(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork, qPublisher queue.IQueuePublisher) CallbackQueryHandlerFunc {
+func RPSChoice(
+	userGetter userRepository.IUserGetter,
+	unit uow.IUnitOfWork,
+	qPublisher queue.IQueuePublisher,
+) CallbackQueryHandlerFunc {
 	const operationName = "handler::rps_choice"
 	return func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error) {
 		slog.DebugContext(ctx, "RPS Choice callback received", logger.OperationField, operationName)

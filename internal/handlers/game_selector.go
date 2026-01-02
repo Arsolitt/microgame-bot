@@ -32,10 +32,7 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 			}
 			if len(fields) > 1 {
 				if parsed, err := (strconv.Atoi(fields[1])); err == nil && parsed > 0 {
-					bet = parsed
-					if bet > int(domainBet.MaxBet) {
-						bet = int(domainBet.MaxBet)
-					}
+					bet = min(parsed, int(domainBet.MaxBet))
 				}
 			}
 		}
@@ -60,8 +57,16 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 			betLabel = fmt.Sprintf(" 💰 %d токенов", bet)
 		}
 
-		tttMsg := fmt.Sprintf("🎮 <b>Крестики-Нолики</b>\n<i>%s%s</i>\n\nНажми кнопку, чтобы начать игру!", roundsLabel, betLabel)
-		rpsMsg := fmt.Sprintf("🎮 <b>Камень-Ножницы-Бумага</b>\n<i>%s%s</i>\n\nНажми кнопку, чтобы начать игру!", roundsLabel, betLabel)
+		tttMsg := fmt.Sprintf(
+			"🎮 <b>Крестики-Нолики</b>\n<i>%s%s</i>\n\nНажми кнопку, чтобы начать игру!",
+			roundsLabel,
+			betLabel,
+		)
+		rpsMsg := fmt.Sprintf(
+			"🎮 <b>Камень-Ножницы-Бумага</b>\n<i>%s%s</i>\n\nНажми кнопку, чтобы начать игру!",
+			roundsLabel,
+			betLabel,
+		)
 
 		return &InlineQueryResponse{
 			QueryID: query.ID,
@@ -72,7 +77,8 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 					tu.TextMessage(tttMsg).WithParseMode("HTML"),
 				).WithReplyMarkup(tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
-						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::ttt::" + roundsStr + "::" + betStr),
+						tu.InlineKeyboardButton("🎯 Начать игру").
+							WithCallbackData("create::ttt::" + roundsStr + "::" + betStr),
 					),
 				)),
 				tu.ResultArticle(
@@ -81,7 +87,8 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 					tu.TextMessage(rpsMsg).WithParseMode("HTML"),
 				).WithReplyMarkup(tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
-						tu.InlineKeyboardButton("🎯 Начать игру").WithCallbackData("create::rps::" + roundsStr + "::" + betStr),
+						tu.InlineKeyboardButton("🎯 Начать игру").
+							WithCallbackData("create::rps::" + roundsStr + "::" + betStr),
 					),
 				)),
 			},

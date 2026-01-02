@@ -104,7 +104,7 @@ func (r *Repository) UpdateBet(ctx context.Context, bet domainBet.Bet) (domainBe
 	err := r.db.WithContext(ctx).
 		Model(&Bet{}).
 		Where("id = ?", model.ID).
-		Updates(map[string]interface{}{
+		Updates(map[string]any{
 			"status":     model.Status,
 			"updated_at": model.UpdatedAt,
 		}).Error
@@ -116,7 +116,11 @@ func (r *Repository) UpdateBet(ctx context.Context, bet domainBet.Bet) (domainBe
 	return r.BetByID(ctx, bet.ID())
 }
 
-func (r *Repository) UpdateBetsStatusBatch(ctx context.Context, sessionID domainSession.ID, status domainBet.Status) error {
+func (r *Repository) UpdateBetsStatusBatch(
+	ctx context.Context,
+	sessionID domainSession.ID,
+	status domainBet.Status,
+) error {
 	const operationName = "repo::bet::gorm::updateBetsBatch"
 	_, err := gorm.G[Bet](r.db).Where("session_id = ?", sessionID.String()).Update(ctx, "status", status)
 	if err != nil {
@@ -148,7 +152,11 @@ func (r *Repository) FindWaitingBetSession(ctx context.Context) (domainSession.I
 	return domainSession.ID(bet.SessionID), nil
 }
 
-func (r *Repository) BetsBySessionIDLocked(ctx context.Context, sessionID domainSession.ID, status domainBet.Status) ([]domainBet.Bet, error) {
+func (r *Repository) BetsBySessionIDLocked(
+	ctx context.Context,
+	sessionID domainSession.ID,
+	status domainBet.Status,
+) ([]domainBet.Bet, error) {
 	if !r.isInTransaction() {
 		return nil, ErrNotInTransaction
 	}

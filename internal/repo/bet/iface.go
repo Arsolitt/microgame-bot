@@ -33,5 +33,9 @@ type IBetRepository interface {
 
 	// BetsBySessionIDLocked returns all bets for a session with row lock (SELECT FOR UPDATE)
 	// Must be called within transaction
-	BetsBySessionIDLocked(ctx context.Context, sessionID domainSession.ID, status domainBet.Status) ([]domainBet.Bet, error)
+	BetsBySessionIDLocked(
+		ctx context.Context,
+		sessionID domainSession.ID,
+		status domainBet.Status,
+	) ([]domainBet.Bet, error)
 }

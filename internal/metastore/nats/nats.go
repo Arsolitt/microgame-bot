@@ -93,7 +93,13 @@ func (m *Metastore) SetWithTTL(ctx context.Context, uniqueID string, key string,
 	return m.сreateOrUpdate(ctx, m.dataKey(uniqueID, key), data, ttl)
 }
 
-func (m *Metastore) SetStringWithTTL(ctx context.Context, uniqueID string, key string, value string, ttl time.Duration) error {
+func (m *Metastore) SetStringWithTTL(
+	ctx context.Context,
+	uniqueID string,
+	key string,
+	value string,
+	ttl time.Duration,
+) error {
 	return m.сreateOrUpdate(ctx, m.dataKey(uniqueID, key), []byte(value), ttl)
 }
 

@@ -23,10 +23,12 @@ const (
 
 // GameTimeoutHandler returns a handler function for processing game timeouts.
 // It finds old games and either cancels them (if not started) or marks as abandoned (if started).
-func GameTimeoutHandler(u uow.IUnitOfWork, publisher queue.IQueuePublisher) func(ctx context.Context, data []byte) error {
+func GameTimeoutHandler(
+	u uow.IUnitOfWork,
+	publisher queue.IQueuePublisher,
+) func(ctx context.Context, data []byte) error {
 	const OPERATION_NAME = "queue::handler::game_timeout"
 	return func(ctx context.Context, data []byte) error {
-
 		err := u.Do(ctx, func(unit uow.IUnitOfWork) error {
 			sessionRepo, err := unit.SessionRepo()
 			if err != nil {
@@ -42,7 +44,7 @@ func GameTimeoutHandler(u uow.IUnitOfWork, publisher queue.IQueuePublisher) func
 				return fmt.Errorf("failed to find old sessions: %w", err)
 			}
 
-			ctx = logger.WithLogValue(ctx, logger.SessionIDField, session.ID().String())
+			ctx := logger.WithLogValue(ctx, logger.SessionIDField, session.ID().String())
 
 			if err := processTimedOutSession(ctx, unit, session); err != nil {
 				return fmt.Errorf("failed to process timed out session: %w", err)

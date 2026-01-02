@@ -13,15 +13,15 @@ import (
 )
 
 type Bet struct {
-	ID        uuid.UUID        `gorm:"primaryKey;type:uuid"`
-	UserID    uuid.UUID        `gorm:"type:uuid;not null;index"`
-	User      uM.User          `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:RESTRICT"`
-	SessionID uuid.UUID        `gorm:"type:uuid;not null;index:idx_session_status"`
-	Session   seM.Session      `gorm:"not null;foreignKey:SessionID;references:ID;constraint:OnDelete:RESTRICT"`
-	Amount    uint64           `gorm:"not null"`
-	Status    domainBet.Status `gorm:"not null;index:idx_session_status"`
 	CreatedAt time.Time        `gorm:"not null"`
 	UpdatedAt time.Time        `gorm:"not null"`
+	Session   seM.Session      `gorm:"not null;foreignKey:SessionID;references:ID;constraint:OnDelete:RESTRICT"`
+	Status    domainBet.Status `gorm:"not null;index:idx_session_status"`
+	User      uM.User          `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:RESTRICT"`
+	Amount    uint64           `gorm:"not null"`
+	ID        uuid.UUID        `gorm:"primaryKey;type:uuid"`
+	UserID    uuid.UUID        `gorm:"type:uuid;not null;index"`
+	SessionID uuid.UUID        `gorm:"type:uuid;not null;index:idx_session_status"`
 }
 
 func (Bet) TableName() string {

@@ -24,13 +24,13 @@ const (
 )
 
 type Queue struct {
+	sem        utils.ISemaphore
 	db         *gorm.DB
 	handlers   map[string]Handler
+	wg         sync.WaitGroup
 	batchSize  int
 	pollPeriod time.Duration
 	maxWorkers int
-	wg         sync.WaitGroup
-	sem        utils.ISemaphore
 }
 
 func New(db *gorm.DB, maxWorkers int) *Queue {

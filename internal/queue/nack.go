@@ -31,10 +31,7 @@ func (q *Queue) nack(ctx context.Context, taskID utils.UniqueID, handlerErr erro
 			task.Status = TaskStatusFailed
 		} else {
 			task.Status = TaskStatusPending
-			backoff := time.Duration(1<<task.Attempts) * 10 * time.Second
-			if backoff > maxBackoffTimeout {
-				backoff = maxBackoffTimeout
-			}
+			backoff := min(time.Duration(1<<task.Attempts)*10*time.Second, maxBackoffTimeout)
 			task.RunAfter = time.Now().Add(backoff)
 		}
 
