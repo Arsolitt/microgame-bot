@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
-	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/ttt"
@@ -66,22 +64,10 @@ func (r *Repository) GamesByCreatorID(ctx context.Context, id user.ID) ([]ttt.TT
 }
 
 func (r *Repository) GamesBySessionID(ctx context.Context, id session.ID) ([]ttt.TTT, error) {
-	models, err := gorm.G[gM.Game](r.db).
-		Where("session_id = ?", id.String()).
-		Find(ctx)
-	if err != nil {
-		return nil, err
-	}
-	results := make([]ttt.TTT, len(models))
-	for i, model := range models {
-		results[i], err = r.ToDomain(model)
-		if err != nil {
-			ctx := logger.WithLogValue(ctx, logger.ModelIDField, model.ID)
-			slog.WarnContext(ctx, "Failed to convert model to domain", logger.ErrorField, err)
-			continue
-		}
-	}
-	return results, nil
+	return r.gamesBySessionID(ctx, id)
+}
+func (r *Repository) GamesBySessionIDLocked(ctx context.Context, id session.ID) ([]ttt.TTT, error) {
+	return r.gamesBySessionID(ctx, id, clause.Locking{Strength: "UPDATE"})
 }
 
 func (r *Repository) UpdateGame(ctx context.Context, game ttt.TTT) (ttt.TTT, error) {
@@ -112,4 +98,22 @@ func (r *Repository) gameByID(ctx context.Context, id ttt.ID, opts ...clause.Exp
 		return ttt.TTT{}, fmt.Errorf("failed to get game by ID from gorm database in %s: %w", operationName, err)
 	}
 	return r.ToDomain(model)
+}
+
+func (r *Repository) gamesBySessionID(ctx context.Context, id session.ID, opts ...clause.Expression) ([]ttt.TTT, error) {
+	const operationName = "repo::ttt::gorm::gamesBySessionID"
+	models, err := gorm.G[gM.Game](r.db, opts...).
+		Where("session_id = ?", id.String()).
+		Find(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get games by session ID from gorm database in %s: %w", operationName, err)
+	}
+	results := make([]ttt.TTT, len(models))
+	for i, model := range models {
+		results[i], err = r.ToDomain(model)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert model to domain in %s: %w", operationName, err)
+		}
+	}
+	return results, nil
 }

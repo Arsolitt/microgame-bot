@@ -12,6 +12,7 @@ type ITTTGetter interface {
 	GameByIDLocked(ctx context.Context, id ttt.ID) (ttt.TTT, error)
 	GamesByCreatorID(ctx context.Context, id user.ID) ([]ttt.TTT, error)
 	GamesBySessionID(ctx context.Context, id session.ID) ([]ttt.TTT, error)
+	GamesBySessionIDLocked(ctx context.Context, id session.ID) ([]ttt.TTT, error)
 }
 
 type ITTTCreator interface {
