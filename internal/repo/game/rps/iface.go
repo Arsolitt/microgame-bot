@@ -12,6 +12,7 @@ type IRPSGetter interface {
 	GameByIDLocked(ctx context.Context, id rps.ID) (rps.RPS, error)
 	GamesByCreatorID(ctx context.Context, id user.ID) ([]rps.RPS, error)
 	GamesBySessionID(ctx context.Context, id session.ID) ([]rps.RPS, error)
+	GamesBySessionIDLocked(ctx context.Context, id session.ID) ([]rps.RPS, error)
 }
 
 type IRPSCreator interface {
