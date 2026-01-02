@@ -44,9 +44,6 @@ func New(opts ...Opt) (TTT, error) {
 	if t.creatorID.IsZero() {
 		return TTT{}, domain.ErrCreatorIDRequired
 	}
-	if (t.playerXID.IsZero() || t.playerOID.IsZero()) && t.IsFinished() {
-		return TTT{}, domain.ErrCantBeFinishedWithoutTwoPlayers
-	}
 
 	// Set turn to X player by default if not set and both players are present
 	if t.turn.IsZero() && !t.playerXID.IsZero() && !t.playerOID.IsZero() {
@@ -105,7 +102,7 @@ func (t TTT) IsPlayerTurn(userID user.ID) bool {
 
 // IsFinished returns true if the game has ended.
 func (t TTT) IsFinished() bool {
-	return !t.winnerID.IsZero() || t.IsDraw()
+	return !t.winnerID.IsZero() || t.IsDraw() || t.status == domain.GameStatusCancelled
 }
 
 // IsDraw returns true if the game is a draw.
@@ -122,6 +119,46 @@ func (t TTT) IsDraw() bool {
 		}
 	}
 	return true
+}
+
+// IsStarted returns true if at least one move has been made.
+func (t TTT) IsStarted() bool {
+	for i := range 3 {
+		for j := range 3 {
+			if t.board[i][j] != CellEmpty {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (t TTT) SetWinner(winnerID user.ID) (TTT, error) {
+	if winnerID != t.playerXID && winnerID != t.playerOID {
+		return TTT{}, domain.ErrPlayerNotInGame
+	}
+	t.winnerID = winnerID
+	t.status = domain.GameStatusFinished
+	return t, nil
+}
+
+func (t TTT) AFKPlayerID() (user.ID, error) {
+	if !t.turn.IsZero() {
+		return t.turn, nil
+	}
+	return user.ID{}, domain.ErrAFKPlayerNotFound
+}
+
+// TODO: validate conversion from previous status to new status
+func (t TTT) SetStatus(status domain.GameStatus) (TTT, error) {
+	if status.IsZero() {
+		return TTT{}, domain.ErrGameStatusRequired
+	}
+	if !status.IsValid() {
+		return TTT{}, domain.ErrInvalidGameStatus
+	}
+	t.status = status
+	return t, nil
 }
 
 // GetCell returns the cell value at the specified coordinates.

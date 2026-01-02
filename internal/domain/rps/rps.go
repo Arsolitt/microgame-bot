@@ -83,6 +83,10 @@ func (r RPS) Participants() []user.ID {
 }
 
 func (r RPS) JoinGame(playerID user.ID) (RPS, error) {
+	if r.IsFinished() {
+		return RPS{}, domain.ErrGameOver
+	}
+
 	if !r.player1ID.IsZero() && !r.player2ID.IsZero() {
 		return RPS{}, domain.ErrGameFull
 	}
@@ -125,7 +129,7 @@ func (r RPS) MakeChoice(playerID user.ID, choice Choice) (RPS, error) {
 }
 
 func (r RPS) IsFinished() bool {
-	return !r.winnerID.IsZero() || r.IsDraw()
+	return !r.winnerID.IsZero() || r.IsDraw() || r.status == domain.GameStatusCancelled
 }
 
 func (r RPS) IsDraw() bool {
@@ -167,4 +171,39 @@ func (r RPS) tryWinnerID() user.ID {
 	}
 
 	return r.player2ID
+}
+
+// IsStarted returns true if at least one player has made a choice.
+func (r RPS) IsStarted() bool {
+	return r.choice1 != ChoiceEmpty || r.choice2 != ChoiceEmpty
+}
+
+func (r RPS) SetWinner(winnerID user.ID) (RPS, error) {
+	if winnerID != r.player1ID && winnerID != r.player2ID {
+		return RPS{}, domain.ErrPlayerNotInGame
+	}
+	r.winnerID = winnerID
+	return r, nil
+}
+
+func (r RPS) AFKPlayerID() (user.ID, error) {
+	if r.choice1 == ChoiceEmpty {
+		return r.player1ID, nil
+	}
+	if r.choice2 == ChoiceEmpty {
+		return r.player2ID, nil
+	}
+	return user.ID{}, domain.ErrAFKPlayerNotFound
+}
+
+// TODO: validate conversion from previous status to new status
+func (r RPS) SetStatus(status domain.GameStatus) (RPS, error) {
+	if status.IsZero() {
+		return RPS{}, domain.ErrGameStatusRequired
+	}
+	if !status.IsValid() {
+		return RPS{}, domain.ErrInvalidGameStatus
+	}
+	r.status = status
+	return r, nil
 }

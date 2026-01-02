@@ -9,6 +9,10 @@ import (
 // First player joins: temporarily stored in playerXID (roles not assigned yet).
 // Second player joins: roles are randomly assigned between first and second players.
 func (t TTT) JoinGame(playerID user.ID) (TTT, error) {
+	if t.IsFinished() {
+		return TTT{}, domain.ErrGameOver
+	}
+
 	// Game must not be full
 	if !t.playerXID.IsZero() && !t.playerOID.IsZero() {
 		return TTT{}, domain.ErrGameFull
