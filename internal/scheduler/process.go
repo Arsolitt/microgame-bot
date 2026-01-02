@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
-	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/queue"
 	"time"
 
@@ -15,19 +13,6 @@ import (
 
 func (s *Scheduler) processCronJobs(ctx context.Context) error {
 	const OPERATION_NAME = "scheduler::processCronJobs"
-	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
-
-	startTime := time.Now()
-	var processedCount int
-
-	defer func() {
-		duration := time.Since(startTime)
-		if processedCount > 0 {
-			l.DebugContext(ctx, "Cron jobs processed",
-				"count", processedCount,
-				"duration_ms", duration.Milliseconds())
-		}
-	}()
 
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		now := time.Now()
@@ -52,8 +37,6 @@ func (s *Scheduler) processCronJobs(ctx context.Context) error {
 		if len(cronJobs) == 0 {
 			return nil
 		}
-
-		processedCount = len(cronJobs)
 
 		// First: update NextRunAt and LastRunAt
 		for i := range cronJobs {

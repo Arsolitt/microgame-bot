@@ -41,10 +41,15 @@ func New(db *gorm.DB, batchSize int, qp queue.IQueuePublisher, pollInterval time
 
 func (s *Scheduler) CreateOrUpdateCronJobs(ctx context.Context, jobs []CronJob) error {
 	const OPERATION_NAME = "scheduler::CreateOrUpdateCronJob"
-	for i := range jobs {
-		err := jobs[i].Expression.Validate()
+	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+	for i, j := range jobs {
+		err := j.Expression.Validate()
 		if err != nil {
 			return fmt.Errorf("failed to validate cron expression in %s: %w", OPERATION_NAME, err)
+		}
+		if j.ID.IsZero() {
+			j.ID = utils.NewUniqueID()
+			jobs[i] = j
 		}
 	}
 	err := s.db.Clauses(clause.OnConflict{
@@ -54,6 +59,11 @@ func (s *Scheduler) CreateOrUpdateCronJobs(ctx context.Context, jobs []CronJob) 
 	if err != nil {
 		return fmt.Errorf("failed to create or update cron job in %s: %w", OPERATION_NAME, err)
 	}
+	jobNames := make([]string, len(jobs))
+	for i, j := range jobs {
+		jobNames[i] = j.Name
+	}
+	l.InfoContext(ctx, "Cron jobs setup completed", "jobs", jobNames)
 	return nil
 }
 
