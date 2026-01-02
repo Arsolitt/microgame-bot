@@ -60,9 +60,9 @@ func (q *Queue) Publish(ctx context.Context, tasks []Task) error {
 
 func (q *Queue) Start(ctx context.Context) {
 	const OPERATION_NAME = "queue::Start"
-	slog.InfoContext(ctx, "Starting task queue", logger.OperationField, OPERATION_NAME)
 	q.wg.Add(1)
 	go q.pollTasks(ctx)
+	slog.InfoContext(ctx, "Task queue started", logger.OperationField, OPERATION_NAME)
 }
 
 func (q *Queue) Stop(ctx context.Context) error {

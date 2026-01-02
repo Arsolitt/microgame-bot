@@ -57,6 +57,9 @@ func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork, qPubli
 			if err != nil {
 				return fmt.Errorf("failed to get game by ID with lock in %s: %w", operationName, err)
 			}
+			if game.IsFinished() {
+				return domain.ErrGameOver
+			}
 
 			game, err = game.MakeMove(row, col, player.ID())
 			if err != nil {
@@ -154,7 +157,7 @@ func TTTMove(userGetter userRepository.IUserGetter, unit uow.IUnitOfWork, qPubli
 					if err != nil {
 						return fmt.Errorf("failed to update bets status in %s: %w", operationName, err)
 					}
-					_ = publishPayoutTask(ctx, qPublisher)
+					_ = queue.PublishPayoutTask(ctx, qPublisher)
 				}
 
 				return nil
