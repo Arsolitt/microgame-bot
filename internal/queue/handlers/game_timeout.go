@@ -242,24 +242,35 @@ func abandonSession(
 
 		afkPlayerID, err := tttGame.AFKPlayerID()
 		if err != nil {
-			return fmt.Errorf("failed to get AFK player ID in %s: %w", OPERATION_NAME, err)
-		}
-		var winnerID user.ID
-		for _, p := range tttGame.Participants() {
-			if p != afkPlayerID {
-				winnerID = p
-				break
+			if errors.Is(err, domain.ErrAllPlayersAFK) {
+				l.DebugContext(ctx, "All players AFK - marking game as abandoned without winner")
+				tttGame, err = tttGame.SetStatus(domain.GameStatusAbandoned)
+				if err != nil {
+					return fmt.Errorf("failed to set status to abandoned in TTT in %s: %w", OPERATION_NAME, err)
+				}
+			} else {
+				return fmt.Errorf("failed to get AFK player ID in %s: %w", OPERATION_NAME, err)
 			}
-		}
+		} else {
+			var winnerID user.ID
+			for _, p := range tttGame.Participants() {
+				if p != afkPlayerID {
+					winnerID = p
+					break
+				}
+			}
 
-		tttGame, err = tttGame.SetWinner(winnerID)
-		if err != nil {
-			return fmt.Errorf("failed to set winner in TTT in %s: %w", OPERATION_NAME, err)
-		}
+			tttGame, err = tttGame.SetWinner(winnerID)
+			if err != nil {
+				return fmt.Errorf("failed to set winner in TTT in %s: %w", OPERATION_NAME, err)
+			}
 
-		tttGame, err = tttGame.SetStatus(domain.GameStatusAbandoned)
-		if err != nil {
-			return fmt.Errorf("failed to set status to abandoned in TTT in %s: %w", OPERATION_NAME, err)
+			tttGame, err = tttGame.SetStatus(domain.GameStatusAbandoned)
+			if err != nil {
+				return fmt.Errorf("failed to set status to abandoned in TTT in %s: %w", OPERATION_NAME, err)
+			}
+
+			l.DebugContext(ctx, "One player AFK - other player wins", "winner_id", winnerID.String())
 		}
 
 		tttRepo, err := unit.TTTRepo()
@@ -280,24 +291,35 @@ func abandonSession(
 
 		afkPlayerID, err := rpsGame.AFKPlayerID()
 		if err != nil {
-			return fmt.Errorf("failed to get AFK player ID in %s: %w", OPERATION_NAME, err)
-		}
-		var winnerID user.ID
-		for _, p := range rpsGame.Participants() {
-			if p != afkPlayerID {
-				winnerID = p
-				break
+			if errors.Is(err, domain.ErrAllPlayersAFK) {
+				l.DebugContext(ctx, "All players AFK - marking game as abandoned without winner")
+				rpsGame, err = rpsGame.SetStatus(domain.GameStatusAbandoned)
+				if err != nil {
+					return fmt.Errorf("failed to set status to abandoned in RPS in %s: %w", OPERATION_NAME, err)
+				}
+			} else {
+				return fmt.Errorf("failed to get AFK player ID in %s: %w", OPERATION_NAME, err)
 			}
-		}
+		} else {
+			var winnerID user.ID
+			for _, p := range rpsGame.Participants() {
+				if p != afkPlayerID {
+					winnerID = p
+					break
+				}
+			}
 
-		rpsGame, err = rpsGame.SetWinner(winnerID)
-		if err != nil {
-			return fmt.Errorf("failed to set winner in RPS in %s: %w", OPERATION_NAME, err)
-		}
+			rpsGame, err = rpsGame.SetWinner(winnerID)
+			if err != nil {
+				return fmt.Errorf("failed to set winner in RPS in %s: %w", OPERATION_NAME, err)
+			}
 
-		rpsGame, err = rpsGame.SetStatus(domain.GameStatusAbandoned)
-		if err != nil {
-			return fmt.Errorf("failed to set status to abandoned in RPS in %s: %w", OPERATION_NAME, err)
+			rpsGame, err = rpsGame.SetStatus(domain.GameStatusAbandoned)
+			if err != nil {
+				return fmt.Errorf("failed to set status to abandoned in RPS in %s: %w", OPERATION_NAME, err)
+			}
+
+			l.DebugContext(ctx, "One player AFK - other player wins", "winner_id", winnerID.String())
 		}
 
 		rpsRepo, err := unit.RPSRepo()

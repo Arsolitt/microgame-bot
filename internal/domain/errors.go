@@ -26,6 +26,7 @@ var (
 	ErrGameStatusRequired              = errors.New("game status required")
 	ErrInvalidGameStatus               = errors.New("invalid game status")
 	ErrAFKPlayerNotFound               = errors.New("AFK player not found")
+	ErrAllPlayersAFK                   = errors.New("all players are AFK")
 	// Session errors
 	ErrInvalidGameType         = errors.New("invalid game type")
 	ErrMultipleGamesInProgress = errors.New("multiple games in progress")

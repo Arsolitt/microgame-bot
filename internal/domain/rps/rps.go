@@ -129,7 +129,10 @@ func (r RPS) MakeChoice(playerID user.ID, choice Choice) (RPS, error) {
 }
 
 func (r RPS) IsFinished() bool {
-	return !r.winnerID.IsZero() || r.IsDraw() || r.status == domain.GameStatusCancelled
+	return !r.winnerID.IsZero() || r.IsDraw() ||
+		r.status == domain.GameStatusCancelled ||
+		r.status == domain.GameStatusFinished ||
+		r.status == domain.GameStatusAbandoned
 }
 
 func (r RPS) IsDraw() bool {
@@ -187,10 +190,16 @@ func (r RPS) SetWinner(winnerID user.ID) (RPS, error) {
 }
 
 func (r RPS) AFKPlayerID() (user.ID, error) {
-	if r.choice1 == ChoiceEmpty {
+	choice1Empty := r.choice1 == ChoiceEmpty
+	choice2Empty := r.choice2 == ChoiceEmpty
+
+	if choice1Empty && choice2Empty {
+		return user.ID{}, domain.ErrAllPlayersAFK
+	}
+	if choice1Empty {
 		return r.player1ID, nil
 	}
-	if r.choice2 == ChoiceEmpty {
+	if choice2Empty {
 		return r.player2ID, nil
 	}
 	return user.ID{}, domain.ErrAFKPlayerNotFound

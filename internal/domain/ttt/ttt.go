@@ -102,7 +102,10 @@ func (t TTT) IsPlayerTurn(userID user.ID) bool {
 
 // IsFinished returns true if the game has ended.
 func (t TTT) IsFinished() bool {
-	return !t.winnerID.IsZero() || t.IsDraw() || t.status == domain.GameStatusCancelled
+	return !t.winnerID.IsZero() || t.IsDraw() ||
+		t.status == domain.GameStatusCancelled ||
+		t.status == domain.GameStatusFinished ||
+		t.status == domain.GameStatusAbandoned
 }
 
 // IsDraw returns true if the game is a draw.
@@ -143,6 +146,9 @@ func (t TTT) SetWinner(winnerID user.ID) (TTT, error) {
 }
 
 func (t TTT) AFKPlayerID() (user.ID, error) {
+	if !t.IsStarted() {
+		return user.ID{}, domain.ErrAllPlayersAFK
+	}
 	if !t.turn.IsZero() {
 		return t.turn, nil
 	}
