@@ -22,6 +22,8 @@ type IGame interface {
 	Winners() []user.ID
 	Participants() []user.ID
 	IsDraw() bool
+	IsStarted() bool
+	AFKPlayerID() (user.ID, error)
 }
 
 type Manager struct {
@@ -34,6 +36,15 @@ func NewManager(session Session, games []IGame) *Manager {
 		session: session,
 		games:   games,
 	}
+}
+
+func (sm *Manager) HasFinishedGames() bool {
+	for _, game := range sm.games {
+		if game.IsFinished() {
+			return true
+		}
+	}
+	return false
 }
 
 func (sm *Manager) CalculateResult() Result {

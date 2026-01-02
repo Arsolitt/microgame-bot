@@ -60,7 +60,8 @@ func (g Session) ChangeStatus(status domain.GameStatus) (Session, error) {
 	if status != domain.GameStatusCreated &&
 		status != domain.GameStatusInProgress &&
 		status != domain.GameStatusFinished &&
-		status != domain.GameStatusCancelled {
+		status != domain.GameStatusCancelled &&
+		status != domain.GameStatusAbandoned {
 		return Session{}, domain.ErrInvalidGameStatus
 	}
 
