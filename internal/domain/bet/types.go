@@ -5,10 +5,11 @@ import "microgame-bot/internal/domain"
 type Status string
 
 const (
-	StatusPending Status = "pending" // Bet created, tokens deducted
-	StatusRunning Status = "running" // Game started
-	StatusWaiting Status = "waiting" // Game finished, waiting for payout
-	StatusPaid    Status = "paid"    // Payout completed
+	StatusPending  Status = "pending"  // Bet created, tokens deducted
+	StatusRunning  Status = "running"  // Game started
+	StatusWaiting  Status = "waiting"  // Game finished, waiting for payout
+	StatusPaid     Status = "paid"     // Payout completed
+	StatusRefunded Status = "refunded" // Game canceled/abandoned, tokens refunded
 )
 
 const (
@@ -26,7 +27,7 @@ func (s Status) String() string {
 
 func (s Status) IsValid() bool {
 	switch s {
-	case StatusPending, StatusRunning, StatusWaiting, StatusPaid:
+	case StatusPending, StatusRunning, StatusWaiting, StatusPaid, StatusRefunded:
 		return true
 	default:
 		return false
@@ -34,5 +35,5 @@ func (s Status) IsValid() bool {
 }
 
 func (s Status) IsFinal() bool {
-	return s == StatusPaid
+	return s == StatusPaid || s == StatusRefunded
 }

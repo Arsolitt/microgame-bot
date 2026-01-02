@@ -74,6 +74,13 @@ func (b Bet) ToPaid() Bet {
 	return b
 }
 
+// ToRefunded transitions bet to REFUNDED (for canceled/abandoned games)
+func (b Bet) ToRefunded() Bet {
+	b.status = StatusRefunded
+	b.updatedAt = time.Now()
+	return b
+}
+
 // IsPending returns true if bet is in PENDING state
 func (b Bet) IsPending() bool {
 	return b.status == StatusPending
@@ -92,6 +99,11 @@ func (b Bet) IsWaiting() bool {
 // IsPaid returns true if bet is in PAID state
 func (b Bet) IsPaid() bool {
 	return b.status == StatusPaid
+}
+
+// IsRefunded returns true if bet is in REFUNDED state
+func (b Bet) IsRefunded() bool {
+	return b.status == StatusRefunded
 }
 
 // CalculateWinPayout calculates winner's payout (90% of total pool, rounded up)
