@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 )
 
 var (
@@ -11,8 +12,14 @@ var (
 )
 
 type Locker[ID comparable] struct {
-	locks map[ID]*sync.RWMutex
+	locks map[ID]*Lock[ID]
 	mu    sync.RWMutex
+}
+
+type Lock[ID comparable] struct {
+	id        ID
+	mu        *sync.RWMutex
+	updatedAt time.Time
 }
 
 // New creates a new memory locker.
@@ -20,7 +27,7 @@ type Locker[ID comparable] struct {
 // User different lockers with TTL.
 func New[ID comparable]() *Locker[ID] {
 	return &Locker[ID]{
-		locks: make(map[ID]*sync.RWMutex),
+		locks: make(map[ID]*Lock[ID]),
 	}
 }
 
@@ -29,13 +36,19 @@ func (l *Locker[ID]) Lock(_ context.Context, id ID) error {
 
 	lock, ok := l.locks[id]
 	if !ok {
-		l.locks[id] = &sync.RWMutex{}
+		l.locks[id] = &Lock[ID]{
+			id:        id,
+			mu:        &sync.RWMutex{},
+			updatedAt: time.Now(),
+		}
 		lock = l.locks[id]
+	} else {
+		lock.updatedAt = time.Now()
 	}
 
 	l.mu.Unlock()
 
-	lock.Lock()
+	lock.mu.Lock()
 	return nil
 }
 
@@ -50,6 +63,25 @@ func (l *Locker[ID]) Unlock(_ context.Context, id ID) error {
 		return ErrLockNotFound
 	}
 
-	lock.Unlock()
+	lock.mu.Unlock()
 	return nil
+}
+
+func (l *Locker[ID]) Clean(ctx context.Context, ttl time.Duration) (int, error) {
+	cutoffDate := time.Now().Add(-ttl)
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	count := 0
+	for id, lock := range l.locks {
+		if lock.updatedAt.Before(cutoffDate) {
+			if lock.mu.TryLock() {
+				lock.mu.Unlock()
+				delete(l.locks, id)
+				count++
+			}
+		}
+	}
+	return count, nil
 }

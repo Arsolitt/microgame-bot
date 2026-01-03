@@ -64,6 +64,11 @@ func (l *Locker[ID]) Lock(ctx context.Context, id ID) error {
 		tx.Rollback()
 		return fmt.Errorf("%w: %v", ErrLockFailed, err)
 	}
+	_, err = gorm.G[Lock](tx).Where("lock_key = ?", key).Updates(ctx, Lock{UpdatedAt: time.Now()})
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to update lock record: %w", err)
+	}
 
 	l.mu.Lock()
 	l.txs[id] = tx
@@ -91,4 +96,16 @@ func (l *Locker[ID]) Unlock(ctx context.Context, id ID) error {
 	slog.DebugContext(ctx, "Lock released", "duration_us", time.Since(start).Microseconds())
 
 	return nil
+}
+
+func (l *Locker[ID]) Clean(ctx context.Context, ttl time.Duration) (int, error) {
+	cutoffDate := time.Now().Add(-ttl)
+
+	count, err := gorm.G[Lock](l.db).Where("updated_at < ?", cutoffDate).Delete(ctx)
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to clean old locks: %w", err)
+	}
+
+	return count, nil
 }
