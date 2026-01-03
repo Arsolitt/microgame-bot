@@ -49,8 +49,8 @@ func New(db *gorm.DB, maxWorkers int) *Queue {
 }
 
 func (q *Queue) Register(subject string, handler Handler) {
-	const OPERATION_NAME = "queue::Register"
-	slog.Info("Registering task handler", "subject", subject, logger.OperationField, OPERATION_NAME)
+	const operationName = "queue::Register"
+	slog.Info("Registering task handler", "subject", subject, logger.OperationField, operationName)
 	q.handlers[subject] = handler
 }
 
@@ -59,10 +59,10 @@ func (q *Queue) Publish(ctx context.Context, tasks []Task) error {
 }
 
 func (q *Queue) Start(ctx context.Context) {
-	const OPERATION_NAME = "queue::Start"
+	const operationName = "queue::Start"
 	q.wg.Add(1)
 	go q.pollTasks(ctx)
-	slog.InfoContext(ctx, "Task queue started", logger.OperationField, OPERATION_NAME)
+	slog.InfoContext(ctx, "Task queue started", logger.OperationField, operationName)
 }
 
 func (q *Queue) Stop(ctx context.Context) error {

@@ -12,7 +12,7 @@ import (
 )
 
 func (s *Scheduler) processCronJobs(ctx context.Context) error {
-	const OPERATION_NAME = "scheduler::processCronJobs"
+	const operationName = "scheduler::processCronJobs"
 
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		now := time.Now()
@@ -66,7 +66,7 @@ func (s *Scheduler) processCronJobs(ctx context.Context) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to process cron jobs in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to process cron jobs in %s: %w", operationName, err)
 	}
 
 	return nil

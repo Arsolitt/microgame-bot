@@ -13,8 +13,8 @@ const (
 )
 
 func (s *Scheduler) Stop(ctx context.Context) error {
-	const OPERATION_NAME = "scheduler::Stop"
-	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+	const operationName = "scheduler::Stop"
+	l := slog.With(slog.String(logger.OperationField, operationName))
 
 	s.mu.Lock()
 	if !s.running {

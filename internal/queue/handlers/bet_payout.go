@@ -14,7 +14,7 @@ import (
 
 // BetPayoutHandler returns a handler function for processing bet payouts.
 func BetPayoutHandler(u uow.IUnitOfWork) func(ctx context.Context, data []byte) error {
-	const OPERATION_NAME = "queue::handler::bet_payout"
+	const operationName = "queue::handler::bet_payout"
 	return func(ctx context.Context, data []byte) error {
 		err := u.Do(ctx, func(unit uow.IUnitOfWork) error {
 			betRepo, err := unit.BetRepo()
@@ -38,38 +38,38 @@ func BetPayoutHandler(u uow.IUnitOfWork) func(ctx context.Context, data []byte) 
 			return nil
 		})
 		if err != nil {
-			return uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
+			return uow.ErrFailedToDoTransaction(operationName, err)
 		}
 		return nil
 	}
 }
 
 func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID domainSession.ID) error {
-	const OPERATION_NAME = "handler::process_session_payout"
+	const operationName = "handler::process_session_payout"
 	l := slog.With(
-		slog.String(logger.OperationField, OPERATION_NAME),
+		slog.String(logger.OperationField, operationName),
 	)
 	ctx = logger.WithLogValue(ctx, logger.SessionIDField, sessionID.String())
 	l.DebugContext(ctx, "Processing session payout", "session_id", sessionID.String())
 
 	betRepo, err := unit.BetRepo()
 	if err != nil {
-		return fmt.Errorf("failed to get bet repository in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to get bet repository in %s: %w", operationName, err)
 	}
 
 	sessionRepo, err := unit.SessionRepo()
 	if err != nil {
-		return fmt.Errorf("failed to get session repository in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to get session repository in %s: %w", operationName, err)
 	}
 
 	userRepo, err := unit.UserRepo()
 	if err != nil {
-		return fmt.Errorf("failed to get user repository in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to get user repository in %s: %w", operationName, err)
 	}
 
 	bets, err := betRepo.BetsBySessionIDLocked(ctx, sessionID, domainBet.StatusWaiting)
 	if err != nil {
-		return fmt.Errorf("failed to get locked bets in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to get locked bets in %s: %w", operationName, err)
 	}
 
 	if len(bets) == 0 {
@@ -78,7 +78,7 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 
 	session, err := sessionRepo.SessionByID(ctx, sessionID)
 	if err != nil {
-		return fmt.Errorf("failed to get session in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to get session in %s: %w", operationName, err)
 	}
 
 	var games []domainSession.IGame
@@ -86,11 +86,11 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 	case domain.GameTypeTTT:
 		tttRepo, err := unit.TTTRepo()
 		if err != nil {
-			return fmt.Errorf("failed to get TTT repository in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to get TTT repository in %s: %w", operationName, err)
 		}
 		tttGames, err := tttRepo.GamesBySessionID(ctx, sessionID)
 		if err != nil {
-			return fmt.Errorf("failed to get TTT games in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to get TTT games in %s: %w", operationName, err)
 		}
 		for _, g := range tttGames {
 			games = append(games, g)
@@ -99,11 +99,11 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 	case domain.GameTypeRPS:
 		rpsRepo, err := unit.RPSRepo()
 		if err != nil {
-			return fmt.Errorf("failed to get RPS repository in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to get RPS repository in %s: %w", operationName, err)
 		}
 		rpsGames, err := rpsRepo.GamesBySessionID(ctx, sessionID)
 		if err != nil {
-			return fmt.Errorf("failed to get RPS games in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to get RPS games in %s: %w", operationName, err)
 		}
 		for _, g := range rpsGames {
 			games = append(games, g)
@@ -124,16 +124,16 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 		for _, bet := range bets {
 			user, err := userRepo.UserByIDLocked(ctx, bet.UserID())
 			if err != nil {
-				return fmt.Errorf("failed to get user in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get user in %s: %w", operationName, err)
 			}
 
 			user, err = user.AddTokens(bet.Amount())
 			if err != nil {
-				return fmt.Errorf("failed to add tokens to user in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to add tokens to user in %s: %w", operationName, err)
 			}
 
 			if _, err := userRepo.UpdateUser(ctx, user); err != nil {
-				return fmt.Errorf("failed to update user in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to update user in %s: %w", operationName, err)
 			}
 
 			l.DebugContext(ctx, "Refunded bet for cancelled game",
@@ -143,7 +143,7 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 
 		// Mark bets as paid (refund completed)
 		if err := betRepo.UpdateBetsStatusBatch(ctx, sessionID, domainBet.StatusPaid); err != nil {
-			return fmt.Errorf("failed to update bets batch in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to update bets batch in %s: %w", operationName, err)
 		}
 
 		return nil
@@ -161,16 +161,16 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 			for _, bet := range bets {
 				user, err := userRepo.UserByIDLocked(ctx, bet.UserID())
 				if err != nil {
-					return fmt.Errorf("failed to get user in %s: %w", OPERATION_NAME, err)
+					return fmt.Errorf("failed to get user in %s: %w", operationName, err)
 				}
 
 				user, err = user.AddTokens(bet.Amount())
 				if err != nil {
-					return fmt.Errorf("failed to add tokens to user in %s: %w", OPERATION_NAME, err)
+					return fmt.Errorf("failed to add tokens to user in %s: %w", operationName, err)
 				}
 
 				if _, err := userRepo.UpdateUser(ctx, user); err != nil {
-					return fmt.Errorf("failed to update user in %s: %w", OPERATION_NAME, err)
+					return fmt.Errorf("failed to update user in %s: %w", operationName, err)
 				}
 
 				l.DebugContext(ctx, "Refunded bet for abandoned game",
@@ -179,7 +179,7 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 			}
 
 			if err := betRepo.UpdateBetsStatusBatch(ctx, sessionID, domainBet.StatusPaid); err != nil {
-				return fmt.Errorf("failed to update bets batch in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to update bets batch in %s: %w", operationName, err)
 			}
 
 			return nil
@@ -208,21 +208,21 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 		for _, winnerID := range winners {
 			winner, err := userRepo.UserByID(ctx, winnerID)
 			if err != nil {
-				return fmt.Errorf("failed to get winner in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get winner in %s: %w", operationName, err)
 			}
 
 			winner, err = winner.AddTokens(payoutPerWinner)
 			if err != nil {
-				return fmt.Errorf("failed to add tokens to winner in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to add tokens to winner in %s: %w", operationName, err)
 			}
 
 			if _, err := userRepo.UpdateUser(ctx, winner); err != nil {
-				return fmt.Errorf("failed to update winner in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to update winner in %s: %w", operationName, err)
 			}
 		}
 
 		if err := betRepo.UpdateBetsStatusBatch(ctx, sessionID, domainBet.StatusPaid); err != nil {
-			return fmt.Errorf("failed to update bets batch in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to update bets batch in %s: %w", operationName, err)
 		}
 
 		return nil
@@ -242,16 +242,16 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 
 			user, err := userRepo.UserByID(ctx, bet.UserID())
 			if err != nil {
-				return fmt.Errorf("failed to get user in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get user in %s: %w", operationName, err)
 			}
 
 			user, err = user.AddTokens(payout)
 			if err != nil {
-				return fmt.Errorf("failed to add tokens to user in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to add tokens to user in %s: %w", operationName, err)
 			}
 
 			if _, err := userRepo.UpdateUser(ctx, user); err != nil {
-				return fmt.Errorf("failed to update user in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to update user in %s: %w", operationName, err)
 			}
 		}
 	} else if len(result.SeriesWinners) > 0 {
@@ -268,16 +268,16 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 		for _, winnerID := range result.SeriesWinners {
 			winner, err := userRepo.UserByID(ctx, winnerID)
 			if err != nil {
-				return fmt.Errorf("failed to get winner in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get winner in %s: %w", operationName, err)
 			}
 
 			winner, err = winner.AddTokens(payoutPerWinner)
 			if err != nil {
-				return fmt.Errorf("failed to add tokens to winner in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to add tokens to winner in %s: %w", operationName, err)
 			}
 
 			if _, err := userRepo.UpdateUser(ctx, winner); err != nil {
-				return fmt.Errorf("failed to update winner in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to update winner in %s: %w", operationName, err)
 			}
 		}
 	} else {
@@ -286,7 +286,7 @@ func processSessionPayout(ctx context.Context, unit uow.IUnitOfWork, sessionID d
 	}
 
 	if err := betRepo.UpdateBetsStatusBatch(ctx, sessionID, domainBet.StatusPaid); err != nil {
-		return fmt.Errorf("failed to update bets batch in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to update bets batch in %s: %w", operationName, err)
 	}
 
 	return nil

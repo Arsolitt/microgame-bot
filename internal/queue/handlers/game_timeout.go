@@ -27,7 +27,7 @@ func GameTimeoutHandler(
 	u uow.IUnitOfWork,
 	publisher queue.IQueuePublisher,
 ) func(ctx context.Context, data []byte) error {
-	const OPERATION_NAME = "queue::handler::game_timeout"
+	const operationName = "queue::handler::game_timeout"
 	return func(ctx context.Context, data []byte) error {
 		err := u.Do(ctx, func(unit uow.IUnitOfWork) error {
 			sessionRepo, err := unit.SessionRepo()
@@ -53,11 +53,11 @@ func GameTimeoutHandler(
 			if session.Bet() > 0 {
 				betRepo, err := unit.BetRepo()
 				if err != nil {
-					return fmt.Errorf("failed to get bet repository in %s: %w", OPERATION_NAME, err)
+					return fmt.Errorf("failed to get bet repository in %s: %w", operationName, err)
 				}
 				err = betRepo.UpdateBetsStatusBatch(ctx, session.ID(), domainBet.StatusWaiting)
 				if err != nil {
-					return fmt.Errorf("failed to update bets status in %s: %w", OPERATION_NAME, err)
+					return fmt.Errorf("failed to update bets status in %s: %w", operationName, err)
 				}
 				_ = queue.PublishPayoutTask(ctx, publisher)
 			}
@@ -65,16 +65,16 @@ func GameTimeoutHandler(
 			return nil
 		})
 		if err != nil {
-			return uow.ErrFailedToDoTransaction(OPERATION_NAME, err)
+			return uow.ErrFailedToDoTransaction(operationName, err)
 		}
 		return nil
 	}
 }
 
 func processTimedOutSession(ctx context.Context, unit uow.IUnitOfWork, session domainSession.Session) error {
-	const OPERATION_NAME = "handler::process_timed_out_session"
+	const operationName = "handler::process_timed_out_session"
 	l := slog.With(
-		slog.String(logger.OperationField, OPERATION_NAME),
+		slog.String(logger.OperationField, operationName),
 	)
 
 	var games []domainSession.IGame
@@ -129,12 +129,12 @@ func processTimedOutSession(ctx context.Context, unit uow.IUnitOfWork, session d
 	if !manager.HasFinishedGames() && !activeGame.IsStarted() {
 		err := cancelSession(ctx, unit, session, activeGame)
 		if err != nil {
-			return fmt.Errorf("failed to cancel session in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to cancel session in %s: %w", operationName, err)
 		}
 	} else {
 		err := abandonSession(ctx, unit, session, activeGame)
 		if err != nil {
-			return fmt.Errorf("failed to abandon session in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to abandon session in %s: %w", operationName, err)
 		}
 	}
 
@@ -147,68 +147,68 @@ func cancelSession(
 	session domainSession.Session,
 	activeGame domainSession.IGame,
 ) error {
-	const OPERATION_NAME = "queue::handler::cancel_session"
+	const operationName = "queue::handler::cancel_session"
 	l := slog.With(
-		slog.String(logger.OperationField, OPERATION_NAME),
+		slog.String(logger.OperationField, operationName),
 	)
 
 	l.DebugContext(ctx, "Canceling session - no moves made")
 
 	sessionRepo, err := unit.SessionRepo()
 	if err != nil {
-		return fmt.Errorf("failed to get session repository in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to get session repository in %s: %w", operationName, err)
 	}
 
 	session, err = session.ChangeStatus(domain.GameStatusCancelled)
 	if err != nil {
-		return fmt.Errorf("failed to change session status in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to change session status in %s: %w", operationName, err)
 	}
 
 	if session, err = sessionRepo.UpdateSession(ctx, session); err != nil {
-		return fmt.Errorf("failed to update session in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to update session in %s: %w", operationName, err)
 	}
 
 	switch session.GameType() {
 	case domain.GameTypeTTT:
 		tttGame, ok := activeGame.(ttt.TTT)
 		if !ok {
-			return fmt.Errorf("failed to cast game to TTT in %s", OPERATION_NAME)
+			return fmt.Errorf("failed to cast game to TTT in %s", operationName)
 		}
 
 		tttRepo, err := unit.TTTRepo()
 		if err != nil {
-			return fmt.Errorf("failed to get TTT repository in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to get TTT repository in %s: %w", operationName, err)
 		}
 
 		tttGame, err = tttGame.SetStatus(domain.GameStatusCancelled)
 		if err != nil {
-			return fmt.Errorf("failed to set status to cancelled in TTT in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to set status to cancelled in TTT in %s: %w", operationName, err)
 		}
 
 		_, err = tttRepo.UpdateGame(ctx, tttGame)
 		if err != nil {
-			return fmt.Errorf("failed to update TTT game in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to update TTT game in %s: %w", operationName, err)
 		}
 
 	case domain.GameTypeRPS:
 		rpsGame, ok := activeGame.(rps.RPS)
 		if !ok {
-			return fmt.Errorf("failed to cast game to RPS in %s", OPERATION_NAME)
+			return fmt.Errorf("failed to cast game to RPS in %s", operationName)
 		}
 
 		rpsRepo, err := unit.RPSRepo()
 		if err != nil {
-			return fmt.Errorf("failed to get RPS repository in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to get RPS repository in %s: %w", operationName, err)
 		}
 
 		rpsGame, err = rpsGame.SetStatus(domain.GameStatusCancelled)
 		if err != nil {
-			return fmt.Errorf("failed to set status to cancelled in RPS in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to set status to cancelled in RPS in %s: %w", operationName, err)
 		}
 
 		_, err = rpsRepo.UpdateGame(ctx, rpsGame)
 		if err != nil {
-			return fmt.Errorf("failed to update RPS game in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to update RPS game in %s: %w", operationName, err)
 		}
 	}
 
@@ -222,23 +222,23 @@ func abandonSession(
 	session domainSession.Session,
 	activeGame domainSession.IGame,
 ) error {
-	const OPERATION_NAME = "queue::handler::abandon_session"
+	const operationName = "queue::handler::abandon_session"
 	l := slog.With(
-		slog.String(logger.OperationField, OPERATION_NAME),
+		slog.String(logger.OperationField, operationName),
 	)
 
 	l.DebugContext(ctx, "Abandoning session - determining winner")
 
 	sessionRepo, err := unit.SessionRepo()
 	if err != nil {
-		return fmt.Errorf("failed to get session repository in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to get session repository in %s: %w", operationName, err)
 	}
 
 	switch session.GameType() {
 	case domain.GameTypeTTT:
 		tttGame, ok := activeGame.(ttt.TTT)
 		if !ok {
-			return fmt.Errorf("failed to cast game to TTT in %s", OPERATION_NAME)
+			return fmt.Errorf("failed to cast game to TTT in %s", operationName)
 		}
 
 		afkPlayerID, err := tttGame.AFKPlayerID()
@@ -247,10 +247,10 @@ func abandonSession(
 				l.DebugContext(ctx, "All players AFK - marking game as abandoned without winner")
 				tttGame, err = tttGame.SetStatus(domain.GameStatusAbandoned)
 				if err != nil {
-					return fmt.Errorf("failed to set status to abandoned in TTT in %s: %w", OPERATION_NAME, err)
+					return fmt.Errorf("failed to set status to abandoned in TTT in %s: %w", operationName, err)
 				}
 			} else {
-				return fmt.Errorf("failed to get AFK player ID in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get AFK player ID in %s: %w", operationName, err)
 			}
 		} else {
 			var winnerID user.ID
@@ -263,12 +263,12 @@ func abandonSession(
 
 			tttGame, err = tttGame.SetWinner(winnerID)
 			if err != nil {
-				return fmt.Errorf("failed to set winner in TTT in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to set winner in TTT in %s: %w", operationName, err)
 			}
 
 			tttGame, err = tttGame.SetStatus(domain.GameStatusAbandoned)
 			if err != nil {
-				return fmt.Errorf("failed to set status to abandoned in TTT in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to set status to abandoned in TTT in %s: %w", operationName, err)
 			}
 
 			l.DebugContext(ctx, "One player AFK - other player wins", "winner_id", winnerID.String())
@@ -276,18 +276,18 @@ func abandonSession(
 
 		tttRepo, err := unit.TTTRepo()
 		if err != nil {
-			return fmt.Errorf("failed to get TTT repository in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to get TTT repository in %s: %w", operationName, err)
 		}
 
 		_, err = tttRepo.UpdateGame(ctx, tttGame)
 		if err != nil {
-			return fmt.Errorf("failed to update TTT game in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to update TTT game in %s: %w", operationName, err)
 		}
 
 	case domain.GameTypeRPS:
 		rpsGame, ok := activeGame.(rps.RPS)
 		if !ok {
-			return fmt.Errorf("failed to cast game to RPS in %s", OPERATION_NAME)
+			return fmt.Errorf("failed to cast game to RPS in %s", operationName)
 		}
 
 		afkPlayerID, err := rpsGame.AFKPlayerID()
@@ -296,10 +296,10 @@ func abandonSession(
 				l.DebugContext(ctx, "All players AFK - marking game as abandoned without winner")
 				rpsGame, err = rpsGame.SetStatus(domain.GameStatusAbandoned)
 				if err != nil {
-					return fmt.Errorf("failed to set status to abandoned in RPS in %s: %w", OPERATION_NAME, err)
+					return fmt.Errorf("failed to set status to abandoned in RPS in %s: %w", operationName, err)
 				}
 			} else {
-				return fmt.Errorf("failed to get AFK player ID in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to get AFK player ID in %s: %w", operationName, err)
 			}
 		} else {
 			var winnerID user.ID
@@ -312,12 +312,12 @@ func abandonSession(
 
 			rpsGame, err = rpsGame.SetWinner(winnerID)
 			if err != nil {
-				return fmt.Errorf("failed to set winner in RPS in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to set winner in RPS in %s: %w", operationName, err)
 			}
 
 			rpsGame, err = rpsGame.SetStatus(domain.GameStatusAbandoned)
 			if err != nil {
-				return fmt.Errorf("failed to set status to abandoned in RPS in %s: %w", OPERATION_NAME, err)
+				return fmt.Errorf("failed to set status to abandoned in RPS in %s: %w", operationName, err)
 			}
 
 			l.DebugContext(ctx, "One player AFK - other player wins", "winner_id", winnerID.String())
@@ -325,12 +325,12 @@ func abandonSession(
 
 		rpsRepo, err := unit.RPSRepo()
 		if err != nil {
-			return fmt.Errorf("failed to get RPS repository in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to get RPS repository in %s: %w", operationName, err)
 		}
 
 		_, err = rpsRepo.UpdateGame(ctx, rpsGame)
 		if err != nil {
-			return fmt.Errorf("failed to update RPS game in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to update RPS game in %s: %w", operationName, err)
 		}
 	}
 
@@ -338,11 +338,11 @@ func abandonSession(
 
 	session, err = session.ChangeStatus(domain.GameStatusAbandoned)
 	if err != nil {
-		return fmt.Errorf("failed to change session status in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to change session status in %s: %w", operationName, err)
 	}
 
 	if _, err := sessionRepo.UpdateSession(ctx, session); err != nil {
-		return fmt.Errorf("failed to update session in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to update session in %s: %w", operationName, err)
 	}
 
 	l.DebugContext(ctx, "Session abandoned successfully")

@@ -40,12 +40,12 @@ func New(db *gorm.DB, batchSize int, qp queue.IQueuePublisher, pollInterval time
 }
 
 func (s *Scheduler) CreateOrUpdateCronJobs(ctx context.Context, jobs []CronJob) error {
-	const OPERATION_NAME = "scheduler::CreateOrUpdateCronJob"
-	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+	const operationName = "scheduler::CreateOrUpdateCronJob"
+	l := slog.With(slog.String(logger.OperationField, operationName))
 	for i, j := range jobs {
 		err := j.Expression.Validate()
 		if err != nil {
-			return fmt.Errorf("failed to validate cron expression in %s: %w", OPERATION_NAME, err)
+			return fmt.Errorf("failed to validate cron expression in %s: %w", operationName, err)
 		}
 		if j.ID.IsZero() {
 			j.ID = utils.NewUniqueID()
@@ -57,7 +57,7 @@ func (s *Scheduler) CreateOrUpdateCronJobs(ctx context.Context, jobs []CronJob) 
 		DoUpdates: clause.AssignmentColumns([]string{"expression", "status", "subject", "payload"}),
 	}).Create(&jobs).Error
 	if err != nil {
-		return fmt.Errorf("failed to create or update cron job in %s: %w", OPERATION_NAME, err)
+		return fmt.Errorf("failed to create or update cron job in %s: %w", operationName, err)
 	}
 	jobNames := make([]string, len(jobs))
 	for i, j := range jobs {
@@ -72,8 +72,8 @@ func (s *Scheduler) CreateOrUpdateCronJobs(ctx context.Context, jobs []CronJob) 
 // in transaction with select for update skip locked check if there are any cron jobs that are due to run
 // if there are any cron jobs that are due to run, publish task to task queue.
 func (s *Scheduler) Start(ctx context.Context) error {
-	const OPERATION_NAME = "scheduler::Start"
-	l := slog.With(slog.String(logger.OperationField, OPERATION_NAME))
+	const operationName = "scheduler::Start"
+	l := slog.With(slog.String(logger.OperationField, operationName))
 	l.InfoContext(ctx, "Scheduler started", "poll_interval", s.pollInterval.Seconds())
 
 	s.mu.Lock()
