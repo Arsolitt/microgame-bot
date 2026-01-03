@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/ilyakaznacheev/cleanenv"
@@ -41,9 +42,9 @@ type TelegramConfig struct {
 }
 
 type AppConfig struct {
-	GormDialector      string `env:"GORM_DIALECTOR"        env-default:"sqlite" validate:"oneof=sqlite postgres"`
-	MaxRequestsPerUser int    `env:"MAX_REQUESTS_PER_USER" env-default:"3"      validate:"min=1"`
-	MaxGameCount       int    `env:"MAX_GAME_COUNT"        env-default:"10"     validate:"min=1"`
+	MaxGameCount int           `env:"MAX_GAME_COUNT"        env-default:"10"     validate:"min=1"`
+	LockerTTL    time.Duration `env:"LOCKER_TLL"     env-default:"720h"     validate:"required"`
+	LockerDriver string        `env:"LOCKER_DRIVER"         env-default:"memory"   validate:"oneof=gorm memory"`
 }
 
 type NatsConfig struct {

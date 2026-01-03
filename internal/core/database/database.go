@@ -15,7 +15,6 @@ import (
 	gormLogger "gorm.io/gorm/logger"
 
 	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -24,15 +23,7 @@ func MustInit(cfg core.Config) (*gorm.DB, error) {
 	gormConfig := &gorm.Config{
 		Logger: gormLogger.Default.LogMode(gormLogger.Silent),
 	}
-	var dialector gorm.Dialector
-	switch cfg.App.GormDialector {
-	case "sqlite":
-		dialector = sqlite.Open(cfg.Sqlite.URL)
-	case "postgres":
-		dialector = postgres.Open(cfg.Postgres.URL)
-	}
-
-	db, err := gorm.Open(dialector, gormConfig)
+	db, err := gorm.Open(postgres.Open(cfg.Postgres.URL), gormConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database in %s: %w", operationName, err)
 	}
