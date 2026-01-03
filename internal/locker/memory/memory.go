@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"errors"
 	"sync"
 )
@@ -23,7 +24,7 @@ func New[ID comparable]() *Locker[ID] {
 	}
 }
 
-func (l *Locker[ID]) Lock(id ID) error {
+func (l *Locker[ID]) Lock(_ context.Context, id ID) error {
 	l.mu.Lock()
 
 	lock, ok := l.locks[id]
@@ -38,7 +39,7 @@ func (l *Locker[ID]) Lock(id ID) error {
 	return nil
 }
 
-func (l *Locker[ID]) Unlock(id ID) error {
+func (l *Locker[ID]) Unlock(_ context.Context, id ID) error {
 	l.mu.RLock()
 
 	lock, ok := l.locks[id]
