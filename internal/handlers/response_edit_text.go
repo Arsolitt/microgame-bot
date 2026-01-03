@@ -1,7 +1,12 @@
 package handlers
 
 import (
+	"errors"
+	"fmt"
+	"strings"
+
 	"github.com/mymmrac/telego"
+	ta "github.com/mymmrac/telego/telegoapi"
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
@@ -27,6 +32,23 @@ func (r *EditMessageTextResponse) Handle(ctx *th.Context) error {
 		LinkPreviewOptions: r.LinkPreviewOptions,
 		ReplyMarkup:        r.ReplyMarkup,
 	}
+
 	_, err := ctx.Bot().EditMessageText(ctx, params)
-	return err
+	if err != nil {
+		if isMessageNotModifiedError(err) {
+			return nil
+		}
+		return fmt.Errorf("failed to edit message text: %w", err)
+	}
+
+	return nil
+}
+
+func isMessageNotModifiedError(err error) bool {
+	var apiErr *ta.Error
+	if errors.As(err, &apiErr) {
+		return apiErr.ErrorCode == 400 &&
+			strings.Contains(apiErr.Description, "message is not modified")
+	}
+	return false
 }

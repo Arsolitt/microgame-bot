@@ -34,9 +34,19 @@ func getCustomErrorMessage(target error) string {
 	return "Внутренняя ошибка сервера"
 }
 
+type HandlerWrapper struct {
+	bufferedHandler *BufferedHandler
+}
+
+func NewHandlerWrapper(bufferedHandler *BufferedHandler) *HandlerWrapper {
+	return &HandlerWrapper{
+		bufferedHandler: bufferedHandler,
+	}
+}
+
 type HandlerFunc func(ctx *th.Context) (IResponse, error)
 
-func Wrap(handler HandlerFunc) func(*th.Context) error {
+func (w *HandlerWrapper) Wrap(handler HandlerFunc) func(*th.Context) error {
 	return func(ctx *th.Context) error {
 		response, err := handler(ctx)
 		if err != nil {
@@ -47,13 +57,13 @@ func Wrap(handler HandlerFunc) func(*th.Context) error {
 			return nil
 		}
 
-		return response.Handle(ctx)
+		return w.bufferedHandler.Handle(response, ctx)
 	}
 }
 
 type InlineQueryHandlerFunc func(ctx *th.Context, query telego.InlineQuery) (IResponse, error)
 
-func WrapInlineQuery(handler InlineQueryHandlerFunc) func(*th.Context, telego.InlineQuery) error {
+func (w *HandlerWrapper) WrapInlineQuery(handler InlineQueryHandlerFunc) func(*th.Context, telego.InlineQuery) error {
 	return func(ctx *th.Context, query telego.InlineQuery) error {
 		response, err := handler(ctx, query)
 		if err != nil {
@@ -64,13 +74,13 @@ func WrapInlineQuery(handler InlineQueryHandlerFunc) func(*th.Context, telego.In
 			return nil
 		}
 
-		return response.Handle(ctx)
+		return w.bufferedHandler.Handle(response, ctx)
 	}
 }
 
 type CallbackQueryHandlerFunc func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error)
 
-func WrapCallbackQuery(handler CallbackQueryHandlerFunc) func(*th.Context, telego.CallbackQuery) error {
+func (w *HandlerWrapper) WrapCallbackQuery(handler CallbackQueryHandlerFunc) func(*th.Context, telego.CallbackQuery) error {
 	const operationName = "handler::wrap_callback_query"
 	l := slog.With(slog.String(logger.OperationField, operationName))
 
@@ -93,7 +103,7 @@ func WrapCallbackQuery(handler CallbackQueryHandlerFunc) func(*th.Context, teleg
 			return nil
 		}
 
-		err = response.Handle(ctx)
+		err = w.bufferedHandler.Handle(response, ctx)
 		if err != nil {
 			l.ErrorContext(ctx, "Failed to handle callback query", logger.ErrorField, err.Error())
 			return err
@@ -105,7 +115,7 @@ func WrapCallbackQuery(handler CallbackQueryHandlerFunc) func(*th.Context, teleg
 
 type ChosenInlineResultHandlerFunc func(ctx *th.Context, result telego.ChosenInlineResult) (IResponse, error)
 
-func WrapChosenInlineResult(handler ChosenInlineResultHandlerFunc) func(*th.Context, telego.ChosenInlineResult) error {
+func (w *HandlerWrapper) WrapChosenInlineResult(handler ChosenInlineResultHandlerFunc) func(*th.Context, telego.ChosenInlineResult) error {
 	return func(ctx *th.Context, result telego.ChosenInlineResult) error {
 		response, err := handler(ctx, result)
 		if err != nil {
@@ -116,6 +126,6 @@ func WrapChosenInlineResult(handler ChosenInlineResultHandlerFunc) func(*th.Cont
 			return nil
 		}
 
-		return response.Handle(ctx)
+		return w.bufferedHandler.Handle(response, ctx)
 	}
 }
