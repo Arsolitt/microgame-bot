@@ -43,10 +43,6 @@ func RPSJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 			if err != nil {
 				return fmt.Errorf("failed to get game session repository in %s: %w", operationName, err)
 			}
-			userRepo, err := uow.UserRepo()
-			if err != nil {
-				return fmt.Errorf("failed to get user repository in %s: %w", operationName, err)
-			}
 			betRepo, err := uow.BetRepo()
 			if err != nil {
 				return fmt.Errorf("failed to get bet repository in %s: %w", operationName, err)
@@ -75,46 +71,10 @@ func RPSJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 				return fmt.Errorf("failed to update game: %w", err)
 			}
 
-			// Create bets if bet amount > 0
-			betAmount := session.Bet()
-			if betAmount > 0 {
-				// Get joining player
-				joiningPlayer, err := userRepo.UserByIDLocked(ctx, player2.ID())
-				if err != nil {
-					return fmt.Errorf("failed to get joining player in %s: %w", operationName, err)
-				}
-
-				// Check balance
-				if joiningPlayer.Tokens() < betAmount {
-					return domain.ErrInsufficientTokens
-				}
-
-				// Deduct tokens
-				joiningPlayer, err = joiningPlayer.SubtractTokens(betAmount)
-				if err != nil {
-					return fmt.Errorf("failed to deduct tokens in %s: %w", operationName, err)
-				}
-				_, err = userRepo.UpdateUser(ctx, joiningPlayer)
-				if err != nil {
-					return fmt.Errorf("failed to update joining player in %s: %w", operationName, err)
-				}
-
-				// Create bet for joining player
-				bet, err := domainBet.New(
-					domainBet.WithNewID(),
-					domainBet.WithUserID(player2.ID()),
-					domainBet.WithSessionID(session.ID()),
-					domainBet.WithAmount(betAmount),
-					domainBet.WithStatus(domainBet.StatusPending),
-				)
-				if err != nil {
-					return fmt.Errorf("failed to create bet in %s: %w", operationName, err)
-				}
-
-				_, err = betRepo.CreateBet(ctx, bet)
-				if err != nil {
-					return fmt.Errorf("failed to save bet in %s: %w", operationName, err)
-				}
+			// Create bet for joining player if needed
+			err = processPlayerBet(ctx, uow, player2.ID(), session.ID(), session.Bet(), operationName)
+			if err != nil {
+				return err
 			}
 
 			// Only change session status if both players joined

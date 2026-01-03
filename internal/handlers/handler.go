@@ -7,7 +7,9 @@ import (
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/domain"
 	domainBet "microgame-bot/internal/domain/bet"
+	domainSession "microgame-bot/internal/domain/session"
 	domainUser "microgame-bot/internal/domain/user"
+	"microgame-bot/internal/uow"
 	"microgame-bot/internal/utils"
 	"strings"
 )
@@ -101,4 +103,68 @@ func extractBetAmount(callbackData string, maxBet domain.Token) domain.Token {
 	}
 
 	return domain.Token(bet)
+}
+
+// processPlayerBet handles bet creation when a player joins a game
+func processPlayerBet(
+	ctx context.Context,
+	uow uow.IUnitOfWork,
+	playerID domainUser.ID,
+	sessionID domainSession.ID,
+	betAmount domain.Token,
+	operationName string,
+) error {
+	if betAmount <= 0 {
+		return nil
+	}
+
+	userRepo, err := uow.UserRepo()
+	if err != nil {
+		return fmt.Errorf("failed to get user repository in %s: %w", operationName, err)
+	}
+
+	betRepo, err := uow.BetRepo()
+	if err != nil {
+		return fmt.Errorf("failed to get bet repository in %s: %w", operationName, err)
+	}
+
+	// Get joining player
+	joiningPlayer, err := userRepo.UserByIDLocked(ctx, playerID)
+	if err != nil {
+		return fmt.Errorf("failed to get joining player in %s: %w", operationName, err)
+	}
+
+	// Check balance
+	if joiningPlayer.Tokens() < betAmount {
+		return domain.ErrInsufficientTokens
+	}
+
+	// Deduct tokens
+	joiningPlayer, err = joiningPlayer.SubtractTokens(betAmount)
+	if err != nil {
+		return fmt.Errorf("failed to deduct tokens in %s: %w", operationName, err)
+	}
+	_, err = userRepo.UpdateUser(ctx, joiningPlayer)
+	if err != nil {
+		return fmt.Errorf("failed to update joining player in %s: %w", operationName, err)
+	}
+
+	// Create bet for joining player
+	bet, err := domainBet.New(
+		domainBet.WithNewID(),
+		domainBet.WithUserID(playerID),
+		domainBet.WithSessionID(sessionID),
+		domainBet.WithAmount(betAmount),
+		domainBet.WithStatus(domainBet.StatusPending),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create bet in %s: %w", operationName, err)
+	}
+
+	_, err = betRepo.CreateBet(ctx, bet)
+	if err != nil {
+		return fmt.Errorf("failed to save bet in %s: %w", operationName, err)
+	}
+
+	return nil
 }
