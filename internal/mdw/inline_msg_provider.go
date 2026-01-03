@@ -15,7 +15,9 @@ func InlineMsgProvider(
 	locker locker.ILocker[domain.InlineMessageID],
 ) func(ctx *th.Context, update telego.Update) error {
 	const operationName = "middleware::inline_msg_provider"
+	l := slog.With(slog.String(logger.OperationField, operationName))
 	return func(ctx *th.Context, update telego.Update) error {
+		l.DebugContext(ctx, "InlineMsgProvider middleware started")
 		var inlineMessageID domain.InlineMessageID
 		if update.CallbackQuery != nil {
 			if update.CallbackQuery.InlineMessageID != "" {

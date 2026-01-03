@@ -56,6 +56,23 @@ func startup() error {
 	}
 	defer func() { _ = bh.StopWithContext(ctx) }()
 
+	bufferedHandler := handlers.NewBufferedHandler(
+		30,    // 30 requests per second (Telegram limit)
+		10,    // burst capacity
+		10000, // queue size
+		5,     // worker goroutines
+		3,     // max retries
+	)
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := bufferedHandler.Shutdown(shutdownCtx); err != nil {
+			slog.Error("Failed to shutdown buffered handler gracefully", logger.ErrorField, err.Error())
+		}
+	}()
+
+	wrap := handlers.NewHandlerWrapper(bufferedHandler)
+
 	userRepo := gormUserRepository.New(db)
 	tttRepo := gormTTTRepository.New(db)
 	rpsRepo := gormRPSRepository.New(db)
@@ -141,7 +158,7 @@ func startup() error {
 	)
 
 	// Game selector
-	bh.HandleInlineQuery(handlers.WrapInlineQuery(handlers.GameSelector(cfg.App)), th.AnyInlineQuery())
+	bh.HandleInlineQuery(wrap.WrapInlineQuery(handlers.GameSelector(cfg.App)), th.AnyInlineQuery())
 
 	// RPS GAME HANDLERS
 	rpsCreateUnit := uowGorm.New(db,
@@ -149,7 +166,7 @@ func startup() error {
 		uowGorm.WithRPSRepo(rpsRepo),
 	)
 	bh.HandleCallbackQuery(
-		handlers.WrapCallbackQuery(handlers.RPSCreate(rpsCreateUnit, cfg.App)),
+		wrap.WrapCallbackQuery(handlers.RPSCreate(rpsCreateUnit, cfg.App)),
 		th.CallbackDataPrefix("create::rps"),
 	)
 
@@ -162,7 +179,7 @@ func startup() error {
 		uowGorm.WithBetRepo(betRepo),
 	)
 	rpsG.HandleCallbackQuery(
-		handlers.WrapCallbackQuery(handlers.RPSJoin(userRepo, rpsJoinUnit)),
+		wrap.WrapCallbackQuery(handlers.RPSJoin(userRepo, rpsJoinUnit)),
 		th.CallbackDataPrefix("g::rps::join::"),
 	)
 	rpsChoiceUnit := uowGorm.New(db,
@@ -171,7 +188,7 @@ func startup() error {
 		uowGorm.WithBetRepo(betRepo),
 	)
 	rpsG.HandleCallbackQuery(
-		handlers.WrapCallbackQuery(handlers.RPSChoice(userRepo, rpsChoiceUnit, q)),
+		wrap.WrapCallbackQuery(handlers.RPSChoice(userRepo, rpsChoiceUnit, q)),
 		th.CallbackDataPrefix("g::rps::choice::"),
 	)
 
@@ -181,7 +198,7 @@ func startup() error {
 		uowGorm.WithTTTRepo(tttRepo),
 	)
 	bh.HandleCallbackQuery(
-		handlers.WrapCallbackQuery(handlers.TTTCreate(tttCreateUnit, cfg.App)),
+		wrap.WrapCallbackQuery(handlers.TTTCreate(tttCreateUnit, cfg.App)),
 		th.CallbackDataPrefix("create::ttt"),
 	)
 
@@ -194,7 +211,7 @@ func startup() error {
 		uowGorm.WithBetRepo(betRepo),
 	)
 	tttG.HandleCallbackQuery(
-		handlers.WrapCallbackQuery(handlers.TTTJoin(userRepo, tttJoinUnit)),
+		wrap.WrapCallbackQuery(handlers.TTTJoin(userRepo, tttJoinUnit)),
 		th.CallbackDataPrefix("g::ttt::join::"),
 	)
 
@@ -204,17 +221,17 @@ func startup() error {
 		uowGorm.WithBetRepo(betRepo),
 	)
 	tttG.HandleCallbackQuery(
-		handlers.WrapCallbackQuery(handlers.TTTMove(userRepo, tttMoveUnit, q)),
+		wrap.WrapCallbackQuery(handlers.TTTMove(userRepo, tttMoveUnit, q)),
 		th.CallbackDataPrefix("g::ttt::move::"),
 	)
 
 	tttG.HandleCallbackQuery(
-		handlers.WrapCallbackQuery(handlers.TTTRebuild(userRepo, tttRepo)),
+		wrap.WrapCallbackQuery(handlers.TTTRebuild(userRepo, tttRepo)),
 		th.CallbackDataPrefix("g::ttt::rebuild::"),
 	)
 
 	// Empty callback handler
-	bh.HandleCallbackQuery(handlers.WrapCallbackQuery(handlers.Empty()), th.CallbackDataEqual("empty"))
+	bh.HandleCallbackQuery(wrap.WrapCallbackQuery(handlers.Empty()), th.CallbackDataEqual("empty"))
 
 	// Start handling updates
 	return bh.Start()

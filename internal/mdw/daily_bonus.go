@@ -21,6 +21,7 @@ func DailyBonusMiddleware(
 	const operationName = "middleware::daily_bonus"
 	l := slog.With(slog.String(logger.OperationField, operationName))
 	return func(ctx *th.Context, update telego.Update) error {
+		l.DebugContext(ctx, "DailyBonusMiddleware started")
 		user, err := userFromContext(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get user from context in %s: %w", operationName, err)
@@ -76,6 +77,7 @@ func DailyBonusMiddleware(
 		if err != nil {
 			l.WarnContext(ctx, "Failed to award daily bonus", logger.ErrorField, err.Error())
 		}
+		l.DebugContext(ctx, "DailyBonusMiddleware finished")
 
 		return ctx.Next(update)
 	}

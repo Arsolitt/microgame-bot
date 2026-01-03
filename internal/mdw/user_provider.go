@@ -22,6 +22,7 @@ func UserProvider(
 	const operationName = "middleware::user_provider"
 	l := slog.With(slog.String(logger.OperationField, operationName))
 	return func(ctx *th.Context, update telego.Update) error {
+		l.DebugContext(ctx, "UserProvider middleware started")
 		var userTelegramID int64
 		var firstName string
 		var lastName string
