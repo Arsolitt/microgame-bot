@@ -37,11 +37,11 @@ func InlineMsgProvider(
 		ctx = ctx.WithContext(rawCtx)
 		l.DebugContext(ctx, "InlineMsgProvider middleware finished")
 
-		err := locker.Lock(inlineMessageID)
+		err := locker.Lock(ctx, inlineMessageID)
 		if err != nil {
 			return err
 		}
-		defer func() { _ = locker.Unlock(inlineMessageID) }()
+		defer func() { _ = locker.Unlock(ctx, inlineMessageID) }()
 
 		return ctx.Next(update)
 	}

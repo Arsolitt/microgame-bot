@@ -110,11 +110,11 @@ func UserProvider(
 		ctx = ctx.WithContext(rawCtx)
 		ctx = ctx.WithValue(core.ContextKeyUser, user)
 
-		err = locker.Lock(user.ID())
+		err = locker.Lock(ctx, user.ID())
 		if err != nil {
 			return err
 		}
-		defer func() { _ = locker.Unlock(user.ID()) }()
+		defer func() { _ = locker.Unlock(ctx, user.ID()) }()
 
 		l.DebugContext(ctx, "UserProvider middleware finished")
 

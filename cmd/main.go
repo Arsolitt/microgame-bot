@@ -20,7 +20,7 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 
 	"microgame-bot/internal/handlers"
-	memoryLocker "microgame-bot/internal/locker/memory"
+	gormLocker "microgame-bot/internal/locker/gorm"
 	qHandlers "microgame-bot/internal/queue/handlers"
 	gormBetRepository "microgame-bot/internal/repo/bet"
 	gormClaimRepository "microgame-bot/internal/repo/claim"
@@ -48,7 +48,13 @@ func startup() error {
 		return err
 	}
 
-	userLocker := memoryLocker.New[user.ID]()
+	// userLocker := memoryLocker.New[user.ID]()
+	userLocker, err := gormLocker.New(db, func(id user.ID) string {
+		return id.String()
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create user locker: %w", err)
+	}
 
 	bh, err := bot.MustInit(ctx, cfg)
 	if err != nil {
@@ -80,7 +86,13 @@ func startup() error {
 	claimRepo := gormClaimRepository.New(db)
 	betRepo := gormBetRepository.New(db)
 
-	inlineMsgLocker := memoryLocker.New[domain.InlineMessageID]()
+	// inlineMsgLocker := memoryLocker.New[domain.InlineMessageID]()
+	inlineMsgLocker, err := gormLocker.New(db, func(id domain.InlineMessageID) string {
+		return id.String()
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create inline message locker: %w", err)
+	}
 
 	q := queue.New(db, 10)
 	q.Register("queue.cleanup", func(ctx context.Context, _ []byte) error {
