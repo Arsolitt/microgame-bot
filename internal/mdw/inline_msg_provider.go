@@ -35,14 +35,14 @@ func InlineMsgProvider(
 		rawCtx = logger.WithLogValue(rawCtx, logger.InlineMessageIDField, inlineMessageID)
 		rawCtx = ctx.WithValue(core.ContextKeyInlineMessageID, inlineMessageID)
 		ctx = ctx.WithContext(rawCtx)
-		l.DebugContext(ctx, "InlineMsgProvider middleware finished")
-
+		
 		err := locker.Lock(ctx, inlineMessageID)
 		if err != nil {
 			return err
 		}
 		defer func() { _ = locker.Unlock(ctx, inlineMessageID) }()
-
+		
+		l.DebugContext(ctx, "InlineMsgProvider middleware finished")
 		return ctx.Next(update)
 	}
 }

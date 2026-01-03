@@ -10,6 +10,7 @@ import (
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/user"
+	"microgame-bot/internal/locker"
 	"microgame-bot/internal/mdw"
 	"microgame-bot/internal/queue"
 	"microgame-bot/internal/scheduler"
@@ -21,6 +22,7 @@ import (
 
 	"microgame-bot/internal/handlers"
 	gormLocker "microgame-bot/internal/locker/gorm"
+	memoryLocker "microgame-bot/internal/locker/memory"
 	qHandlers "microgame-bot/internal/queue/handlers"
 	gormBetRepository "microgame-bot/internal/repo/bet"
 	gormClaimRepository "microgame-bot/internal/repo/claim"
@@ -47,14 +49,26 @@ func startup() error {
 	if err != nil {
 		return err
 	}
-
-	// userLocker := memoryLocker.New[user.ID]()
-	userLocker, err := gormLocker.New(db, func(id user.ID) string {
-		return id.String()
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create user locker: %w", err)
+	var inlineMsgLocker locker.ILocker[domain.InlineMessageID]
+	var userLocker locker.ILocker[user.ID]
+	if cfg.App.LockerDriver == "gorm" {
+		userLocker, err = gormLocker.New(db, func(id user.ID) string {
+			return id.String()
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create user locker: %w", err)
+		}
+		inlineMsgLocker, err = gormLocker.New(db, func(id domain.InlineMessageID) string {
+			return id.String()
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create inline message locker: %w", err)
+		}
+	} else {
+		userLocker = memoryLocker.New[user.ID]()
+		inlineMsgLocker = memoryLocker.New[domain.InlineMessageID]()
 	}
+	slog.Info("Locker initialized successfully", "driver", cfg.App.LockerDriver)
 
 	bh, err := bot.MustInit(ctx, cfg)
 	if err != nil {
@@ -86,14 +100,6 @@ func startup() error {
 	claimRepo := gormClaimRepository.New(db)
 	betRepo := gormBetRepository.New(db)
 
-	// inlineMsgLocker := memoryLocker.New[domain.InlineMessageID]()
-	inlineMsgLocker, err := gormLocker.New(db, func(id domain.InlineMessageID) string {
-		return id.String()
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create inline message locker: %w", err)
-	}
-
 	q := queue.New(db, 10)
 	q.Register("queue.cleanup", func(ctx context.Context, _ []byte) error {
 		return q.CleanupStuckTasks(ctx)
@@ -118,6 +124,7 @@ func startup() error {
 		uowGorm.WithRPSRepo(rpsRepo),
 	)
 	q.Register("games.timeout", qHandlers.GameTimeoutHandler(gameTimeoutUnit, q))
+	q.Register("locks.cleanup", qHandlers.LockCleanupHandler(userLocker, cfg.App.LockerTTL))
 
 	defer func() { _ = q.Stop(ctx) }()
 	q.Start(ctx)
@@ -142,6 +149,14 @@ func startup() error {
 			Expression: "0 */5 * * * *",
 			Status:     scheduler.CronJobStatusActive,
 			Subject:    "games.timeout",
+			Payload:    queue.EmptyPayload,
+		},
+		{
+			Name: "locks-cleanup",
+			// Expression: "0 33 0 * * *",
+			Expression: "*/5 * * * * *",
+			Status:     scheduler.CronJobStatusActive,
+			Subject:    "locks.cleanup",
 			Payload:    queue.EmptyPayload,
 		},
 	}

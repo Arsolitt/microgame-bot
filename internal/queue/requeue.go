@@ -19,7 +19,7 @@ func (q *Queue) requeue(ctx context.Context, taskID utils.UniqueID) {
 
 		task.Status = TaskStatusPending
 		task.Attempts--
-		task.RunAfter = time.Now()
+		task.RunAfter = time.Now().Add(time.Second * 10)
 
 		return tx.Save(&task).Error
 	})
