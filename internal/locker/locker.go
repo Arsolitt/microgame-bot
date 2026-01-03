@@ -1,6 +1,8 @@
 package locker
 
+import "context"
+
 type ILocker[ID comparable] interface {
-	Lock(id ID) error
-	Unlock(id ID) error
+	Lock(ctx context.Context, id ID) error
+	Unlock(ctx context.Context, id ID) error
 }
