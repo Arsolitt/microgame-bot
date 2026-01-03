@@ -90,7 +90,7 @@ func (m *Metastore) SetWithTTL(ctx context.Context, uniqueID string, key string,
 	if err != nil {
 		return fmt.Errorf("failed to json marshal value: %w", err)
 	}
-	return m.сreateOrUpdate(ctx, m.dataKey(uniqueID, key), data, ttl)
+	return m.createOrUpdate(ctx, m.dataKey(uniqueID, key), data, ttl)
 }
 
 func (m *Metastore) SetStringWithTTL(
@@ -100,7 +100,7 @@ func (m *Metastore) SetStringWithTTL(
 	value string,
 	ttl time.Duration,
 ) error {
-	return m.сreateOrUpdate(ctx, m.dataKey(uniqueID, key), []byte(value), ttl)
+	return m.createOrUpdate(ctx, m.dataKey(uniqueID, key), []byte(value), ttl)
 }
 
 func (m *Metastore) Delete(ctx context.Context, uniqueID string, key string) error {
@@ -126,7 +126,7 @@ func (m *Metastore) dataKey(uniqueID string, key string) string {
 	return fmt.Sprintf("%s__%s", uniqueID, key)
 }
 
-func (m *Metastore) сreateOrUpdate(ctx context.Context, dataKey string, data []byte, ttl time.Duration) error {
+func (m *Metastore) createOrUpdate(ctx context.Context, dataKey string, data []byte, ttl time.Duration) error {
 	if ttl == 0 {
 		ttl = defaultTTL
 	}

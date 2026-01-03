@@ -18,7 +18,7 @@ type Session struct {
 	ID              se.ID                  `gorm:"primaryKey;type:uuid"`
 }
 
-// TODO: add tests
+// ToDomain TODO: add tests
 func (m Session) ToDomain() (se.Session, error) {
 	return se.New(
 		se.WithID(m.ID),
@@ -33,7 +33,7 @@ func (m Session) ToDomain() (se.Session, error) {
 	)
 }
 
-// TODO: add tests
+// FromDomain TODO: add tests
 func (Session) FromDomain(u se.Session) Session {
 	return Session{
 		ID:              u.ID(),

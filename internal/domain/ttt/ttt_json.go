@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// TODO: add tests
+// MarshalJSON TODO: add tests
 func (t TTT) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		CreatedAt time.Time  `json:"created_at"`
@@ -34,7 +34,7 @@ func (t TTT) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// TODO: add tests
+// UnmarshalJSON TODO: add tests
 func (t *TTT) UnmarshalJSON(data []byte) error {
 	var aux struct {
 		CreatedAt time.Time  `json:"created_at"`

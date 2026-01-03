@@ -155,7 +155,7 @@ func (t TTT) AFKPlayerID() (user.ID, error) {
 	return user.ID{}, domain.ErrAFKPlayerNotFound
 }
 
-// TODO: validate conversion from previous status to new status
+// SetStatus TODO: validate conversion from previous status to new status
 func (t TTT) SetStatus(status domain.GameStatus) (TTT, error) {
 	if status.IsZero() {
 		return TTT{}, domain.ErrGameStatusRequired

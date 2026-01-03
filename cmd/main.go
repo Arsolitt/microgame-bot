@@ -157,9 +157,8 @@ func startup() error {
 			Payload:    queue.EmptyPayload,
 		},
 		{
-			Name: "locks-cleanup",
-			// Expression: "0 33 0 * * *",
-			Expression: "*/5 * * * * *",
+			Name:       "locks-cleanup",
+			Expression: "0 33 0 * * *",
 			Status:     scheduler.CronJobStatusActive,
 			Subject:    "locks.cleanup",
 			Payload:    queue.EmptyPayload,

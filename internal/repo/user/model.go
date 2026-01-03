@@ -20,7 +20,7 @@ type User struct {
 	Tokens     uint64    `gorm:"not null"`
 }
 
-// TODO: add tests
+// ToDomain TODO: add tests
 func (m User) ToDomain() (domainUser.User, error) {
 	return domainUser.New(
 		domainUser.WithIDFromUUID(m.ID),
@@ -35,7 +35,7 @@ func (m User) ToDomain() (domainUser.User, error) {
 	)
 }
 
-// TODO: add tests
+// FromDomain TODO: add tests
 func (m User) FromDomain(u domainUser.User) User {
 	var chatID *int64
 	if u.ChatID() != nil {

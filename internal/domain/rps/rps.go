@@ -205,7 +205,7 @@ func (r RPS) AFKPlayerID() (user.ID, error) {
 	return user.ID{}, domain.ErrAFKPlayerNotFound
 }
 
-// TODO: validate conversion from previous status to new status
+// SetStatus TODO: validate conversion from previous status to new status
 func (r RPS) SetStatus(status domain.GameStatus) (RPS, error) {
 	if status.IsZero() {
 		return RPS{}, domain.ErrGameStatusRequired

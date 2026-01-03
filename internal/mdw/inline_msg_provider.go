@@ -33,8 +33,8 @@ func InlineMsgProvider(
 
 		rawCtx := ctx.Context()
 		rawCtx = logger.WithLogValue(rawCtx, logger.InlineMessageIDField, inlineMessageID)
-		rawCtx = ctx.WithValue(core.ContextKeyInlineMessageID, inlineMessageID)
 		ctx = ctx.WithContext(rawCtx)
+		ctx = ctx.WithValue(core.ContextKeyInlineMessageID, inlineMessageID)
 
 		err := locker.Lock(ctx, inlineMessageID)
 		if err != nil {
