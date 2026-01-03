@@ -15,23 +15,23 @@ import (
 )
 
 type BufferedHandler struct {
+	ctx        context.Context
 	limiter    *rate.Limiter
 	queue      chan *queuedRequest
 	retryQueue chan *queuedRequest
+	cancel     context.CancelFunc
+	wg         sync.WaitGroup
 	workers    int
 	maxRetries int
-	wg         sync.WaitGroup
-	ctx        context.Context
-	cancel     context.CancelFunc
 }
 
 type queuedRequest struct {
+	createdAt  time.Time
 	response   IResponse
 	ctx        *th.Context
-	retries    int
 	resultChan chan error
-	createdAt  time.Time
-	retryAfter time.Duration // Explicit retry delay from Telegram API
+	retries    int
+	retryAfter time.Duration
 }
 
 func NewBufferedHandler(
@@ -59,7 +59,7 @@ func NewBufferedHandler(
 
 func (h *BufferedHandler) start() {
 	// Main workers
-	for i := 0; i < h.workers; i++ {
+	for range h.workers {
 		h.wg.Add(1)
 		go h.worker()
 	}

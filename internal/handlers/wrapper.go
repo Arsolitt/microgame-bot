@@ -80,7 +80,9 @@ func (w *HandlerWrapper) WrapInlineQuery(handler InlineQueryHandlerFunc) func(*t
 
 type CallbackQueryHandlerFunc func(ctx *th.Context, query telego.CallbackQuery) (IResponse, error)
 
-func (w *HandlerWrapper) WrapCallbackQuery(handler CallbackQueryHandlerFunc) func(*th.Context, telego.CallbackQuery) error {
+func (w *HandlerWrapper) WrapCallbackQuery(
+	handler CallbackQueryHandlerFunc,
+) func(*th.Context, telego.CallbackQuery) error {
 	const operationName = "handler::wrap_callback_query"
 	l := slog.With(slog.String(logger.OperationField, operationName))
 
@@ -115,7 +117,9 @@ func (w *HandlerWrapper) WrapCallbackQuery(handler CallbackQueryHandlerFunc) fun
 
 type ChosenInlineResultHandlerFunc func(ctx *th.Context, result telego.ChosenInlineResult) (IResponse, error)
 
-func (w *HandlerWrapper) WrapChosenInlineResult(handler ChosenInlineResultHandlerFunc) func(*th.Context, telego.ChosenInlineResult) error {
+func (w *HandlerWrapper) WrapChosenInlineResult(
+	handler ChosenInlineResultHandlerFunc,
+) func(*th.Context, telego.ChosenInlineResult) error {
 	return func(ctx *th.Context, result telego.ChosenInlineResult) error {
 		response, err := handler(ctx, result)
 		if err != nil {

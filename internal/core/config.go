@@ -42,9 +42,9 @@ type TelegramConfig struct {
 }
 
 type AppConfig struct {
-	MaxGameCount int           `env:"MAX_GAME_COUNT"        env-default:"10"     validate:"min=1"`
-	LockerTTL    time.Duration `env:"LOCKER_TLL"     env-default:"720h"     validate:"required"`
-	LockerDriver string        `env:"LOCKER_DRIVER"         env-default:"memory"   validate:"oneof=gorm memory"`
+	LockerDriver string        `env:"LOCKER_DRIVER"  env-default:"memory" validate:"oneof=gorm memory"`
+	MaxGameCount int           `env:"MAX_GAME_COUNT" env-default:"10"     validate:"min=1"`
+	LockerTTL    time.Duration `env:"LOCKER_TLL"     env-default:"720h"   validate:"required"`
 }
 
 type NatsConfig struct {

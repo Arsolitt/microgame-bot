@@ -18,16 +18,16 @@ var (
 )
 
 type Lock struct {
-	LockKey   string    `gorm:"primaryKey;type:text"`
 	CreatedAt time.Time `gorm:"not null"`
 	UpdatedAt time.Time `gorm:"not null"`
+	LockKey   string    `gorm:"primaryKey;type:text"`
 }
 
 type Locker[ID comparable] struct {
 	db    *gorm.DB
 	txs   map[ID]*gorm.DB
-	mu    sync.RWMutex
 	toKey func(ID) string
+	mu    sync.RWMutex
 }
 
 // New creates a new PostgreSQL-based locker using SELECT FOR UPDATE.
@@ -62,7 +62,7 @@ func (l *Locker[ID]) Lock(ctx context.Context, id ID) error {
 	_, err = gorm.G[Lock](tx, clause.Locking{Strength: "UPDATE"}).Where("lock_key = ?", key).First(ctx)
 	if err != nil {
 		tx.Rollback()
-		return fmt.Errorf("%w: %v", ErrLockFailed, err)
+		return fmt.Errorf("%w: %w", ErrLockFailed, err)
 	}
 	_, err = gorm.G[Lock](tx).Where("lock_key = ?", key).Updates(ctx, Lock{UpdatedAt: time.Now()})
 	if err != nil {
