@@ -23,7 +23,7 @@ func New(keyPrefix string) *Metastore {
 	}
 }
 
-func (m *Metastore) Get(ctx context.Context, uniqueID string, key string) ([]byte, error) {
+func (m *Metastore) Get(_ context.Context, uniqueID string, key string) ([]byte, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -35,7 +35,7 @@ func (m *Metastore) Get(ctx context.Context, uniqueID string, key string) ([]byt
 	return data, nil
 }
 
-func (m *Metastore) Set(ctx context.Context, uniqueID string, key string, value any) error {
+func (m *Metastore) Set(_ context.Context, uniqueID string, key string, value any) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -48,13 +48,13 @@ func (m *Metastore) Set(ctx context.Context, uniqueID string, key string, value 
 	return nil
 }
 
-func (m *Metastore) SetWithTTL(ctx context.Context, uniqueID string, key string, value any, ttl time.Duration) error {
+func (m *Metastore) SetWithTTL(ctx context.Context, uniqueID string, key string, value any, _ time.Duration) error {
 	// TODO: Implement TTL
-	slog.InfoContext(ctx, "Memory metastore does not support TTL")
+	slog.WarnContext(ctx, "Memory metastore does not support TTL")
 	return m.Set(ctx, uniqueID, key, value)
 }
 
-func (m *Metastore) Delete(ctx context.Context, uniqueID string, key string) error {
+func (m *Metastore) Delete(_ context.Context, uniqueID string, key string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -62,7 +62,7 @@ func (m *Metastore) Delete(ctx context.Context, uniqueID string, key string) err
 	return nil
 }
 
-func (m *Metastore) Exists(ctx context.Context, uniqueID string, key string) (bool, error) {
+func (m *Metastore) Exists(_ context.Context, uniqueID string, key string) (bool, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 

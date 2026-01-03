@@ -74,6 +74,9 @@ func (r *Repository) GamesBySessionIDLocked(ctx context.Context, id session.ID) 
 
 func (r *Repository) UpdateGame(ctx context.Context, game rps.RPS) (rps.RPS, error) {
 	model, err := r.FromDomain(gM.Game{}, game)
+	if err != nil {
+		return rps.RPS{}, fmt.Errorf("failed to convert RPS domain model to gorm model: %w", err)
+	}
 	_, err = gorm.G[gM.Game](r.db).Where("id = ?", model.ID.String()).Updates(ctx, model)
 	if err != nil {
 		return rps.RPS{}, fmt.Errorf("failed to update game in gorm database: %w", err)

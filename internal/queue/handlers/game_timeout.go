@@ -28,7 +28,7 @@ func GameTimeoutHandler(
 	publisher queue.IQueuePublisher,
 ) func(ctx context.Context, data []byte) error {
 	const operationName = "queue::handler::game_timeout"
-	return func(ctx context.Context, data []byte) error {
+	return func(ctx context.Context, _ []byte) error {
 		err := u.Do(ctx, func(unit uow.IUnitOfWork) error {
 			sessionRepo, err := unit.SessionRepo()
 			if err != nil {

@@ -77,11 +77,16 @@ func startup() error {
 	defer func() { _ = bh.StopWithContext(ctx) }()
 
 	bufferedHandler := handlers.NewBufferedHandler(
-		30,    // 30 requests per second (Telegram limit)
-		10,    // burst capacity
-		10000, // queue size
-		5,     // worker goroutines
-		3,     // max retries
+		//nolint:mnd // requests per second (Telegram limit)
+		30,
+		//nolint:mnd // burst capacity
+		10,
+		//nolint:mnd // queue size
+		10000,
+		//nolint:mnd // worker goroutines
+		5,
+		//nolint:mnd // max retries
+		3,
 	)
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

@@ -67,7 +67,7 @@ func (l *Locker[ID]) Unlock(_ context.Context, id ID) error {
 	return nil
 }
 
-func (l *Locker[ID]) Clean(ctx context.Context, ttl time.Duration) (int, error) {
+func (l *Locker[ID]) Clean(_ context.Context, ttl time.Duration) (int, error) {
 	cutoffDate := time.Now().Add(-ttl)
 
 	l.mu.Lock()

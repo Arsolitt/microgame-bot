@@ -15,7 +15,7 @@ func LockCleanupHandler(cleaner locker.ILockerCleaner, ttl time.Duration) func(c
 		slog.String(logger.OperationField, operationName),
 	)
 	l.Info("Lock cleanup handler created", "ttl_h", ttl.Hours())
-	return func(ctx context.Context, data []byte) error {
+	return func(ctx context.Context, _ []byte) error {
 		l := slog.With(
 			slog.String(logger.OperationField, operationName),
 		)

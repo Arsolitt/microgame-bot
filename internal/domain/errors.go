@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	// Common errors.
+
 	ErrIDRequired              = errors.New("ID required")
 	ErrCreatedAtRequired       = errors.New("createdAt required")
 	ErrUpdatedAtRequired       = errors.New("updatedAt required")
@@ -11,6 +12,7 @@ var (
 	ErrUserIDRequired          = errors.New("user ID is required")
 	ErrSessionIDRequired       = errors.New("session ID required")
 	// Game errors.
+
 	ErrGameOver                        = errors.New("game is over")
 	ErrGameFull                        = errors.New("game is full")
 	ErrNotPlayersTurn                  = errors.New("not this player's turn")
@@ -28,6 +30,7 @@ var (
 	ErrAFKPlayerNotFound               = errors.New("AFK player not found")
 	ErrAllPlayersAFK                   = errors.New("all players are AFK")
 	// Session errors.
+
 	ErrInvalidGameType         = errors.New("invalid game type")
 	ErrMultipleGamesInProgress = errors.New("multiple games in progress")
 	ErrGameCountRequired       = errors.New("round count required")
@@ -35,6 +38,7 @@ var (
 	ErrSessionNotFound         = errors.New("session not found")
 	ErrSessionNotInProgress    = errors.New("session is not in progress")
 	// Bet errors.
+
 	ErrInsufficientTokens = errors.New("insufficient tokens")
 	ErrInvalidAmount      = errors.New("invalid bet amount")
 	ErrInvalidStatus      = errors.New("invalid bet status")

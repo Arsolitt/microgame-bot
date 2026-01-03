@@ -10,6 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	requeueDelay = 10 * time.Second
+)
+
 func (q *Queue) requeue(ctx context.Context, taskID utils.UniqueID) {
 	err := q.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var task Task
@@ -19,7 +23,7 @@ func (q *Queue) requeue(ctx context.Context, taskID utils.UniqueID) {
 
 		task.Status = TaskStatusPending
 		task.Attempts--
-		task.RunAfter = time.Now().Add(time.Second * 10)
+		task.RunAfter = time.Now().Add(requeueDelay)
 
 		return tx.Save(&task).Error
 	})

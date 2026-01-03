@@ -44,7 +44,6 @@ func New(opts ...Opt) (Bet, error) {
 	return *b, nil
 }
 
-// Getters.
 func (b Bet) ID() ID                { return b.id }
 func (b Bet) UserID() user.ID       { return b.userID }
 func (b Bet) SessionID() session.ID { return b.sessionID }

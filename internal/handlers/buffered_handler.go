@@ -1,4 +1,3 @@
-// internal/handlers/buffered_handler.go
 package handlers
 
 import (
@@ -131,7 +130,7 @@ func (h *BufferedHandler) processRequest(req *queuedRequest) {
 				slog.Int("error_code", apiErr.ErrorCode))
 		} else {
 			slog.DebugContext(req.ctx, "Retrying request after error",
-				slog.Int("retry_attempt", req.retries),
+				"retry_attempt", req.retries,
 				logger.ErrorField, err.Error())
 		}
 
@@ -159,8 +158,10 @@ func (h *BufferedHandler) shouldRetry(err error, retries int) bool {
 	}
 
 	switch apiErr.ErrorCode {
+	//nolint:mnd // Rate limit exceeded.
 	case 429: // Too Many Requests - rate limit exceeded
 		return true
+	//nolint:mnd // Server errors.
 	case 500, 502, 503, 504: // Server errors - temporary issues
 		return true
 	default:
@@ -170,6 +171,7 @@ func (h *BufferedHandler) shouldRetry(err error, retries int) bool {
 
 func (h *BufferedHandler) calculateBackoff(retries int) time.Duration {
 	// Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
+	//nolint:mnd // Base is constant.
 	base := 100 * time.Millisecond
 	return base * time.Duration(1<<uint(retries))
 }
@@ -200,7 +202,7 @@ func (h *BufferedHandler) Handle(response IResponse, ctx *th.Context) error {
 }
 
 func (h *BufferedHandler) Shutdown(ctx context.Context) error {
-	slog.Info("Shutting down buffered handler",
+	slog.InfoContext(ctx, "Shutting down buffered handler",
 		slog.Int("pending_requests", len(h.queue)),
 		slog.Int("pending_retries", len(h.retryQueue)))
 
@@ -214,10 +216,10 @@ func (h *BufferedHandler) Shutdown(ctx context.Context) error {
 
 	select {
 	case <-done:
-		slog.Info("Buffered handler shut down successfully")
+		slog.InfoContext(ctx, "Buffered handler shut down successfully")
 		return nil
 	case <-ctx.Done():
-		slog.Warn("Buffered handler shutdown timeout",
+		slog.WarnContext(ctx, "Buffered handler shutdown timeout",
 			slog.Int("remaining_requests", len(h.queue)+len(h.retryQueue)))
 		return errors.New("shutdown timeout")
 	}

@@ -31,7 +31,8 @@ func (Repository) FromDomain(gm gM.Game, dm rpsD.RPS) (gM.Game, error) {
 			Choice:   dm.Choice1(),
 		},
 		{
-			ID:       dm.Player2ID().UUID(),
+			ID: dm.Player2ID().UUID(),
+			//nolint:mnd // Player number is constant.
 			Number:   2,
 			IsWinner: dm.WinnerID() == dm.Player2ID(),
 			Choice:   dm.Choice2(),
@@ -62,6 +63,7 @@ func (Repository) ToDomain(gm gM.Game) (rpsD.RPS, error) {
 		return rpsD.RPS{}, fmt.Errorf("failed to decode binary fields in %s: %w", operationName, err)
 	}
 	player1 := rpsPlayerByNumber(players, 1)
+	//nolint:mnd // Player number is constant.
 	player2 := rpsPlayerByNumber(players, 2)
 
 	model, err := rpsD.New(

@@ -9,6 +9,7 @@ import (
 )
 
 func buildRPSGameBoardKeyboard(game *rps.RPS) *telego.InlineKeyboardMarkup {
+	//nolint:mnd // Rows count is constant.
 	rows := make([][]telego.InlineKeyboardButton, 0, 3)
 	if game.IsFinished() {
 		return &telego.InlineKeyboardMarkup{
@@ -36,6 +37,7 @@ func buildRPSGameBoardKeyboard(game *rps.RPS) *telego.InlineKeyboardMarkup {
 
 func extractRPSChoice(callbackData string) (rps.Choice, error) {
 	parts := strings.Split(callbackData, "::")
+	//nolint:mnd // Callback data params is constant.
 	if len(parts) < 5 {
 		return rps.ChoiceEmpty, ErrInvalidCallbackData
 	}

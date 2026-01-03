@@ -7,6 +7,7 @@ import (
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
+	domainBet "microgame-bot/internal/domain/bet"
 	"microgame-bot/internal/domain/rps"
 	domainSession "microgame-bot/internal/domain/session"
 	"microgame-bot/internal/msgs"
@@ -34,7 +35,7 @@ func RPSCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 		}
 
 		gameCount := extractGameCount(query.Data, cfg.MaxGameCount)
-		betAmount := extractBetAmount(query.Data, 10000)
+		betAmount := extractBetAmount(query.Data, domainBet.MaxBet)
 
 		session, err := domainSession.New(
 			domainSession.WithNewID(),
@@ -53,6 +54,9 @@ func RPSCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 			rps.WithStatus(domain.GameStatusWaitingForPlayers),
 			rps.WithSessionID(session.ID()),
 		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create RPS game in %s: %w", operationName, err)
+		}
 		err = unit.Do(ctx, func(unit uow.IUnitOfWork) error {
 			sR, err := unit.SessionRepo()
 			if err != nil {

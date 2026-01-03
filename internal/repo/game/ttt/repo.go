@@ -72,6 +72,9 @@ func (r *Repository) GamesBySessionIDLocked(ctx context.Context, id session.ID) 
 
 func (r *Repository) UpdateGame(ctx context.Context, game ttt.TTT) (ttt.TTT, error) {
 	model, err := r.FromDomain(gM.Game{}, game)
+	if err != nil {
+		return ttt.TTT{}, fmt.Errorf("failed to convert TTT domain model to gorm model: %w", err)
+	}
 	_, err = gorm.G[gM.Game](r.db).Where("id = ?", model.ID.String()).Updates(ctx, model)
 	if err != nil {
 		return ttt.TTT{}, fmt.Errorf("failed to update game in gorm database: %w", err)

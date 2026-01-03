@@ -37,6 +37,7 @@ func userFromContext(ctx context.Context) (domainUser.User, error) {
 
 func extractGameID[ID utils.UUIDBasedID](callbackData string) (ID, error) {
 	parts := strings.Split(callbackData, "::")
+	//nolint:mnd // Callback data params is constant.
 	if len(parts) < 4 {
 		var zero ID
 		return zero, ErrInvalidCallbackData
@@ -57,6 +58,7 @@ func extractGameID[ID utils.UUIDBasedID](callbackData string) (ID, error) {
 func extractGameCount(callbackData string, maxGameCount int) int {
 	const defaultGameCount = 1
 	parts := strings.Split(callbackData, "::")
+	//nolint:mnd // Callback data params is constant.
 	if len(parts) < 3 {
 		return defaultGameCount
 	}
@@ -78,8 +80,9 @@ func extractGameCount(callbackData string, maxGameCount int) int {
 }
 
 // Extracts the bet amount from the callback data. If the callback data is invalid, returns 0.
-func extractBetAmount(callbackData string, maxBet int) domain.Token {
+func extractBetAmount(callbackData string, maxBet domain.Token) domain.Token {
 	parts := strings.Split(callbackData, "::")
+	//nolint:mnd // Callback data params is constant.
 	if len(parts) < 4 {
 		return domainBet.DefaultBet
 	}
@@ -93,7 +96,7 @@ func extractBetAmount(callbackData string, maxBet int) domain.Token {
 	if bet < 0 {
 		return domainBet.DefaultBet
 	}
-	if bet > maxBet {
+	if domain.Token(bet) > maxBet {
 		return domainBet.MaxBet
 	}
 

@@ -27,7 +27,16 @@ func (u UniqueID) IsZero() bool {
 	return UUIDIsZero(u)
 }
 
+// Value implements gorm.Serializer interface for writing to database.
+//
+//nolint:revive // ABOBA
+func (id UniqueID) Value(_ context.Context, _ *schema.Field, _ reflect.Value, _ any) (any, error) {
+	return id.String(), nil
+}
+
 // Scan implements gorm.Serializer interface for reading from database.
+//
+//nolint:revive // ABOBA
 func (id *UniqueID) Scan(_ context.Context, _ *schema.Field, _ reflect.Value, dbValue any) error {
 	switch value := dbValue.(type) {
 	case []byte:
@@ -48,9 +57,4 @@ func (id *UniqueID) Scan(_ context.Context, _ *schema.Field, _ reflect.Value, db
 		return fmt.Errorf("unsupported data type for UUID: %T", dbValue)
 	}
 	return nil
-}
-
-// Value implements gorm.Serializer interface for writing to database.
-func (id UniqueID) Value(_ context.Context, _ *schema.Field, _ reflect.Value, _ any) (any, error) {
-	return id.String(), nil
 }

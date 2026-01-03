@@ -21,11 +21,7 @@ func (q *Queue) nack(ctx context.Context, taskID utils.UniqueID, handlerErr erro
 			return err
 		}
 
-		errorMsg := handlerErr.Error()
-		if len(errorMsg) > 255 {
-			errorMsg = errorMsg[:255]
-		}
-		task.LastError = errorMsg
+		task.LastError = handlerErr.Error()
 
 		if task.Attempts >= task.MaxAttempts {
 			task.Status = TaskStatusFailed

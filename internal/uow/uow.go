@@ -39,6 +39,7 @@ func New(db *gorm.DB, opts ...UnitOfWorkOpt) *UnitOfWork {
 // Do executes function within a transaction.
 func (u *UnitOfWork) Do(_ context.Context, fn func(unit IUnitOfWork) error) error {
 	return u.db.Transaction(func(tx *gorm.DB) error {
+		//nolint:mnd // Repo count is constant.
 		opts := make([]UnitOfWorkOpt, 0, 6)
 
 		if u.sessionRepo != nil {

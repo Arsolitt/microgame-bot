@@ -6,6 +6,7 @@ import (
 	"microgame-bot/internal/core"
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
+	domainBet "microgame-bot/internal/domain/bet"
 	domainSession "microgame-bot/internal/domain/session"
 	"microgame-bot/internal/domain/ttt"
 	domainUser "microgame-bot/internal/domain/user"
@@ -34,7 +35,7 @@ func TTTCreate(unit uow.IUnitOfWork, cfg core.AppConfig) CallbackQueryHandlerFun
 		}
 
 		gameCount := extractGameCount(query.Data, cfg.MaxGameCount)
-		betAmount := extractBetAmount(query.Data, 10000)
+		betAmount := extractBetAmount(query.Data, domainBet.MaxBet)
 
 		session, err := domainSession.New(
 			domainSession.WithNewID(),

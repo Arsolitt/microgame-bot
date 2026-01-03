@@ -46,6 +46,7 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 		switch rounds {
 		case 1:
 			roundsLabel += ")"
+		//nolint:mnd // Ending of a numeral.
 		case 2, 3, 4:
 			roundsLabel += "а)"
 		default:

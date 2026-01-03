@@ -76,7 +76,7 @@ func TTTJoin(userRepo userRepository.IUserRepository, unit uow.IUnitOfWork) Call
 			}
 
 			// Create bets if bet amount > 0
-			betAmount := domain.Token(session.Bet())
+			betAmount := session.Bet()
 			if betAmount > 0 {
 				// Get joining player
 				joiningPlayer, err := userRepo.UserByIDLocked(ctx, player2.ID())

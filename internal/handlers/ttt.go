@@ -17,9 +17,11 @@ func buildTTTGameBoardKeyboard(
 	playerX domainUser.User,
 	playerO domainUser.User,
 ) *telego.InlineKeyboardMarkup {
+	//nolint:mnd // Cell number is constant.
 	rows := make([][]telego.InlineKeyboardButton, 0, 4)
 
 	for row := range 3 {
+		//nolint:mnd // buttons count is constant.
 		buttons := make([]telego.InlineKeyboardButton, 3)
 		for col := range 3 {
 			cell, _ := game.GetCell(row, col)
@@ -32,6 +34,7 @@ func buildTTTGameBoardKeyboard(
 				icon = ttt.CellOIcon
 			}
 
+			//nolint:mnd // Cell number is constant.
 			cellNumber := row*3 + col
 			callbackData := fmt.Sprintf("g::ttt::move::%s::%d", game.ID().String(), cellNumber)
 
@@ -70,6 +73,7 @@ func buildTTTGameBoardKeyboard(
 
 func tttExtractCellNumber(callbackData string) (int, error) {
 	parts := strings.Split(callbackData, "::")
+	//nolint:mnd // Callback data params is constant.
 	if len(parts) < 5 {
 		return 0, errors.New("invalid callback data")
 	}
@@ -84,5 +88,6 @@ func tttExtractCellNumber(callbackData string) (int, error) {
 }
 
 func tttCellNumberToCoords(cellNumber int) (int, int) {
+	//nolint:mnd // Cell number is constant.
 	return cellNumber / 3, cellNumber % 3
 }

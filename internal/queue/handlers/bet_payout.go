@@ -15,7 +15,7 @@ import (
 // BetPayoutHandler returns a handler function for processing bet payouts.
 func BetPayoutHandler(u uow.IUnitOfWork) func(ctx context.Context, data []byte) error {
 	const operationName = "queue::handler::bet_payout"
-	return func(ctx context.Context, data []byte) error {
+	return func(ctx context.Context, _ []byte) error {
 		err := u.Do(ctx, func(unit uow.IUnitOfWork) error {
 			betRepo, err := unit.BetRepo()
 			if err != nil {

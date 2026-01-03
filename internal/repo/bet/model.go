@@ -34,7 +34,7 @@ func (m Bet) ToDomain() (domainBet.Bet, error) {
 		domainBet.WithUserID(domainUser.ID(m.UserID)),
 		domainBet.WithSessionID(domainSession.ID(m.SessionID)),
 		domainBet.WithAmountFromUint64(m.Amount),
-		domainBet.WithStatus(domainBet.Status(m.Status)),
+		domainBet.WithStatus(m.Status),
 		domainBet.WithCreatedAt(m.CreatedAt),
 		domainBet.WithUpdatedAt(m.UpdatedAt),
 	)
