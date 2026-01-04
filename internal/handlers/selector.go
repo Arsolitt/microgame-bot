@@ -69,19 +69,16 @@ func GameSelector(cfg core.AppConfig) InlineQueryHandlerFunc {
 			betLabel,
 		)
 
-		profileMsg := "👤 <b>Мой Профиль</b>\n\nНажми кнопку, чтобы посмотреть свой профиль!"
-
 		return &InlineQueryResponse{
 			QueryID: query.ID,
 			Results: []telego.InlineQueryResult{
 				tu.ResultArticle(
 					"profile",
 					"👤 Мой Профиль",
-					tu.TextMessage(profileMsg).WithParseMode("HTML"),
+					tu.TextMessage("⏳ <b>Загрузка профиля...</b>").WithParseMode("HTML"),
 				).WithReplyMarkup(tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
-						tu.InlineKeyboardButton("📊 Показать профиль").
-							WithCallbackData("profile::view"),
+						tu.InlineKeyboardButton("⏳").WithCallbackData("empty"),
 					),
 				)),
 				tu.ResultArticle(

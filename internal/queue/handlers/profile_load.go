@@ -11,7 +11,6 @@ import (
 	"microgame-bot/internal/uow"
 
 	"github.com/mymmrac/telego"
-	tu "github.com/mymmrac/telego/telegoutil"
 )
 
 type iMessageSender interface {
@@ -64,17 +63,10 @@ func ProfileLoadHandler(u uow.IUnitOfWork, sender iMessageSender) func(ctx conte
 			return uow.ErrFailedToDoTransaction(operationName, err)
 		}
 
-		// Edit message with profile info
 		_, err = sender.EditMessageText(ctx, &telego.EditMessageTextParams{
 			InlineMessageID: payload.InlineMessageID.String(),
 			Text:            profileMsg,
 			ParseMode:       "HTML",
-			ReplyMarkup: tu.InlineKeyboard(
-				tu.InlineKeyboardRow(
-					tu.InlineKeyboardButton("🔄 Обновить").
-						WithCallbackData("profile::view"),
-				),
-			),
 		})
 		if err != nil {
 			return fmt.Errorf("failed to edit message in %s: %w", operationName, err)

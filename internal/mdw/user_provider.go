@@ -63,6 +63,11 @@ func UserProvider(
 			firstName = update.InlineQuery.From.FirstName
 			lastName = update.InlineQuery.From.LastName
 			username = update.InlineQuery.From.Username
+		} else if update.ChosenInlineResult != nil {
+			userTelegramID = update.ChosenInlineResult.From.ID
+			firstName = update.ChosenInlineResult.From.FirstName
+			lastName = update.ChosenInlineResult.From.LastName
+			username = update.ChosenInlineResult.From.Username
 		} else {
 			return core.ErrInvalidUpdate
 		}
