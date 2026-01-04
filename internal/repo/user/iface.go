@@ -10,7 +10,7 @@ type IUserGetter interface {
 	UserByTelegramID(ctx context.Context, telegramID int64) (domainUser.User, error)
 	UserByID(ctx context.Context, id domainUser.ID) (domainUser.User, error)
 	UserByIDLocked(ctx context.Context, id domainUser.ID) (domainUser.User, error)
-	UserProfile(ctx context.Context, id domainUser.ID) (domainUser.Profile, error)
+	GetUserSessionIDs(ctx context.Context, userID domainUser.ID) (UserSessionIDs, error)
 }
 
 type IUserCreator interface {
