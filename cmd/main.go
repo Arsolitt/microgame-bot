@@ -14,6 +14,7 @@ import (
 	"microgame-bot/internal/mdw"
 	"microgame-bot/internal/queue"
 	"microgame-bot/internal/scheduler"
+	"net/http"
 	"os"
 	"os/signal"
 	"time"
@@ -70,11 +71,27 @@ func startup() error {
 	}
 	slog.Info("Locker initialized successfully", "driver", cfg.App.LockerDriver)
 
-	bh, err := bot.MustInit(ctx, cfg)
+	bh, webhookSrv, err := bot.MustInit(ctx, cfg)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = bh.StopWithContext(ctx) }()
+
+	if webhookSrv != nil {
+		go func() {
+			slog.Info("Starting webhook server", "addr", webhookSrv.Addr)
+			if err := webhookSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				slog.Error("Webhook server error", logger.ErrorField, err.Error())
+			}
+		}()
+		defer func() {
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			if err := webhookSrv.Shutdown(shutdownCtx); err != nil {
+				slog.Error("Failed to shutdown webhook server", logger.ErrorField, err.Error())
+			}
+		}()
+	}
 
 	bufferedHandler := handlers.NewBufferedHandler(
 		//nolint:mnd // requests per second (Telegram limit)

@@ -36,9 +36,12 @@ type PostgresConfig struct {
 }
 
 type TelegramConfig struct {
-	Token    TelegramToken `env:"TOKEN"     validate:"required"`
-	AdminIDs []int64       `env:"ADMIN_IDS" validate:""`
-	Debug    bool          `env:"DEBUG"                         env-default:"false"`
+	Token       TelegramToken `env:"TOKEN"        validate:"required"`
+	AdminIDs    []int64       `env:"ADMIN_IDS"    validate:""`
+	Debug       bool          `env:"DEBUG"        env-default:"false"`
+	WebhookURL  string        `env:"WEBHOOK_URL"`
+	WebhookPath string        `env:"WEBHOOK_PATH" env-default:"/bot"`
+	WebhookAddr string        `env:"WEBHOOK_ADDR" env-default:":8443"`
 }
 
 type AppConfig struct {
