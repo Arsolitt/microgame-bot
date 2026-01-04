@@ -71,7 +71,7 @@ func startup() error {
 	}
 	slog.Info("Locker initialized successfully", "driver", cfg.App.LockerDriver)
 
-	bh, webhookSrv, err := bot.MustInit(ctx, cfg)
+	bot, bh, webhookSrv, err := bot.MustInit(ctx, cfg)
 	if err != nil {
 		return err
 	}
@@ -126,6 +126,15 @@ func startup() error {
 	q.Register("queue.cleanup", func(ctx context.Context, _ []byte) error {
 		return q.CleanupStuckTasks(ctx)
 	})
+
+	// Register profile load handler
+	profileLoadUnit := uowGorm.New(db,
+		uowGorm.WithUserRepo(userRepo),
+		uowGorm.WithSessionRepo(sessionRepo),
+		uowGorm.WithRPSRepo(rpsRepo),
+		uowGorm.WithTTTRepo(tttRepo),
+	)
+	q.Register("profile.load", qHandlers.ProfileLoadHandler(profileLoadUnit, bot))
 
 	// Register bet payout handler
 	betPayoutUnit := uowGorm.New(db,
@@ -205,8 +214,14 @@ func startup() error {
 		mdw.DailyBonusMiddleware(dbmUow),
 	)
 
-	// Game selector
+	// Selector
 	bh.HandleInlineQuery(wrap.WrapInlineQuery(handlers.GameSelector(cfg.App)), th.AnyInlineQuery())
+
+	// Profile handler
+	bh.HandleChosenInlineResult(
+		wrap.WrapChosenInlineResult(handlers.ProfileChosen(q)),
+		handlers.ChosenInlineResultID("profile"),
+	)
 
 	// RPS GAME HANDLERS
 	rpsCreateUnit := uowGorm.New(db,
