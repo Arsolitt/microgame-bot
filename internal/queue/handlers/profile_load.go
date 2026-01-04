@@ -8,6 +8,7 @@ import (
 
 	"microgame-bot/internal/core/logger"
 	domainUser "microgame-bot/internal/domain/user"
+	"microgame-bot/internal/msgs"
 	"microgame-bot/internal/uow"
 
 	"github.com/mymmrac/telego"
@@ -32,36 +33,25 @@ func ProfileLoadHandler(u uow.IUnitOfWork, sender iMessageSender) func(ctx conte
 		ctx = logger.WithLogValue(ctx, logger.UserIDField, payload.UserID.String())
 		l.DebugContext(ctx, "Processing profile load task")
 
-		var profileMsg string
+		var profile domainUser.Profile
 		err := u.Do(ctx, func(unit uow.IUnitOfWork) error {
 			userRepo, err := unit.UserRepo()
 			if err != nil {
 				return fmt.Errorf("failed to get user repository in %s: %w", operationName, err)
 			}
 
-			user, err := userRepo.UserByID(ctx, payload.UserID)
+			profile, err = userRepo.UserProfile(ctx, payload.UserID)
 			if err != nil {
-				return fmt.Errorf("failed to get user in %s: %w", operationName, err)
+				return fmt.Errorf("failed to get user profile in %s: %w", operationName, err)
 			}
-
-			// TODO: Collect actual profile statistics here
-			// For now, just show basic info as a stub
-			profileMsg = fmt.Sprintf(
-				"👤 <b>Профиль</b>\n\n"+
-					"🆔 ID: <code>%s</code>\n"+
-					"💰 Токены: <b>%d</b>\n"+
-					"📅 Зарегистрирован: <i>%s</i>\n\n"+
-					"<i>Статистика в разработке...</i>",
-				user.ID().String(),
-				user.Tokens(),
-				user.CreatedAt().Format("02.01.2006"),
-			)
 
 			return nil
 		})
 		if err != nil {
 			return uow.ErrFailedToDoTransaction(operationName, err)
 		}
+
+		profileMsg := msgs.ProfileMsg(profile)
 
 		_, err = sender.EditMessageText(ctx, &telego.EditMessageTextParams{
 			InlineMessageID: payload.InlineMessageID.String(),
