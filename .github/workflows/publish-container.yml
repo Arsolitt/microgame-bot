@@ -60,7 +60,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          target: runtime
+          target: production
 
       - name: Generate artifact attestation
         if: github.event_name != 'pull_request'
