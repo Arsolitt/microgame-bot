@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: microgame-bot
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: microgame.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: microgame-bot
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - microgame.example.com
+      secretName: wildcard.example.com-tls

@@ -48,6 +48,55 @@ Built with clean architecture principles:
 - **Queue**: PostgreSQL (via GORM)
 - **Scheduler**: PostgreSQL (via GORM)
 
+## Deployment
+
+### Docker Compose
+
+1. Create `.env` file with required variables:
+
+```env
+TELEGRAM__TOKEN=your_bot_token_here
+TELEGRAM__WEBHOOK_URL=https://yourdomain.com
+POSTGRES__URL=postgres://app:app@postgres:5432/app
+```
+
+See `.env.example` for complete list of available options.
+
+2. Run with production compose file:
+
+```bash
+docker compose -f docker-compose.production.yaml up -d
+```
+
+The bot will be available on port 8080 for webhook connections.
+
+### Kubernetes
+
+1. Update `manifests/env.yaml` with your configuration:
+   - Set `TELEGRAM__TOKEN` with your bot token
+   - Set `TELEGRAM__WEBHOOK_URL` with your domain
+   - Configure `POSTGRES__URL` to point to your database
+
+2. Apply manifests:
+
+```bash
+kubectl apply -f manifests/
+```
+
+Required manifests:
+- `env.yaml` - Secret with environment variables
+- `deployment.yaml` - Bot deployment with health checks
+- `service.yaml` - ClusterIP service
+- `ingress.yaml` - Ingress for webhook routing
+
+### Required Environment Variables
+
+- `TELEGRAM__TOKEN` - Telegram bot token from [@BotFather](https://t.me/BotFather)
+- `TELEGRAM__WEBHOOK_URL` - Public HTTPS URL for webhook
+- `POSTGRES__URL` - PostgreSQL connection string
+
+See `manifests/env.yaml` and `.env.example` for complete list of available options.
+
 ## License
 
 This project is licensed under the terms specified in the [LICENSE](LICENSE) file.

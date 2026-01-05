@@ -29,7 +29,7 @@ type Game struct {
 	Session   seM.Session       `gorm:"not null;foreignKey:SessionID;references:ID;constraint:OnDelete:RESTRICT"`
 	Type      domain.GameType   `gorm:"not null"`
 	Status    domain.GameStatus `gorm:"not null"`
-	Players   []byte            `gorm:"type:jsonb"`
+	Players   []byte            `gorm:"type:jsonb;index:idx_games_players,type:gin"`
 	Data      []byte            `gorm:"type:jsonb"`
 	Creator   uM.User           `gorm:"foreignKey:CreatorID;references:ID;constraint:OnDelete:RESTRICT"`
 	ID        uuid.UUID         `gorm:"primaryKey;type:uuid"`

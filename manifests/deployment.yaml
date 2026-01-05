@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microgame-bot
+  labels:
+    app: microgame-bot
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  # strategy:
+  #   type: Recreate
+  selector:
+    matchLabels:
+      app: microgame-bot
+  template:
+    metadata:
+      labels:
+        app: microgame-bot
+    spec:
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #         - matchExpressions:
+      #             - key: kubernetes.io/hostname
+      #               operator: In
+      #               values:
+      #                 - home-k3s-worker-2
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 13001
+        runAsUser: 13001
+        runAsGroup: 13001
+        fsGroupChangePolicy: Always
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: microgame-bot
+          image: ghcr.io/Arsolitt/microgame-bot:v0.0.1
+          # image: ghcr.io/open-webui/open-webui:v0.6.43
+          # command:
+          #   - "sleep"
+          #   - "infinity"
+          envFrom:
+            - secretRef:
+                name: microgame-bot-env
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 50m
+              memory: "128Mi"
+            limits:
+              cpu: "1"
+              memory: "1024Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              path: /api/health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10

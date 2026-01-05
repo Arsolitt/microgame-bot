@@ -11,9 +11,9 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
-      - nats1
-      - nats2
-      - nats3
+      # - nats1
+      # - nats2
+      # - nats3
     restart: unless-stopped
 
   postgres:
