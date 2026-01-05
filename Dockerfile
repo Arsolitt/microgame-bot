@@ -1,4 +1,4 @@
-FROM harbor.arsolitt.tech/hub/golang:1.25.5-bookworm AS local
+FROM golang:1.25.5-bookworm AS local
 ENV CGO_ENABLED=0
 ENV GOOS=linux
 ENV GOARCH=amd64
@@ -14,7 +14,7 @@ EXPOSE 8080
 USER 1000
 CMD ["air"]
 
-FROM harbor.arsolitt.tech/hub/golang:1.25.5-bookworm AS builder
+FROM golang:1.25.5-bookworm AS builder
 ENV CGO_ENABLED=0
 ENV GOOS=linux
 ENV GOARCH=amd64
@@ -24,9 +24,9 @@ RUN go mod download
 COPY . .
 RUN go build -o app ./cmd/main.go
 
-FROM harbor.arsolitt.tech/hub/bookworm-slim AS production
+FROM alpine:3.23.2 AS production
 ENV TZ=UTC
 WORKDIR /app
-COPY --from=builder /app/app .
+COPY --from=builder /src/app .
 EXPOSE 8080
 CMD ["./app"]

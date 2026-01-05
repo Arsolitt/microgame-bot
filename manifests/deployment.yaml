@@ -61,7 +61,7 @@ spec:
             capabilities:
               drop:
                 - ALL
-            readOnlyRootFilesystem: false
+            readOnlyRootFilesystem: true
           livenessProbe:
             failureThreshold: 3
             httpGet:
