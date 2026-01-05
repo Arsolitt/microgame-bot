@@ -69,7 +69,7 @@ func setupWebhook(ctx context.Context, bot *telego.Bot, cfg core.Config, opts *I
 		telego.WebhookHTTPServeMux(mux, cfg.Telegram.WebhookPath, bot.SecretToken()),
 		telego.WithWebhookBuffer(256),
 		telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
-			URL:         cfg.Telegram.WebhookURL,
+			URL:         fmt.Sprintf("%s%s", cfg.Telegram.WebhookURL, cfg.Telegram.WebhookPath),
 			SecretToken: bot.SecretToken(),
 			AllowedUpdates: []string{
 				telego.MessageUpdates,
