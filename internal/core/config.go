@@ -13,8 +13,7 @@ type TelegramToken string
 
 type Config struct {
 	Postgres PostgresConfig `env-prefix:"POSTGRES__"`
-	Sqlite   SqliteConfig   `env-prefix:"SQLITE__"`
-	Nats     NatsConfig     `env-prefix:"NATS__"`
+	// Nats     NatsConfig     `env-prefix:"NATS__"`
 	App      AppConfig      `env-prefix:"APP__"`
 	Logs     LogsConfig     `env-prefix:"LOGS__"`
 	Telegram TelegramConfig `env-prefix:"TELEGRAM__"`
@@ -25,10 +24,6 @@ type LogsConfig struct {
 	IsPretty    bool   `env:"IS_PRETTY"    env-default:"true"`
 	WithContext bool   `env:"WITH_CONTEXT" env-default:"true"`
 	WithSources bool   `env:"WITH_SOURCES" env-default:"false"`
-}
-
-type SqliteConfig struct {
-	URL string `env:"URL" env-default:"file::memory:?cache=shared" validate:"required"`
 }
 
 type PostgresConfig struct {
@@ -59,10 +54,7 @@ type NatsConfig struct {
 
 func LoadConfig() (Config, error) {
 	var cfg Config
-	err := godotenv.Load()
-	if err != nil {
-		return Config{}, fmt.Errorf("failed to load .env file: %w", err)
-	}
+	_ = godotenv.Load()
 	if err := cleanenv.ReadEnv(&cfg); err != nil {
 		return Config{}, fmt.Errorf("failed to read config: %w", err)
 	}
