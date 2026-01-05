@@ -30,6 +30,7 @@ Microgame Bot is a competitive multiplayer Telegram bot that allows users to pla
 - **Unit of Work Pattern** - Ensures transactional consistency across repositories
 - **Session Management** - Persistent game sessions with state recovery
 - **Webhook & Long Polling** - Flexible deployment options
+- **Health Check** - Monitor system health via `/health` endpoint
 
 ## Architecture
 
@@ -69,6 +70,56 @@ docker compose -f docker-compose.production.yaml up -d
 ```
 
 The bot will be available on port 8080 for webhook connections.
+
+## Health Check
+
+The bot exposes a `/health` endpoint for monitoring system health. The endpoint checks:
+
+- **Database** - PostgreSQL connection and pool status
+- **Queue** - Task queue health and stuck tasks detection
+- **Scheduler** - Active cron jobs status
+
+### Health Check Response
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-01-05T10:30:00Z",
+  "components": {
+    "database": {
+      "status": "ok",
+      "latency": "2.5ms"
+    },
+    "queue": {
+      "status": "ok",
+      "latency": "1.8ms"
+    },
+    "scheduler": {
+      "status": "ok",
+      "latency": "1.2ms"
+    }
+  }
+}
+```
+
+### Status Codes
+
+- `200 OK` - All systems operational or degraded
+- `503 Service Unavailable` - Critical system failure
+
+### Component Statuses
+
+- `ok` - Component is healthy
+- `degraded` - Component is working but with issues (e.g., high stuck tasks)
+- `down` - Component is not responding
+
+### Usage
+
+Access the health check endpoint at: `http://your-host:8080/health`
+
+For Kubernetes deployments, liveness and readiness probes are pre-configured in `manifests/deployment.yaml`.
+
+**Note**: Health check is available regardless of whether the bot uses webhook or long polling mode.
 
 ### Kubernetes
 

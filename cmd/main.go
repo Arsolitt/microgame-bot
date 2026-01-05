@@ -10,6 +10,7 @@ import (
 	"microgame-bot/internal/core/logger"
 	"microgame-bot/internal/domain"
 	"microgame-bot/internal/domain/user"
+	"microgame-bot/internal/health"
 	"microgame-bot/internal/locker"
 	"microgame-bot/internal/mdw"
 	"microgame-bot/internal/queue"
@@ -71,7 +72,15 @@ func startup() error {
 	}
 	slog.Info("Locker initialized successfully", "driver", cfg.App.LockerDriver)
 
-	bot, bh, webhookSrv, err := bot.MustInit(ctx, cfg)
+	healthHandler := health.NewHandler(5 * time.Second)
+	healthHandler.RegisterChecker("database", health.NewDatabaseChecker(db))
+	healthHandler.RegisterChecker("queue", health.NewQueueChecker(db))
+	healthHandler.RegisterChecker("scheduler", health.NewSchedulerChecker(db))
+	slog.Info("Health check initialized successfully")
+
+	bot, bh, webhookSrv, err := bot.MustInit(ctx, cfg, &bot.InitOptions{
+		HealthHandler: healthHandler,
+	})
 	if err != nil {
 		return err
 	}

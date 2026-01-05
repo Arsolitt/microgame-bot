@@ -22,6 +22,8 @@ func ProfileMsg(profile domainUser.Profile) string {
 		sb.WriteString("\n")
 		sb.WriteString(fmt.Sprintf("├ <b>W/R:</b> %0.1f%% (%d - %d)", profile.RPSWinRate, profile.RPSWins, profile.RPSLosses))
 		sb.WriteString("\n")
+		sb.WriteString(fmt.Sprintf("├ <b>Ничьи:</b> %d", profile.RPSTotal-profile.RPSWins-profile.RPSLosses))
+		sb.WriteString("\n")
 		sb.WriteString(fmt.Sprintf("└ <b>Сыграно:</b> %d", profile.RPSTotal))
 		sb.WriteString("\n\n")
 	}
@@ -31,6 +33,8 @@ func ProfileMsg(profile domainUser.Profile) string {
 		sb.WriteString("❌⭕ <b>Крестики-Нолики</b>")
 		sb.WriteString("\n")
 		sb.WriteString(fmt.Sprintf("├ <b>W/R:</b> %0.1f%% (%d - %d)", profile.TTTWinRate, profile.TTTWins, profile.TTTLosses))
+		sb.WriteString("\n")
+		sb.WriteString(fmt.Sprintf("├ <b>Ничьи:</b> %d", profile.TTTTotal-profile.TTTWins-profile.TTTLosses))
 		sb.WriteString("\n")
 		sb.WriteString(fmt.Sprintf("└ <b>Сыграно:</b> %d", profile.TTTTotal))
 		sb.WriteString("\n\n")

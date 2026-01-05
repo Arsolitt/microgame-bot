@@ -13,7 +13,11 @@ import (
 	"github.com/mymmrac/telego"
 )
 
-func MustInit(ctx context.Context, cfg core.Config) (*telego.Bot, *th.BotHandler, *http.Server, error) {
+type InitOptions struct {
+	HealthHandler http.Handler
+}
+
+func MustInit(ctx context.Context, cfg core.Config, opts *InitOptions) (*telego.Bot, *th.BotHandler, *http.Server, error) {
 	bot, err := telego.NewBot(string(cfg.Telegram.Token), telego.WithDiscardLogger())
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to create bot: %w", err)
@@ -23,11 +27,15 @@ func MustInit(ctx context.Context, cfg core.Config) (*telego.Bot, *th.BotHandler
 	var srv *http.Server
 
 	if cfg.Telegram.WebhookURL != "" {
-		updates, srv, err = setupWebhook(ctx, bot, cfg)
+		updates, srv, err = setupWebhook(ctx, bot, cfg, opts)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("failed to setup webhook: %w", err)
 		}
 	} else {
+		if opts != nil && opts.HealthHandler != nil {
+			srv = setupHealthServer(cfg, opts.HealthHandler)
+		}
+
 		updates, err = bot.UpdatesViaLongPolling(ctx, &telego.GetUpdatesParams{
 			AllowedUpdates: []string{
 				telego.MessageUpdates,
@@ -54,7 +62,7 @@ func MustInit(ctx context.Context, cfg core.Config) (*telego.Bot, *th.BotHandler
 	return bot, bh, srv, nil
 }
 
-func setupWebhook(ctx context.Context, bot *telego.Bot, cfg core.Config) (<-chan telego.Update, *http.Server, error) {
+func setupWebhook(ctx context.Context, bot *telego.Bot, cfg core.Config, opts *InitOptions) (<-chan telego.Update, *http.Server, error) {
 	mux := http.NewServeMux()
 
 	updates, err := bot.UpdatesViaWebhook(ctx,
@@ -75,6 +83,11 @@ func setupWebhook(ctx context.Context, bot *telego.Bot, cfg core.Config) (<-chan
 		return nil, nil, err
 	}
 
+	if opts != nil && opts.HealthHandler != nil {
+		mux.Handle("/health", opts.HealthHandler)
+		slog.InfoContext(ctx, "Health check endpoint registered", "path", "/health")
+	}
+
 	srv := &http.Server{
 		Addr:    cfg.Telegram.WebhookAddr,
 		Handler: mux,
@@ -91,4 +104,14 @@ func setupWebhook(ctx context.Context, bot *telego.Bot, cfg core.Config) (<-chan
 	}
 
 	return updates, srv, nil
+}
+
+func setupHealthServer(cfg core.Config, healthHandler http.Handler) *http.Server {
+	mux := http.NewServeMux()
+	mux.Handle("/health", healthHandler)
+
+	return &http.Server{
+		Addr:    cfg.Telegram.WebhookAddr,
+		Handler: mux,
+	}
 }
