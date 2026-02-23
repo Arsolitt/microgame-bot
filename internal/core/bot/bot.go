@@ -37,6 +37,14 @@ func MustInit(ctx context.Context, cfg core.Config, opts *InitOptions) (*telego.
 			slog.Info("Health check endpoint registered", "path", "/health")
 		}
 
+		slog.Info("Deleting webhook to enable long polling")
+		err = bot.DeleteWebhook(ctx, &telego.DeleteWebhookParams{
+			DropPendingUpdates: true,
+		})
+		if err != nil {
+			slog.Warn("Failed to delete webhook", logger.ErrorField, err.Error())
+		}
+
 		slog.Info("Starting long polling mode")
 		updates, err = bot.UpdatesViaLongPolling(ctx, &telego.GetUpdatesParams{
 			AllowedUpdates: []string{
