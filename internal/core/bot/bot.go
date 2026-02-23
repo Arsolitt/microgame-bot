@@ -34,8 +34,10 @@ func MustInit(ctx context.Context, cfg core.Config, opts *InitOptions) (*telego.
 	} else {
 		if opts != nil && opts.HealthHandler != nil {
 			srv = setupHealthServer(cfg, opts.HealthHandler)
+			slog.Info("Health check endpoint registered", "path", "/health")
 		}
 
+		slog.Info("Starting long polling mode")
 		updates, err = bot.UpdatesViaLongPolling(ctx, &telego.GetUpdatesParams{
 			AllowedUpdates: []string{
 				telego.MessageUpdates,

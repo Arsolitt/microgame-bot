@@ -88,16 +88,20 @@ func startup() error {
 
 	if webhookSrv != nil {
 		go func() {
-			slog.Info("Starting webhook server", "addr", webhookSrv.Addr)
+			srvType := "webhook"
+			if cfg.Telegram.WebhookURL == "" {
+				srvType = "health"
+			}
+			slog.Info("Starting "+srvType+" server", "addr", webhookSrv.Addr)
 			if err := webhookSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				slog.Error("Webhook server error", logger.ErrorField, err.Error())
+				slog.Error(srvType+" server error", logger.ErrorField, err.Error())
 			}
 		}()
 		defer func() {
 			shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			if err := webhookSrv.Shutdown(shutdownCtx); err != nil {
-				slog.Error("Failed to shutdown webhook server", logger.ErrorField, err.Error())
+				slog.Error("Failed to shutdown server", logger.ErrorField, err.Error())
 			}
 		}()
 	}
